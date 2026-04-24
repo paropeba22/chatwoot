@@ -87,7 +87,10 @@ RUN if [ "$RAILS_ENV" = "production" ]; then \
   fi
 
 # Generate .git_sha file with current commit hash
-RUN git rev-parse HEAD > /app/.git_sha
+# Primeiro, declare que você aceita o argumento GIT_SHA (se já não estiver lá no topo)
+ARG GIT_SHA
+# Substitua a linha 90 por esta:
+RUN echo ${GIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo "unknown")} > /app/.git_sha
 
 # Remove unnecessary files
 RUN rm -rf /gems/ruby/3.4.0/cache/*.gem \
