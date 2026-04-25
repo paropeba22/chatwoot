@@ -41,12 +41,12 @@ const channelList = computed(() => {
       description: t('INBOX_MGMT.ADD.AUTH.CHANNEL.WHATSAPP.DESCRIPTION'),
       icon: 'i-woot-whatsapp',
     },
-    {
-      key: 'sms',
-      title: t('INBOX_MGMT.ADD.AUTH.CHANNEL.SMS.TITLE'),
-      description: t('INBOX_MGMT.ADD.AUTH.CHANNEL.SMS.DESCRIPTION'),
-      icon: 'i-woot-sms',
-    },
+    // {
+    //   key: 'sms',
+    //   title: t('INBOX_MGMT.ADD.AUTH.CHANNEL.SMS.TITLE'),
+    //   description: t('INBOX_MGMT.ADD.AUTH.CHANNEL.SMS.DESCRIPTION'),
+    //   icon: 'i-woot-sms',
+    // },
     {
       key: 'email',
       title: t('INBOX_MGMT.ADD.AUTH.CHANNEL.EMAIL.TITLE'),
