@@ -122,7 +122,7 @@
           "TITLE": "Eventos de alerta para conversas",
           "NONE": "Nenhuma",
           "ASSIGNED": "Conversas atribuídas",
-          "ALL_CONVERSATIONS": "Todas as conversas"
+          "ALL_CONVERSATIONS": "Meus atendimentos"
         },
         "DEFAULT_TONE": {
           "TITLE": "Titulo:"
@@ -301,10 +301,10 @@
     "INBOX_VIEW": "Caixa de entrada",
     "CONVERSATIONS": "Conversas",
     "INBOX": "Caixa de Entrada",
-    "ALL_CONVERSATIONS": "Todas as conversas",
+    "ALL_CONVERSATIONS": "Meus atendimentos",
     "MENTIONED_CONVERSATIONS": "Menções",
     "PARTICIPATING_CONVERSATIONS": "Participantes",
-    "UNATTENDED_CONVERSATIONS": "Não atendidas",
+    "UNATTENDED_CONVERSATIONS": "Urgentes / Atrasados",
     "REPORTS": "Relatórios",
     "SETTINGS": "Configurações",
     "CONTACTS": "Contatos",
@@ -318,13 +318,13 @@
     "CAPTAIN_TOOLS": "Ferramentas",
     "CAPTAIN_SCENARIOS": "Cenários",
     "CAPTAIN_PLAYGROUND": "Playground",
-    "CAPTAIN_INBOXES": "Caixas de Entrada",
+    "CAPTAIN_INBOXES": "Canais de Entrada",
     "CAPTAIN_SETTINGS": "Configurações",
     "HOME": "Principal",
     "AGENTS": "Agentes",
     "AGENT_BOTS": "Robôs",
     "AUDIT_LOGS": "Auditoria",
-    "INBOXES": "Caixas de Entrada",
+    "INBOXES": "Canais de Entrada",
     "NOTIFICATIONS": "Notificações",
     "CANNED_RESPONSES": "Respostas Prontas",
     "INTEGRATIONS": "Integrações",
@@ -921,3 +921,4 @@
     }
   }
 }
+

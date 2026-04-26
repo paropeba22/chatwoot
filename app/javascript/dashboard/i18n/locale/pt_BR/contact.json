@@ -617,7 +617,7 @@
       },
       "INBOX_SELECTOR": {
         "LABEL": "Via:",
-        "BUTTON": "Mostrar Caixas de Entrada"
+        "BUTTON": "Mostrar Canais de Entrada"
       },
       "EMAIL_OPTIONS": {
         "SUBJECT_LABEL": "Assunto:",

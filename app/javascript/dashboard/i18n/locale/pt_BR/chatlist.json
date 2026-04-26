@@ -9,22 +9,22 @@
     "FAILED_TO_SEND": "Falha ao enviar",
     "TAB_HEADING": "Conversas",
     "MENTION_HEADING": "Menções",
-    "UNATTENDED_HEADING": "Não Atendidas",
+    "UNATTENDED_HEADING": "Urgentes / Atrasados",
     "SEARCH": {
       "INPUT": "Pesquisar pessoas, conversas, respostas salvas .."
     },
     "FILTER_ALL": "Todos",
     "ASSIGNEE_TYPE_TABS": {
-      "me": "Minhas",
-      "unassigned": "Não atribuídas",
-      "all": "Todos"
+      "me": "Meus Atendimentos",
+      "unassigned": "Em Fila",
+      "all": "Com IA"
     },
     "CHAT_STATUS_FILTER_ITEMS": {
       "open": {
         "TEXT": "Abertas"
       },
       "resolved": {
-        "TEXT": "Resolvidas"
+        "TEXT": "Histórico Finalizado"
       },
       "pending": {
         "TEXT": "Pendentes"
