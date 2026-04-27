@@ -239,12 +239,12 @@ const menuItems = computed(() => {
           activeOn: ['conversation_through_mentions'],
           to: accountScopedRoute('conversation_mentions'),
         },
-        {
-          name: 'Participating',
-          label: t('SIDEBAR.PARTICIPATING_CONVERSATIONS'),
-          activeOn: ['conversation_through_participating'],
-          to: accountScopedRoute('conversation_participating'),
-        },
+        // {
+        //   name: 'Participating',
+        //   label: t('SIDEBAR.PARTICIPATING_CONVERSATIONS'),
+        //   activeOn: ['conversation_through_participating'],
+        //   to: accountScopedRoute('conversation_participating'),
+        // },
         {
           name: 'Unattended',
           activeOn: ['conversation_through_unattended'],
