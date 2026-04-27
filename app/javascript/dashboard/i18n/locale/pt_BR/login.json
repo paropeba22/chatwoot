@@ -22,7 +22,7 @@
     },
     "FORGOT_PASSWORD": "Esqueceu-se da sua senha?",
     "CREATE_NEW_ACCOUNT": "Criar nova conta",
-    "SUBMIT": "Entrar",
+    "SUBMIT": "Acessar Central de Comando",
     "SAML": {
       "LABEL": "Login via SSO",
       "TITLE": "Iniciar Single Sign-on (SSO)",

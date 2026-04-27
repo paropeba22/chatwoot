@@ -219,27 +219,20 @@ export default {
 </script>
 
 <template>
-  <main
-    class="flex flex-col w-full min-h-screen py-20 bg-n-brand/5 dark:bg-n-background sm:px-6 lg:px-8"
-  >
+  <main class="flex flex-col w-full min-h-screen py-20 bg-[#0B0E14] bg-[radial-gradient(circle_at_center,rgba(0,82,255,0.1)_0%,transparent_50%)] sm:px-6 lg:px-8">
     <section class="max-w-5xl mx-auto">
       <img
-        :src="globalConfig.logo"
-        :alt="globalConfig.installationName"
-        class="block w-auto h-8 mx-auto dark:hidden"
+        v-if="globalConfig.logoDark || globalConfig.logo"
+        :src="globalConfig.logoDark || globalConfig.logo"
+        alt="Logo Grupo Telecom"
+        class="block w-auto h-8 mx-auto"
       />
-      <img
-        v-if="globalConfig.logoDark"
-        :src="globalConfig.logoDark"
-        :alt="globalConfig.installationName"
-        class="hidden w-auto h-8 mx-auto dark:block"
-      />
-      <h2 class="mt-6 text-3xl font-medium text-center text-n-slate-12">
+      <h2 class="mt-6 text-3xl font-medium text-center text-white">
         {{ replaceInstallationName($t('LOGIN.TITLE')) }}
       </h2>
-      <p v-if="showSignupLink" class="mt-3 text-sm text-center text-n-slate-11">
+      <p v-if="showSignupLink" class="mt-3 text-sm text-center text-slate-400">
         {{ $t('COMMON.OR') }}
-        <router-link to="auth/signup" class="lowercase text-link text-n-brand">
+        <router-link to="auth/signup" class="lowercase text-[#0052FF] hover:text-[#003dbf]">
           {{ $t('LOGIN.CREATE_NEW_ACCOUNT') }}
         </router-link>
       </p>
@@ -257,7 +250,7 @@ export default {
     <!-- Regular Login Section -->
     <section
       v-else
-      class="bg-white shadow sm:mx-auto mt-11 sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg"
+      class="sm:mx-auto mt-11 sm:w-full sm:max-w-lg bg-[#0B0E14]/50 border border-[#24292F] backdrop-blur-sm p-11 sm:shadow-2xl sm:rounded-2xl"
       :class="{
         'mb-8 mt-15': !showGoogleOAuth,
         'animate-wiggle': loginApi.hasErrored,
@@ -269,13 +262,13 @@ export default {
           <div v-if="showSamlLogin" class="text-center">
             <router-link
               to="/app/login/sso"
-              class="inline-flex justify-center w-full px-4 py-3 items-center bg-n-background dark:bg-n-solid-3 rounded-md shadow-sm ring-1 ring-inset ring-n-container dark:ring-n-container focus:outline-offset-0 hover:bg-n-alpha-2 dark:hover:bg-n-alpha-2"
+              class="inline-flex justify-center w-full px-4 py-3 items-center bg-black/20 rounded-xl shadow-sm ring-1 ring-inset ring-[#24292F] focus:outline-offset-0 hover:bg-black/40 text-white transition-colors"
             >
               <Icon
                 icon="i-lucide-lock-keyhole"
-                class="size-5 text-n-slate-11"
+                class="size-5 text-slate-400"
               />
-              <span class="ml-2 text-base font-medium text-n-slate-12">
+              <span class="ml-2 text-base font-medium text-white">
                 {{ $t('LOGIN.SAML.LABEL') }}
               </span>
             </router-link>
@@ -287,50 +280,70 @@ export default {
           />
         </div>
         <form class="space-y-5" @submit.prevent="submitFormLogin">
-          <FormInput
-            v-model="credentials.email"
-            name="email_address"
-            type="text"
-            data-testid="email_input"
-            :tabindex="1"
-            required
-            :label="$t('LOGIN.EMAIL.LABEL')"
-            :placeholder="$t('LOGIN.EMAIL.PLACEHOLDER')"
-            :has-error="v$.credentials.email.$error"
-            @input="v$.credentials.email.$touch"
-          />
-          <FormInput
-            v-model="credentials.password"
-            type="password"
-            name="password"
-            data-testid="password_input"
-            required
-            :tabindex="2"
-            :label="$t('LOGIN.PASSWORD.LABEL')"
-            :placeholder="$t('LOGIN.PASSWORD.PLACEHOLDER')"
-            :has-error="v$.credentials.password.$error"
-            @input="v$.credentials.password.$touch"
-          >
-            <p v-if="!globalConfig.disableUserProfileUpdate">
-              <router-link
-                to="auth/reset/password"
-                class="text-sm text-link"
-                tabindex="4"
-              >
-                {{ $t('LOGIN.FORGOT_PASSWORD') }}
-              </router-link>
+          <!-- Email Input -->
+          <div>
+            <label for="email_address" class="flex justify-between text-sm font-medium leading-6 text-white mb-1">
+              {{ $t('LOGIN.EMAIL.LABEL') }}
+            </label>
+            <input
+              id="email_address"
+              v-model="credentials.email"
+              name="email_address"
+              type="text"
+              data-testid="email_input"
+              :tabindex="1"
+              required
+              :placeholder="$t('LOGIN.EMAIL.PLACEHOLDER')"
+              @input="v$.credentials.email.$touch"
+              class="block w-full rounded-xl border-0 px-3 py-3 appearance-none shadow-sm ring-1 ring-inset text-white placeholder:text-slate-500 focus:ring-2 focus:ring-inset focus:ring-[#0052FF] sm:text-sm sm:leading-6 outline-none bg-black/20"
+              :class="v$.credentials.email.$error ? 'ring-red-500' : 'ring-[#24292F]'"
+            />
+            <p v-if="v$.credentials.email.$error" class="mt-2 text-sm text-red-500">
+              {{ $t('LOGIN.EMAIL.ERROR') }}
             </p>
-          </FormInput>
-          <NextButton
-            lg
+          </div>
+          
+          <!-- Password Input -->
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label for="password" class="text-sm font-medium leading-6 text-white">
+                {{ $t('LOGIN.PASSWORD.LABEL') }}
+              </label>
+              <p v-if="!globalConfig.disableUserProfileUpdate">
+                <router-link
+                  to="auth/reset/password"
+                  class="text-sm text-[#0052FF] hover:text-[#003dbf]"
+                  tabindex="4"
+                >
+                  {{ $t('LOGIN.FORGOT_PASSWORD') }}
+                </router-link>
+              </p>
+            </div>
+            <input
+              id="password"
+              v-model="credentials.password"
+              type="password"
+              name="password"
+              data-testid="password_input"
+              required
+              :tabindex="2"
+              :placeholder="$t('LOGIN.PASSWORD.PLACEHOLDER')"
+              @input="v$.credentials.password.$touch"
+              class="block w-full rounded-xl border-0 px-3 py-3 appearance-none shadow-sm ring-1 ring-inset text-white placeholder:text-slate-500 focus:ring-2 focus:ring-inset focus:ring-[#0052FF] sm:text-sm sm:leading-6 outline-none bg-black/20"
+              :class="v$.credentials.password.$error ? 'ring-red-500' : 'ring-[#24292F]'"
+            />
+          </div>
+
+          <button
             type="submit"
             data-testid="submit_button"
-            class="w-full"
+            class="flex items-center w-full justify-center rounded-xl bg-[#0052FF] py-3 px-3 text-base font-medium text-white shadow-sm hover:bg-[#003dbf] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0052FF] cursor-pointer transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             :tabindex="3"
-            :label="$t('LOGIN.SUBMIT')"
             :disabled="loginApi.showLoading"
-            :is-loading="loginApi.showLoading"
-          />
+          >
+            <Spinner v-if="loginApi.showLoading" size="" class="mr-2" />
+            <span>{{ $t('LOGIN.SUBMIT') }}</span>
+          </button>
         </form>
       </div>
       <div v-else class="flex items-center justify-center">
