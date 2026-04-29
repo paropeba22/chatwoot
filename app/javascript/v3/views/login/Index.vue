@@ -222,7 +222,7 @@ export default {
   <main class="flex flex-col w-full min-h-screen py-20 bg-[#0B0E14] bg-[radial-gradient(circle_at_center,rgba(0,82,255,0.1)_0%,transparent_50%)] sm:px-6 lg:px-8">
     <section class="max-w-5xl mx-auto">
       <img
-        :src="'/brand-assets/logo_dark.png'"
+        src="/brand-assets/logo_dark.png"
         alt="Logo Grupo Telecom"
         class="block w-auto h-16 mx-auto"
       />
@@ -341,7 +341,7 @@ export default {
             :disabled="loginApi.showLoading"
           >
             <Spinner v-if="loginApi.showLoading" size="" class="mr-2" />
-            <span>{{ $t('LOGIN.SUBMIT') }}</span>
+            <span>Acessar Central de Comando</span>
           </button>
         </form>
       </div>
