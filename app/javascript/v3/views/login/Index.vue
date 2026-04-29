@@ -11,11 +11,9 @@ import { useBranding } from 'shared/composables/useBranding';
 
 // components
 import SimpleDivider from '../../components/Divider/SimpleDivider.vue';
-import FormInput from '../../components/Form/Input.vue';
 import GoogleOAuthButton from '../../components/GoogleOauth/Button.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import NextButton from 'dashboard/components-next/button/Button.vue';
 import MfaVerification from 'dashboard/components/auth/MfaVerification.vue';
 
 const ERROR_MESSAGES = {
@@ -29,10 +27,8 @@ const IMPERSONATION_URL_SEARCH_KEY = 'impersonation';
 
 export default {
   components: {
-    FormInput,
     GoogleOAuthButton,
     Spinner,
-    NextButton,
     SimpleDivider,
     MfaVerification,
     Icon,
@@ -222,7 +218,7 @@ export default {
   <main class="flex flex-col w-full min-h-screen py-20 bg-[#0B0E14] bg-[radial-gradient(circle_at_center,rgba(0,82,255,0.1)_0%,transparent_50%)] sm:px-6 lg:px-8">
     <section class="max-w-5xl mx-auto">
       <img
-        src="/brand-assets/logo_dark.png"
+        :src="'/brand-assets/logo_dark.png'"
         alt="Logo Grupo Telecom"
         class="block w-auto h-16 mx-auto"
       />
