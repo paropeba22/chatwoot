@@ -761,7 +761,7 @@ const menuItems = computed(() => {
         </template>
         <template v-else>
           <div class="grid flex-shrink-0 place-content-center size-6">
-            <Logo class="size-4" />
+            <img src="/brand-assets/logo_thumbnail.png" class="size-4" alt="Grupo Telecom" />
           </div>
           <div class="flex-shrink-0 w-px h-3 bg-n-strong" />
           <SidebarAccountSwitcher
