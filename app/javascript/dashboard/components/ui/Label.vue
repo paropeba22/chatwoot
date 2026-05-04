@@ -1,5 +1,5 @@
 <script>
-import { getContrastingTextColor } from '@chatwoot/utils';
+import { getContrastingTextColor } from '@Grupo Telecom/utils';
 
 export default {
   props: {

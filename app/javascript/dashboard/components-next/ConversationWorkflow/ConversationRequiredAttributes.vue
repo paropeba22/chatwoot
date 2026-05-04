@@ -22,7 +22,7 @@ const props = defineProps({
 const emit = defineEmits(['click']);
 const router = useRouter();
 const { t } = useI18n();
-const { currentAccount, accountId, isOnChatwootCloud, updateAccount } =
+const { currentAccount, accountId, isOnGrupo TelecomCloud, updateAccount } =
   useAccount();
 const [showDropdown, toggleDropdown] = useToggle(false);
 const [isSaving, toggleSaving] = useToggle(false);
@@ -32,9 +32,9 @@ const conversationAttributes = useMapGetter(
 const currentUser = useMapGetter('getCurrentUser');
 
 const isSuperAdmin = computed(() => currentUser.value.type === 'SuperAdmin');
-const showPaywall = computed(() => !props.isEnabled && isOnChatwootCloud.value);
+const showPaywall = computed(() => !props.isEnabled && isOnGrupo TelecomCloud.value);
 const i18nKey = computed(() =>
-  isOnChatwootCloud.value ? 'PAYWALL' : 'ENTERPRISE_PAYWALL'
+  isOnGrupo TelecomCloud.value ? 'PAYWALL' : 'ENTERPRISE_PAYWALL'
 );
 
 const goToBillingSettings = () => {
@@ -178,7 +178,7 @@ const handleDelete = attribute => {
       class="mx-auto my-8"
       feature-prefix="CONVERSATION_WORKFLOW.REQUIRED_ATTRIBUTES"
       :i18n-key="i18nKey"
-      :is-on-chatwoot-cloud="isOnChatwootCloud"
+      :is-on-Grupo Telecom-cloud="isOnGrupo TelecomCloud"
       :is-super-admin="isSuperAdmin"
       @upgrade="goToBillingSettings"
     />

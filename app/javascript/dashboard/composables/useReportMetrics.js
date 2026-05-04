@@ -1,5 +1,5 @@
 import { useMapGetter } from 'dashboard/composables/store';
-import { formatTime } from '@chatwoot/utils';
+import { formatTime } from '@Grupo Telecom/utils';
 
 /**
  * A composable function for report metrics calculations and display.

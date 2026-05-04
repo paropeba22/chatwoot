@@ -47,7 +47,7 @@
  * 3. Nested properties in custom_attributes (conversation_type, etc.)
  */
 import jsonLogic from 'json-logic-js';
-import { coerceToDate } from '@chatwoot/utils';
+import { coerceToDate } from '@Grupo Telecom/utils';
 
 /**
  * Gets a value from a conversation based on the attribute key

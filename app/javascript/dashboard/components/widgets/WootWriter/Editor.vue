@@ -43,11 +43,11 @@ import {
   MessageMarkdownSerializer,
   EditorState,
   Selection,
-} from '@chatwoot/prosemirror-schema';
+} from '@Grupo Telecom/prosemirror-schema';
 import {
   suggestionsPlugin,
   triggerCharacters,
-} from '@chatwoot/prosemirror-schema/src/mentions/plugin';
+} from '@Grupo Telecom/prosemirror-schema/src/mentions/plugin';
 
 import {
   appendSignature,
@@ -67,7 +67,7 @@ import {
   hasPressedEnterAndNotCmdOrShift,
   hasPressedCommandAndEnter,
 } from 'shared/helpers/KeyboardHelpers';
-import { createTypingIndicator } from '@chatwoot/utils';
+import { createTypingIndicator } from '@Grupo Telecom/utils';
 import { checkFileSizeLimit } from 'shared/helpers/FileHelper';
 import { uploadFile } from 'dashboard/helper/uploadHelper';
 
@@ -919,7 +919,7 @@ useEmitter(BUS_EVENTS.INSERT_INTO_RICH_EDITOR, insertContentIntoEditor);
 </template>
 
 <style lang="scss">
-@import '@chatwoot/prosemirror-schema/src/styles/base.scss';
+@import '@Grupo Telecom/prosemirror-schema/src/styles/base.scss';
 
 .ProseMirror-menubar-wrapper {
   @apply flex flex-col gap-3;
