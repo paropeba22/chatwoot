@@ -4,14 +4,14 @@ import GroupedStackedChangelogCard from './GroupedStackedChangelogCard.vue';
 
 const sampleCards = [
   {
-    id: 'Grupo Telecom-captain',
-    title: 'Grupo Telecom Captain',
-    meta_title: 'Grupo Telecom Captain',
+    id: 'chatwoot-captain',
+    title: 'Chatwoot Captain',
+    meta_title: 'Chatwoot Captain',
     meta_description:
       'Watch how our latest feature can transform your workflow with powerful automation tools.',
-    slug: 'Grupo Telecom-captain',
+    slug: 'chatwoot-captain',
     feature_image:
-      'https://www.Grupo Telecom.com/images/captain/captain_thumbnail.jpg',
+      'https://www.chatwoot.com/images/captain/captain_thumbnail.jpg',
   },
   {
     id: 'smart-routing',
@@ -20,7 +20,7 @@ const sampleCards = [
     meta_description:
       'Screen bookers with intelligent forms and route them to the right team member.',
     slug: 'smart-routing',
-    feature_image: 'https://www.Grupo Telecom.com/images/dashboard-dark.webp',
+    feature_image: 'https://www.chatwoot.com/images/dashboard-dark.webp',
   },
   {
     id: 'instant-meetings',

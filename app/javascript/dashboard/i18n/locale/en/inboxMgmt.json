@@ -1125,7 +1125,7 @@
         "AGENT_MESSAGE": "Hello"
       },
       "BRANDING_TEXT": "Powered by Grupo Telecom",
-      "SCRIPT_SETTINGS": "\n      window.Grupo TelecomSettings = {options};"
+      "SCRIPT_SETTINGS": "\n      window.chatwootSettings = {options};"
     },
     "EMAIL_PROVIDERS": {
       "MICROSOFT": {

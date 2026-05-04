@@ -100,7 +100,7 @@ const onCardClick = e => {
   if (e.metaKey || e.ctrlKey) {
     e.preventDefault();
     window.open(
-      `${window.Grupo TelecomConfig.hostURL}${path}`,
+      `${window.chatwootConfig.hostURL}${path}`,
       '_blank',
       'noopener,noreferrer'
     );

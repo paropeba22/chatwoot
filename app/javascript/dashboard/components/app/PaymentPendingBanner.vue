@@ -23,7 +23,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      isOnGrupo TelecomCloud: 'globalConfig/isOnGrupo TelecomCloud',
+      isOnChatwootCloud: 'globalConfig/isOnChatwootCloud',
       getAccount: 'accounts/getAccount',
     }),
     bannerMessage() {
@@ -33,7 +33,7 @@ export default {
       return this.$t('GENERAL_SETTINGS.OPEN_BILLING');
     },
     shouldShowBanner() {
-      if (!this.isOnGrupo TelecomCloud) {
+      if (!this.isOnChatwootCloud) {
         return false;
       }
 

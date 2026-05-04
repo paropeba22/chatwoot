@@ -9,7 +9,7 @@ import {
   MessageMarkdownSerializer,
   EditorState,
   Selection,
-} from '@Grupo Telecom/prosemirror-schema';
+} from '@chatwoot/prosemirror-schema';
 
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 
@@ -226,7 +226,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss">
-@import '@Grupo Telecom/prosemirror-schema/src/styles/base.scss';
+@import '@chatwoot/prosemirror-schema/src/styles/base.scss';
 
 .editor--copilot {
   @apply bg-n-iris-5 rounded;

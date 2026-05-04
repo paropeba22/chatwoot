@@ -20,7 +20,7 @@ const goToBillingSettings = () => {
       <BasePaywallModal
         feature-prefix="CSAT_REPORTS.REVIEW_NOTES"
         i18n-key="PAYWALL"
-        is-on-Grupo Telecom-cloud
+        is-on-chatwoot-cloud
         @upgrade="goToBillingSettings"
       />
     </div>

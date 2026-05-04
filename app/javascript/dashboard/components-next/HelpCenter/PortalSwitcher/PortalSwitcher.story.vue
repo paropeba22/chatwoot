@@ -4,23 +4,23 @@ import PortalSwitcher from './PortalSwitcher.vue';
 const portals = [
   {
     id: 1,
-    name: 'Grupo Telecom Help Center',
+    name: 'Chatwoot Help Center',
     articles: 67,
-    domain: 'Grupo Telecom.help',
+    domain: 'chatwoot.help',
     slug: 'help-center',
   },
   {
     id: 2,
-    name: 'Grupo Telecom Handbook',
+    name: 'Chatwoot Handbook',
     articles: 42,
-    domain: 'Grupo Telecom.help',
+    domain: 'chatwoot.help',
     slug: 'handbook',
   },
   {
     id: 3,
     name: 'Developer Documentation',
     articles: 89,
-    domain: 'dev.Grupo Telecom.com',
+    domain: 'dev.chatwoot.com',
     slug: 'docs',
   },
 ];

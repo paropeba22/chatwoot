@@ -7,33 +7,33 @@ import {
 describe('PortalHelper', () => {
   describe('buildPortalURL', () => {
     it('returns the correct url', () => {
-      window.Grupo TelecomConfig = {
-        hostURL: 'https://app.Grupo Telecom.com',
-        helpCenterURL: 'https://help.Grupo Telecom.com',
+      window.chatwootConfig = {
+        hostURL: 'https://app.chatwoot.com',
+        helpCenterURL: 'https://help.chatwoot.com',
       };
       expect(buildPortalURL('handbook')).toEqual(
-        'https://help.Grupo Telecom.com/hc/handbook'
+        'https://help.chatwoot.com/hc/handbook'
       );
-      window.Grupo TelecomConfig = {};
+      window.chatwootConfig = {};
     });
   });
 
   describe('buildPortalArticleURL', () => {
     it('returns the correct url', () => {
-      window.Grupo TelecomConfig = {
-        hostURL: 'https://app.Grupo Telecom.com',
-        helpCenterURL: 'https://help.Grupo Telecom.com',
+      window.chatwootConfig = {
+        hostURL: 'https://app.chatwoot.com',
+        helpCenterURL: 'https://help.chatwoot.com',
       };
       expect(
         buildPortalArticleURL('handbook', 'culture', 'fr', 'article-slug')
-      ).toEqual('https://help.Grupo Telecom.com/hc/handbook/articles/article-slug');
-      window.Grupo TelecomConfig = {};
+      ).toEqual('https://help.chatwoot.com/hc/handbook/articles/article-slug');
+      window.chatwootConfig = {};
     });
 
     it('returns the correct url with custom domain', () => {
-      window.Grupo TelecomConfig = {
-        hostURL: 'https://app.Grupo Telecom.com',
-        helpCenterURL: 'https://help.Grupo Telecom.com',
+      window.chatwootConfig = {
+        hostURL: 'https://app.chatwoot.com',
+        helpCenterURL: 'https://help.chatwoot.com',
       };
       expect(
         buildPortalArticleURL(
@@ -47,9 +47,9 @@ describe('PortalHelper', () => {
     });
 
     it('handles https in custom domain correctly', () => {
-      window.Grupo TelecomConfig = {
-        hostURL: 'https://app.Grupo Telecom.com',
-        helpCenterURL: 'https://help.Grupo Telecom.com',
+      window.chatwootConfig = {
+        hostURL: 'https://app.chatwoot.com',
+        helpCenterURL: 'https://help.chatwoot.com',
       };
       expect(
         buildPortalArticleURL(
@@ -63,13 +63,13 @@ describe('PortalHelper', () => {
     });
 
     it('uses hostURL when helpCenterURL is not available', () => {
-      window.Grupo TelecomConfig = {
-        hostURL: 'https://app.Grupo Telecom.com',
+      window.chatwootConfig = {
+        hostURL: 'https://app.chatwoot.com',
         helpCenterURL: '',
       };
       expect(
         buildPortalArticleURL('handbook', 'culture', 'fr', 'article-slug')
-      ).toEqual('https://app.Grupo Telecom.com/hc/handbook/articles/article-slug');
+      ).toEqual('https://app.chatwoot.com/hc/handbook/articles/article-slug');
     });
   });
 

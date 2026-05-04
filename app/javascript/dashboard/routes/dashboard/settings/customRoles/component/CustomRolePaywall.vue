@@ -42,7 +42,7 @@ const dummyCustomRolesData = [
 
 const router = useRouter();
 
-const isOnGrupo TelecomCloud = useMapGetter('globalConfig/isOnGrupo TelecomCloud');
+const isOnChatwootCloud = useMapGetter('globalConfig/isOnChatwootCloud');
 
 const currentUser = useMapGetter('getCurrentUser');
 const currentAccountId = useMapGetter('getCurrentAccountId');
@@ -51,7 +51,7 @@ const isSuperAdmin = computed(() => {
   return currentUser.value.type === 'SuperAdmin';
 });
 const i18nKey = computed(() =>
-  isOnGrupo TelecomCloud.value ? 'PAYWALL' : 'ENTERPRISE_PAYWALL'
+  isOnChatwootCloud.value ? 'PAYWALL' : 'ENTERPRISE_PAYWALL'
 );
 
 const goToBillingSettings = () => {
@@ -98,7 +98,7 @@ const tableHeaders = computed(() => {
       <BasePaywallModal
         feature-prefix="CUSTOM_ROLE"
         :i18n-key="i18nKey"
-        :is-on-Grupo Telecom-cloud="isOnGrupo TelecomCloud"
+        :is-on-chatwoot-cloud="isOnChatwootCloud"
         :is-super-admin="isSuperAdmin"
         @upgrade="goToBillingSettings"
       />

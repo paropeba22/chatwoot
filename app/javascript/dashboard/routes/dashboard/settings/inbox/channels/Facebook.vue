@@ -122,9 +122,9 @@ export default {
 
     runFBInit() {
       FB.init({
-        appId: window.Grupo TelecomConfig.fbAppId,
+        appId: window.chatwootConfig.fbAppId,
         xfbml: true,
-        version: window.Grupo TelecomConfig.fbApiVersion,
+        version: window.chatwootConfig.fbApiVersion,
         status: true,
       });
       window.fbSDKLoaded = true;

@@ -112,7 +112,7 @@ export default {
     ...mapGetters({
       accountId: 'getCurrentAccountId',
       isFeatureEnabledonAccount: 'accounts/isFeatureEnabledonAccount',
-      isOnGrupo TelecomCloud: 'globalConfig/isOnGrupo TelecomCloud',
+      isOnChatwootCloud: 'globalConfig/isOnChatwootCloud',
       uiFlags: 'inboxes/getUIFlags',
       portals: 'portals/allPortals',
     }),
@@ -124,10 +124,10 @@ export default {
     },
     showContinuityToggle() {
       if (this.isInboundEmailEnabled) return true;
-      return this.isOnGrupo TelecomCloud;
+      return this.isOnChatwootCloud;
     },
     isContinuityDisabled() {
-      return this.isOnGrupo TelecomCloud && !this.isInboundEmailEnabled;
+      return this.isOnChatwootCloud && !this.isInboundEmailEnabled;
     },
     continuityDescription() {
       if (this.isContinuityDisabled) {

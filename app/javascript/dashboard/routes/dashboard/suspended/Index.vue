@@ -3,13 +3,13 @@ import EmptyState from 'dashboard/components/widgets/EmptyState.vue';
 import { onMounted } from 'vue';
 
 const toggleSupportWidgetVisibility = () => {
-  if (window.$Grupo Telecom) {
-    window.$Grupo Telecom.toggleBubbleVisibility('show');
+  if (window.$chatwoot) {
+    window.$chatwoot.toggleBubbleVisibility('show');
   }
 };
 
 const setupListenerForWidgetEvent = () => {
-  window.addEventListener('Grupo Telecom:on-message', () => {
+  window.addEventListener('chatwoot:on-message', () => {
     toggleSupportWidgetVisibility();
   });
 };

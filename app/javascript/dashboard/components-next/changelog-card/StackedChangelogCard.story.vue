@@ -2,14 +2,14 @@
 import StackedChangelogCard from './StackedChangelogCard.vue';
 
 const imageCards = {
-  id: 'Grupo Telecom-captain',
-  title: 'Grupo Telecom Captain',
-  meta_title: 'Grupo Telecom Captain',
+  id: 'chatwoot-captain',
+  title: 'Chatwoot Captain',
+  meta_title: 'Chatwoot Captain',
   meta_description:
     'Watch how our latest feature can transform your workflow with powerful automation tools.',
-  slug: 'Grupo Telecom-captain',
+  slug: 'chatwoot-captain',
   feature_image:
-    'https://www.Grupo Telecom.com/images/captain/captain_thumbnail.jpg',
+    'https://www.chatwoot.com/images/captain/captain_thumbnail.jpg',
 };
 
 const handleReadMore = () => {

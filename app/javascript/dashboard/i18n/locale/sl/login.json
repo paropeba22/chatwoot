@@ -1,6 +1,6 @@
 {
   "LOGIN": {
-    "TITLE": "Login to Grupo Telecom",
+    "TITLE": "Login to Chatwoot",
     "EMAIL": {
       "LABEL": "E-pošta",
       "PLACEHOLDER": "primer{'@'}imepodjetja.com",

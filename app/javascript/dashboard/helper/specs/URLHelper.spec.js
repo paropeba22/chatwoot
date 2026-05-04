@@ -84,7 +84,7 @@ describe('#URL Helpers', () => {
 
   describe('isValidURL', () => {
     it('should return true if valid url is passed', () => {
-      expect(isValidURL('https://Grupo Telecom.com')).toBe(true);
+      expect(isValidURL('https://chatwoot.com')).toBe(true);
     });
     it('should return false if invalid url is passed', () => {
       expect(isValidURL('alert.window')).toBe(false);
@@ -181,7 +181,7 @@ describe('#URL Helpers', () => {
 
   describe('hasValidAvatarUrl', () => {
     test('should return true for valid non-Gravatar URL', () => {
-      expect(hasValidAvatarUrl('https://Grupo Telecom.com/avatar.jpg')).toBe(true);
+      expect(hasValidAvatarUrl('https://chatwoot.com/avatar.jpg')).toBe(true);
     });
 
     test('should return false for a Gravatar URL (www.gravatar.com)', () => {
@@ -271,7 +271,7 @@ describe('#URL Helpers', () => {
     });
 
     it('should correctly handle URLs with non-standard TLDs', () => {
-      expect(getHostNameFromURL('https://Grupo Telecom.help')).toBe('Grupo Telecom.help');
+      expect(getHostNameFromURL('https://chatwoot.help')).toBe('chatwoot.help');
     });
   });
 

@@ -9,7 +9,7 @@ export default [
     attributeKey: 'linkContact',
     attributeDisplayName: 'URL Input',
     attributeDisplayType: 'link',
-    value: 'https://www.Grupo Telecom.com',
+    value: 'https://www.chatwoot.com',
   },
   {
     attributeKey: 'numberContact',

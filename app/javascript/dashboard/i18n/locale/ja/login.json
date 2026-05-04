@@ -1,6 +1,6 @@
 {
   "LOGIN": {
-    "TITLE": "Grupo Telecomにログイン",
+    "TITLE": "Chatwootにログイン",
     "EMAIL": {
       "LABEL": "Eメール",
       "PLACEHOLDER": "example{'@'}companyname.com",

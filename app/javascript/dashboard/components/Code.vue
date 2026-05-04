@@ -22,7 +22,7 @@ const props = defineProps({
   },
   codepenTitle: {
     type: String,
-    default: 'Grupo Telecom Codepen',
+    default: 'Chatwoot Codepen',
   },
 });
 

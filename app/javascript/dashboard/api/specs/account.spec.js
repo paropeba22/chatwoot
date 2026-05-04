@@ -31,10 +31,10 @@ describe('#accountAPI', () => {
 
     it('#createAccount', () => {
       accountAPI.createAccount({
-        name: 'Grupo Telecom',
+        name: 'Chatwoot',
       });
       expect(axiosMock.post).toHaveBeenCalledWith('/api/v1/accounts', {
-        name: 'Grupo Telecom',
+        name: 'Chatwoot',
       });
     });
   });

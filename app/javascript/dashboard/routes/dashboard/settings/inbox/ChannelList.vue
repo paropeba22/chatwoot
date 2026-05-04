@@ -17,7 +17,7 @@ const globalConfig = useMapGetter('globalConfig/get');
 const enabledFeatures = ref({});
 
 const hasTiktokConfigured = computed(() => {
-  return window.Grupo TelecomConfig?.tiktokAppId;
+  return window.chatwootConfig?.tiktokAppId;
 });
 
 const channelList = computed(() => {

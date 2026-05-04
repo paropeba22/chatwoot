@@ -13,8 +13,8 @@ vi.mock('dashboard/composables/useImpersonation', () => ({
   }),
 }));
 
-global.Grupo TelecomConfig = {
-  websocketURL: 'wss://test.Grupo Telecom.com',
+global.chatwootConfig = {
+  websocketURL: 'wss://test.chatwoot.com',
 };
 
 describe('ActionCableConnector - Copilot Tests', () => {

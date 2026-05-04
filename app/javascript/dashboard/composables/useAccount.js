@@ -14,7 +14,7 @@ export function useAccount() {
   const route = useRoute();
   const store = useStore();
   const getAccountFn = useMapGetter('accounts/getAccount');
-  const isOnGrupo TelecomCloud = useMapGetter('globalConfig/isOnGrupo TelecomCloud');
+  const isOnChatwootCloud = useMapGetter('globalConfig/isOnChatwootCloud');
   const isFeatureEnabledonAccount = useMapGetter(
     'accounts/isFeatureEnabledonAccount'
   );
@@ -59,7 +59,7 @@ export function useAccount() {
     accountScopedUrl,
     accountScopedRoute,
     isCloudFeatureEnabled,
-    isOnGrupo TelecomCloud,
+    isOnChatwootCloud,
     updateAccount,
   };
 }

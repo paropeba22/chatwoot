@@ -8,7 +8,7 @@ const conversationWithoutMeta = {
     sender: {
       additionalAttributes: {},
       availabilityStatus: 'offline',
-      email: 'candice@Grupo Telecom.com',
+      email: 'candice@chatwoot.com',
       id: 29,
       name: 'Candice Matherson',
       phone_number: '+918585858585',
@@ -30,7 +30,7 @@ const conversationWithoutMeta = {
       availabilityStatus: 'online',
       autoOffline: false,
       confirmed: true,
-      email: 'sivin@Grupo Telecom.com',
+      email: 'sivin@chatwoot.com',
       availableName: 'Sivin',
       name: 'Sivin',
       role: 'administrator',
@@ -66,7 +66,7 @@ const conversationWithoutMeta = {
         unreadCount: 0,
         lastActivityAt: 1730885168,
         contactInbox: {
-          sourceId: 'candice@Grupo Telecom.com',
+          sourceId: 'candice@chatwoot.com',
         },
       },
     },
@@ -120,7 +120,7 @@ const conversationWithoutMeta = {
       unread_count: 0,
       last_activity_at: 1730885168,
       contact_inbox: {
-        source_id: 'candice@Grupo Telecom.com',
+        source_id: 'candice@chatwoot.com',
       },
     },
     sender: {
@@ -145,7 +145,7 @@ const conversationWithMeta = {
     sender: {
       additionalAttributes: {},
       availabilityStatus: 'offline',
-      email: 'willy@Grupo Telecom.com',
+      email: 'willy@chatwoot.com',
       id: 29,
       name: 'Willy Castelot',
       phoneNumber: '+918585858585',
@@ -167,7 +167,7 @@ const conversationWithMeta = {
       availabilityStatus: 'online',
       autoOffline: false,
       confirmed: true,
-      email: 'sivin@Grupo Telecom.com',
+      email: 'sivin@chatwoot.com',
       availableName: 'Sivin',
       name: 'Sivin',
       role: 'administrator',
@@ -210,7 +210,7 @@ const conversationWithMeta = {
         unread_count: 0,
         last_activity_at: 1730885428,
         contact_inbox: {
-          source_id: 'candice@Grupo Telecom.com',
+          source_id: 'candice@chatwoot.com',
         },
       },
       sender: {
@@ -282,7 +282,7 @@ const conversationWithMeta = {
       unread_count: 2,
       last_activity_at: 1730885428,
       contact_inbox: {
-        source_id: 'willy@Grupo Telecom.com',
+        source_id: 'willy@chatwoot.com',
       },
     },
     sender: {
@@ -333,7 +333,7 @@ const conversationWithMeta = {
 
 const contactForConversationWithoutMeta = computed(() => ({
   availabilityStatus: null,
-  email: 'candice@Grupo Telecom.com',
+  email: 'candice@chatwoot.com',
   id: 29,
   name: 'Candice Matherson',
   phoneNumber: '+918585858585',
@@ -347,7 +347,7 @@ const contactForConversationWithoutMeta = computed(() => ({
 
 const contactForConversationWithMeta = computed(() => ({
   availabilityStatus: null,
-  email: 'willy@Grupo Telecom.com',
+  email: 'willy@chatwoot.com',
   id: 29,
   name: 'Willy Castelot',
   phoneNumber: '+918585858585',

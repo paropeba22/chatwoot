@@ -15,7 +15,7 @@ const getters = useStoreGetters();
 const { t } = useI18n();
 
 const globalConfig = getters['globalConfig/get'];
-const isAGrupo TelecomInstance = getters['globalConfig/isAGrupo TelecomInstance'];
+const isAChatwootInstance = getters['globalConfig/isAChatwootInstance'];
 
 const emailProviderList = computed(() => {
   return [
@@ -29,7 +29,7 @@ const emailProviderList = computed(() => {
     {
       title: t('INBOX_MGMT.EMAIL_PROVIDERS.GOOGLE.TITLE'),
       description: t('INBOX_MGMT.EMAIL_PROVIDERS.GOOGLE.DESCRIPTION'),
-      isEnabled: !!window.Grupo TelecomConfig.googleOAuthClientId,
+      isEnabled: !!window.chatwootConfig.googleOAuthClientId,
       key: 'google',
       icon: 'i-woot-gmail',
     },
@@ -41,7 +41,7 @@ const emailProviderList = computed(() => {
       icon: 'i-woot-mail',
     },
   ].filter(providerConfig => {
-    if (isAGrupo TelecomInstance.value) {
+    if (isAChatwootInstance.value) {
       return true;
     }
     return providerConfig.isEnabled;

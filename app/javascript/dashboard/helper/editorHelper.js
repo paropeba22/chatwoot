@@ -2,8 +2,8 @@ import {
   messageSchema,
   MessageMarkdownTransformer,
   MessageMarkdownSerializer,
-} from '@Grupo Telecom/prosemirror-schema';
-import { replaceVariablesInMessage } from '@Grupo Telecom/utils';
+} from '@chatwoot/prosemirror-schema';
+import { replaceVariablesInMessage } from '@chatwoot/utils';
 import * as Sentry from '@sentry/vue';
 import { FORMATTING, MARKDOWN_PATTERNS } from 'dashboard/constants/editor';
 import { INBOX_TYPES, TWILIO_CHANNEL_MEDIUM } from 'dashboard/helper/inbox';

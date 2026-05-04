@@ -1,7 +1,7 @@
 import {
   ANALYTICS_IDENTITY,
-  Grupo Telecom_RESET,
-  Grupo Telecom_SET_USER,
+  CHATWOOT_RESET,
+  CHATWOOT_SET_USER,
 } from '../constants/appEvents';
 import AnalyticsHelper from './AnalyticsHelper';
 import DashboardAudioNotificationHelper from './AudioAlerts/DashboardAudioNotificationHelper';
@@ -34,21 +34,21 @@ export const initializeAudioAlerts = user => {
   });
 };
 
-export const initializeGrupo TelecomEvents = () => {
-  emitter.on(Grupo Telecom_RESET, () => {
-    if (window.$Grupo Telecom) {
-      window.$Grupo Telecom.reset();
+export const initializeChatwootEvents = () => {
+  emitter.on(CHATWOOT_RESET, () => {
+    if (window.$chatwoot) {
+      window.$chatwoot.reset();
     }
   });
-  emitter.on(Grupo Telecom_SET_USER, ({ user }) => {
-    if (window.$Grupo Telecom) {
-      window.$Grupo Telecom.setUser(user.email, {
+  emitter.on(CHATWOOT_SET_USER, ({ user }) => {
+    if (window.$chatwoot) {
+      window.$chatwoot.setUser(user.email, {
         avatar_url: user.avatar_url,
         email: user.email,
         identifier_hash: user.hmac_identifier,
         name: user.name,
       });
-      window.$Grupo Telecom.setCustomAttributes({
+      window.$chatwoot.setCustomAttributes({
         signedUpAt: user.created_at,
         cloudCustomer: 'true',
         account_id: user.account_id,

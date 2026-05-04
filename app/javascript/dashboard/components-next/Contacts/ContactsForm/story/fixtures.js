@@ -1,13 +1,13 @@
 export const contactData = {
   id: 370,
   name: 'John Doe',
-  email: 'johndoe@Grupo Telecom.com',
+  email: 'johndoe@chatwoot.com',
   phoneNumber: '+918634322418',
   additionalAttributes: {
     city: 'Kerala',
     country: 'India',
     description: 'Curious about the web.',
-    companyName: 'Grupo Telecom',
+    companyName: 'Chatwoot',
     countryCode: 'IN',
     socialProfiles: {
       github: 'johndoe',
@@ -23,7 +23,7 @@ export const primaryContactList = [
   {
     id: 1,
     name: 'Jane Smith',
-    email: 'jane@Grupo Telecom.com',
+    email: 'jane@chatwoot.com',
     thumbnail: '',
     label: '(ID: 1) Jane Smith',
     value: 1,
@@ -31,7 +31,7 @@ export const primaryContactList = [
   {
     id: 2,
     name: 'Mike Johnson',
-    email: 'mike@Grupo Telecom.com',
+    email: 'mike@chatwoot.com',
     thumbnail: '',
     label: '(ID: 2) Mike Johnson',
     value: 2,
@@ -39,7 +39,7 @@ export const primaryContactList = [
   {
     id: 3,
     name: 'Sarah Wilson',
-    email: 'sarah@Grupo Telecom.com',
+    email: 'sarah@chatwoot.com',
     thumbnail: '',
     label: '(ID: 3) Sarah Wilson',
     value: 3,

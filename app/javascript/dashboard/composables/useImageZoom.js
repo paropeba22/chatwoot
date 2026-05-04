@@ -4,7 +4,7 @@ import {
   calculateCenterOffset,
   applyRotationTransform,
   normalizeToPercentage,
-} from '@Grupo Telecom/utils';
+} from '@chatwoot/utils';
 
 // Composable for images in gallery view
 export const useImageZoom = imageRef => {

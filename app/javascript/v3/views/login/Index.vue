@@ -292,7 +292,6 @@ export default {
               @input="v$.credentials.email.$touch"
               class="block w-full rounded-xl border-0 px-3 py-3 appearance-none shadow-sm ring-1 ring-inset text-white placeholder:text-slate-500 focus:ring-2 focus:ring-inset focus:ring-[#0052FF] sm:text-sm sm:leading-6 outline-none bg-black/20"
               :class="v$.credentials.email.$error ? 'ring-red-500' : 'ring-[#24292F]'"
-              style="color: #1a1a1a !important; background-color: #ffffff !important;"
             />
             <p v-if="v$.credentials.email.$error" class="mt-2 text-sm text-red-500">
               {{ $t('LOGIN.EMAIL.ERROR') }}
@@ -327,7 +326,6 @@ export default {
               @input="v$.credentials.password.$touch"
               class="block w-full rounded-xl border-0 px-3 py-3 appearance-none shadow-sm ring-1 ring-inset text-white placeholder:text-slate-500 focus:ring-2 focus:ring-inset focus:ring-[#0052FF] sm:text-sm sm:leading-6 outline-none bg-black/20"
               :class="v$.credentials.password.$error ? 'ring-red-500' : 'ring-[#24292F]'"
-              style="color: #1a1a1a !important; background-color: #ffffff !important;"
             />
           </div>
 

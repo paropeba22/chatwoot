@@ -1,6 +1,6 @@
 {
   "LOGIN": {
-    "TITLE": "Přihlásit se do Grupo Telecom",
+    "TITLE": "Přihlásit se do Chatwoot",
     "EMAIL": {
       "LABEL": "E-mailová adresa",
       "PLACEHOLDER": "example{'@'}companyname.com",

@@ -3,10 +3,10 @@
  * @returns {Object} An object containing configuration values.
  */
 export function useConfig() {
-  const config = window.Grupo TelecomConfig || {};
+  const config = window.chatwootConfig || {};
 
   /**
-   * The host URL of the Grupo Telecom instance.
+   * The host URL of the Chatwoot instance.
    * @type {string|undefined}
    */
   const hostURL = config.hostURL;
@@ -18,7 +18,7 @@ export function useConfig() {
   const vapidPublicKey = config.vapidPublicKey;
 
   /**
-   * An array of enabled languages in the Grupo Telecom instance.
+   * An array of enabled languages in the Chatwoot instance.
    * @type {string[]|undefined}
    */
   const enabledLanguages = config.enabledLanguages;

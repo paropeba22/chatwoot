@@ -1,14 +1,14 @@
 // Moved from editorHelper.spec.js to editorContentHelper.spec.js
-// the mock of Grupo Telecom/prosemirror-schema is getting conflicted with other specs
+// the mock of chatwoot/prosemirror-schema is getting conflicted with other specs
 import { getContentNode } from '../editorHelper';
-import { MessageMarkdownTransformer } from '@Grupo Telecom/prosemirror-schema';
-import { replaceVariablesInMessage } from '@Grupo Telecom/utils';
+import { MessageMarkdownTransformer } from '@chatwoot/prosemirror-schema';
+import { replaceVariablesInMessage } from '@chatwoot/utils';
 
-vi.mock('@Grupo Telecom/prosemirror-schema', () => ({
+vi.mock('@chatwoot/prosemirror-schema', () => ({
   MessageMarkdownTransformer: vi.fn(),
 }));
 
-vi.mock('@Grupo Telecom/utils', () => ({
+vi.mock('@chatwoot/utils', () => ({
   replaceVariablesInMessage: vi.fn(),
 }));
 
