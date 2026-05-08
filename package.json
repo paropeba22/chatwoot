@@ -176,5 +176,5 @@
       "scss-lint"
     ]
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "pnpm@10.2.0"
 }
