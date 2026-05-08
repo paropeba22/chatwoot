@@ -1183,7 +1183,7 @@ DEPENDENCIES
   working_hours
 
 RUBY VERSION
-   ruby 3.3.11p205
+   ruby 3.4.4
 
 BUNDLED WITH
    2.5.16

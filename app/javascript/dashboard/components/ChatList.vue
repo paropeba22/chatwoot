@@ -21,7 +21,7 @@ import ConversationResolveAttributesModal from 'dashboard/components-next/Conver
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables';
 import { useBulkActions } from 'dashboard/composables/chatlist/useBulkActions';
-import { useFilter } from 'shared/composables/useFilter';
+import ReportsAPI from 'dashboard/api/reports';
 import { useTrack } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 import {
@@ -89,6 +89,8 @@ const advancedFilterTypes = ref(
     attributeName: t(`FILTER.ATTRIBUTES.${filter.attributeI18nKey}`),
   }))
 );
+
+const closedTodayCount = ref(0);
 
 const currentUser = useMapGetter('getCurrentUser');
 const chatLists = useMapGetter('getFilteredConversations');
@@ -175,15 +177,23 @@ const userPermissions = computed(() => {
 });
 
 const assigneeTabItems = computed(() => {
-  return filterItemsByPermission(
-    ASSIGNEE_TYPE_TAB_PERMISSIONS,
-    userPermissions.value,
-    item => item.permissions
-  ).map(({ key, count: countKey }) => ({
-    key,
-    name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
-    count: conversationStats.value[countKey] || 0,
-  }));
+  return [
+    {
+      key: 'me',
+      name: 'Meus atendimentos',
+      count: conversationStats.value.mineCount || 0,
+    },
+    {
+      key: 'unassigned',
+      name: 'Em fila',
+      count: conversationStats.value.unAssignedCount || 0,
+    },
+    {
+      key: 'bot',
+      name: 'Com IA',
+      count: 0,
+    }
+  ];
 });
 
 const showAssigneeInConversationCard = computed(() => {
@@ -248,11 +258,11 @@ const conversationListPagination = computed(() => {
 const conversationFilters = computed(() => {
   return {
     inboxId: props.conversationInbox ? props.conversationInbox : undefined,
-    assigneeType: activeAssigneeTab.value,
+    assigneeType: activeAssigneeTab.value === 'bot' ? 'all' : activeAssigneeTab.value,
     status: activeStatus.value,
     sortBy: activeSortBy.value,
     page: conversationListPagination.value,
-    labels: props.label ? [props.label] : undefined,
+    labels: activeAssigneeTab.value === 'bot' ? ['IA'] : (props.label ? [props.label] : undefined),
     teamId: props.teamId || undefined,
     conversationType: props.conversationType || undefined,
   };
@@ -319,9 +329,11 @@ const conversationList = computed(() => {
         participatingChatsList.value(filters)
       );
     } else if (activeAssigneeTab.value === 'me') {
-      localConversationList = [...mineChatsList.value(filters)];
+      localConversationList = mineChatsList.value(filters).filter(c => !c.labels || !c.labels.includes('IA'));
     } else if (activeAssigneeTab.value === 'unassigned') {
-      localConversationList = [...unAssignedChatsList.value(filters)];
+      localConversationList = unAssignedChatsList.value(filters).filter(c => !c.labels || !c.labels.includes('IA'));
+    } else if (activeAssigneeTab.value === 'bot') {
+      localConversationList = allChatList.value(filters).filter(c => c.labels && c.labels.includes('IA'));
     } else {
       localConversationList = [...allChatList.value(filters)];
     }
@@ -374,6 +386,28 @@ function setFiltersFromUISettings() {
 
 function emitConversationLoaded() {
   emit('conversationLoad');
+}
+
+async function fetchClosedTodayCount() {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const since = Math.floor(today.getTime() / 1000).toString();
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    const until = Math.floor(endOfDay.getTime() / 1000).toString();
+
+    const response = await ReportsAPI.getSummary(since, until, 'account');
+    if (response.data) {
+      const metrics = response.data;
+      const resolvedMetric = Array.isArray(metrics) ? metrics.find(m => m.name === 'resolutions_count') : null;
+      if (resolvedMetric) {
+        closedTodayCount.value = resolvedMetric.value;
+      }
+    }
+  } catch (error) {
+    // Ignore error
+  }
 }
 
 function fetchFilteredConversations(payload) {
@@ -590,6 +624,11 @@ function updateAssigneeTab(selectedTab) {
     resetBulkActions();
     emitter.emit('clearSearchInput');
     activeAssigneeTab.value = selectedTab;
+    if (selectedTab === 'bot') {
+      activeStatus.value = 'pending';
+    } else {
+      activeStatus.value = 'open';
+    }
     if (!currentPage.value) {
       fetchConversations();
     }
@@ -793,6 +832,7 @@ onMounted(() => {
   store.dispatch('setChatStatusFilter', activeStatus.value);
   store.dispatch('setChatSortFilter', activeSortBy.value);
   resetAndFetchData();
+  fetchClosedTodayCount();
   if (hasActiveFolders.value) {
     store.dispatch('campaigns/get');
   }
@@ -916,6 +956,10 @@ watch(conversationFilters, (newVal, oldVal) => {
       is-compact
       @chat-tab-change="updateAssigneeTab"
     />
+    <div class="px-3 pb-2 text-sm text-n-slate-11 font-medium flex justify-between items-center border-b border-n-weak">
+      <span>Encerrados Hoje:</span>
+      <span class="bg-n-brand text-white px-2 py-0.5 rounded-full text-xs">{{ closedTodayCount }}</span>
+    </div>
 
     <p
       v-if="!chatListLoading && !conversationList.length"

@@ -1,5 +1,5 @@
-<script>
 import { defineAsyncComponent, ref, computed } from 'vue';
+import { useMapGetter } from 'dashboard/composables/store';
 
 import NextSidebar from 'next/sidebar/Sidebar.vue';
 import WootKeyShortcutModal from 'dashboard/components/widgets/modal/WootKeyShortcutModal.vue';
@@ -45,6 +45,15 @@ export default {
     const { width: windowWidth } = useWindowSize();
     const callsStore = useCallsStore();
 
+    const currentUser = useMapGetter('getCurrentUser');
+    const isAgent = computed(() => currentUser.value?.role === 'agent');
+    const isFocusMode = ref(false);
+    const effectiveFocusMode = computed(() => isAgent.value || isFocusMode.value);
+
+    const toggleFocusMode = () => {
+      isFocusMode.value = !isFocusMode.value;
+    };
+
     return {
       uiSettings,
       updateUISettings,
@@ -53,6 +62,9 @@ export default {
       windowWidth,
       hasActiveCall: computed(() => callsStore.hasActiveCall),
       hasIncomingCall: computed(() => callsStore.hasIncomingCall),
+      isAgent,
+      effectiveFocusMode,
+      toggleFocusMode,
     };
   },
   data() {
@@ -130,8 +142,9 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-grow overflow-hidden text-n-slate-12">
+  <div class="flex flex-grow overflow-hidden text-n-slate-12 relative">
     <NextSidebar
+      v-if="!effectiveFocusMode"
       :is-mobile-sidebar-open="isMobileSidebarOpen"
       @toggle-account-modal="toggleAccountModal"
       @open-key-shortcut-modal="toggleKeyShortcutModal"
@@ -143,6 +156,16 @@ export default {
     <main
       class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1"
     >
+      <button 
+        v-if="!isAgent"
+        @click="toggleFocusMode"
+        class="fixed bottom-6 right-6 z-50 bg-n-brand text-white rounded-full px-4 py-2 shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out font-medium"
+      >
+        <span class="i-lucide-layout-panel-left size-4 inline-block align-text-bottom mr-1" v-if="effectiveFocusMode"></span>
+        <span class="i-lucide-maximize size-4 inline-block align-text-bottom mr-1" v-else></span>
+        {{ effectiveFocusMode ? 'Voltar à Gestão' : 'Atendimento Focado' }}
+      </button>
+
       <UpgradePage
         v-show="showUpgradePage"
         ref="upgradePageRef"

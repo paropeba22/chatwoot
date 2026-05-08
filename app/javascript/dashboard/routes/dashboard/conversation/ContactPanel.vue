@@ -23,6 +23,9 @@ import SidebarActionsHeader from 'dashboard/components-next/SidebarActionsHeader
 import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/IssuesList.vue';
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
 
+import { useConversationLabels } from 'dashboard/composables/useConversationLabels';
+import { useAlert } from 'dashboard/composables';
+
 const props = defineProps({
   conversationId: {
     type: [Number, String],
@@ -127,6 +130,41 @@ onMounted(() => {
   // Load integrations to ensure linear integration state is available
   store.dispatch('integrations/get', 'linear');
 });
+
+const { addLabelToConversation } = useConversationLabels();
+
+const triggerSgpAction = async (label) => {
+  try {
+    await addLabelToConversation({ title: label });
+    useAlert(`Ação solicitada. O n8n processará o comando: ${label}`);
+  } catch (error) {
+    useAlert(`Erro ao enviar comando ${label}.`);
+  }
+};
+
+const isEditingCpf = ref(false);
+const editCpfValue = ref('');
+
+const startEditCpf = () => {
+  editCpfValue.value = contactAdditionalAttributes.value.cpf || '';
+  isEditingCpf.value = true;
+};
+
+const saveCpf = async () => {
+  try {
+    await store.dispatch('contacts/update', {
+      id: contactId.value,
+      custom_attributes: {
+        ...contactAdditionalAttributes.value,
+        cpf: editCpfValue.value
+      }
+    });
+    isEditingCpf.value = false;
+    useAlert('CPF atualizado com sucesso.');
+  } catch (error) {
+    useAlert('Erro ao atualizar CPF.');
+  }
+};
 </script>
 
 <template>
@@ -136,6 +174,57 @@ onMounted(() => {
       @close="closeContactPanel"
     />
     <ContactInfo :contact="contact" :channel-type="channelType" />
+    
+    <!-- SGP Panel -->
+    <div class="px-4 py-4 border-b border-n-weak">
+      <h3 class="text-sm font-semibold text-n-slate-12 mb-3">SGP - Grupo Telecom</h3>
+      
+      <!-- Custom Attributes Cards -->
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <div class="bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
+          <p class="text-xs text-n-slate-10 mb-1">Status Contrato</p>
+          <p class="text-sm font-medium" :class="{'text-green-600': contactAdditionalAttributes.status_contrato === 'Ativo', 'text-red-600': contactAdditionalAttributes.status_contrato === 'Bloqueado'}">{{ contactAdditionalAttributes.status_contrato || 'N/A' }}</p>
+        </div>
+        <div class="bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
+          <p class="text-xs text-n-slate-10 mb-1">Status ONU</p>
+          <p class="text-sm font-medium" :class="{'text-green-600': contactAdditionalAttributes.status_onu === 'Online', 'text-red-600': contactAdditionalAttributes.status_onu === 'Offline'}">{{ contactAdditionalAttributes.status_onu || 'N/A' }}</p>
+        </div>
+        <div class="bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
+          <p class="text-xs text-n-slate-10 mb-1">Plano SGP</p>
+          <p class="text-sm font-medium truncate" :title="contactAdditionalAttributes.plano_sgp">{{ contactAdditionalAttributes.plano_sgp || 'N/A' }}</p>
+        </div>
+        <div class="bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
+          <p class="text-xs text-n-slate-10 mb-1">Fatura / Venc</p>
+          <p class="text-sm font-medium truncate" :title="contactAdditionalAttributes.valor_fatura + ' - ' + contactAdditionalAttributes.vencimento_fatura">
+            {{ contactAdditionalAttributes.valor_fatura || 'N/A' }} - {{ contactAdditionalAttributes.vencimento_fatura || 'N/A' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- CPF inline edit -->
+      <div class="flex items-center justify-between mb-4 bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
+        <div class="flex-1 mr-2">
+          <p class="text-xs text-n-slate-10 mb-0.5">CPF do Cliente</p>
+          <p class="text-sm font-medium" v-if="!isEditingCpf">{{ contactAdditionalAttributes.cpf || 'Não informado' }}</p>
+          <input v-else v-model="editCpfValue" type="text" class="w-full text-sm bg-n-background border border-n-strong rounded px-2 py-1 outline-none focus:border-n-brand" placeholder="000.000.000-00" />
+        </div>
+        <button v-if="!isEditingCpf" @click="startEditCpf" class="text-xs text-n-brand font-medium hover:underline">Alterar</button>
+        <div v-else class="flex gap-2 items-center">
+          <button @click="saveCpf" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium hover:bg-green-200">Salvar</button>
+          <button @click="isEditingCpf = false" class="text-xs text-n-slate-10 hover:text-n-slate-12">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <button @click="triggerSgpAction('cmd_reiniciar_onu')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate">Reiniciar ONU</button>
+        <button @click="triggerSgpAction('cmd_gerar_pix')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate">Cód Pix</button>
+        <button @click="triggerSgpAction('cmd_codigo_barras')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate">Cód Barras</button>
+        <button @click="triggerSgpAction('cmd_pdf_fatura')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate">PDF Fatura</button>
+        <button @click="triggerSgpAction('cmd_promessa_pgto')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate col-span-2 sm:col-span-1">Promessa Pgto</button>
+      </div>
+    </div>
+
     <div class="px-2 pb-8 list-group">
       <Draggable
         :list="conversationSidebarItems"
