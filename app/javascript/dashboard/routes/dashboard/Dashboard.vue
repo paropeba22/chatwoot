@@ -21,8 +21,7 @@ const FloatingCallWidget = defineAsyncComponent(
   () => import('dashboard/components/widgets/FloatingCallWidget.vue')
 );
 
-import CopilotLauncher from 'dashboard/components-next/copilot/CopilotLauncher.vue';
-import CopilotContainer from 'dashboard/components/copilot/CopilotContainer.vue';
+// Captain/Copilot AI removido — IA externa via n8n
 
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher.vue';
 import { useCallsStore } from 'dashboard/stores/calls';
@@ -34,8 +33,6 @@ export default {
     WootKeyShortcutModal,
     AddAccountModal,
     UpgradePage,
-    CopilotLauncher,
-    CopilotContainer,
     FloatingCallWidget,
     MobileSidebarLauncher,
   },
@@ -148,9 +145,12 @@ export default {
 
 <template>
   <div class="flex flex-grow overflow-hidden text-n-slate-12 relative">
-    <Transition name="sidebar-slide">
+    <div
+      class="flex-shrink-0 transition-all duration-300 ease-in-out overflow-hidden"
+      :style="{ width: isFocusMode ? '0px' : undefined, minWidth: isFocusMode ? '0px' : undefined }"
+    >
       <NextSidebar
-        v-if="!isFocusMode"
+        v-show="!isFocusMode"
         :is-mobile-sidebar-open="isMobileSidebarOpen"
         @toggle-account-modal="toggleAccountModal"
         @open-key-shortcut-modal="toggleKeyShortcutModal"
@@ -158,7 +158,7 @@ export default {
         @show-create-account-modal="openCreateAccountModal"
         @close-mobile-sidebar="closeMobileSidebar"
       />
-    </Transition>
+    </div>
 
     <main
       class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1 transition-all duration-300 ease-in-out"
@@ -192,12 +192,10 @@ export default {
       <template v-if="!showUpgradePage">
         <router-view />
         <CommandBar />
-        <CopilotLauncher />
         <MobileSidebarLauncher
           :is-mobile-sidebar-open="isMobileSidebarOpen"
           @toggle="toggleMobileSidebar"
         />
-        <CopilotContainer />
         <FloatingCallWidget v-if="hasActiveCall || hasIncomingCall" />
       </template>
       <AddAccountModal
@@ -212,15 +210,3 @@ export default {
     </main>
   </div>
 </template>
-
-<style scoped>
-.sidebar-slide-enter-active,
-.sidebar-slide-leave-active {
-  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-.sidebar-slide-enter-from,
-.sidebar-slide-leave-to {
-  transform: translateX(-100%);
-  opacity: 0;
-}
-</style>

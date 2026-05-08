@@ -630,14 +630,7 @@ function updateAssigneeTab(selectedTab) {
     resetBulkActions();
     emitter.emit('clearSearchInput');
     activeAssigneeTab.value = selectedTab;
-    if (selectedTab === 'bot') {
-      activeStatus.value = 'pending';
-    } else {
-      activeStatus.value = 'open';
-    }
-    if (!currentPage.value) {
-      fetchConversations();
-    }
+    resetAndFetchData();
   }
 }
 
@@ -904,7 +897,7 @@ watch(chatLists, () => {
 });
 
 watch(conversationFilters, (newVal, oldVal) => {
-  if (newVal !== oldVal) {
+  if (JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
     store.dispatch('updateChatListFilters', newVal);
   }
 });
