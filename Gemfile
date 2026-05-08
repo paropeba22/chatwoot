@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby '3.4.4'
+ruby '3.3.11'
 
 ##-- base gems for rails --##
 gem 'rack-cors', '2.0.0', require: 'rack/cors'
@@ -62,7 +62,7 @@ gem 'aws-actionmailbox-ses', '~> 0'
 
 ##-- gems for database --#
 gem 'groupdate'
-gem 'pg'
+gem 'pg', '~> 1.6.0'
 gem 'redis'
 gem 'redis-namespace'
 # super fast record imports in bulk
@@ -111,8 +111,7 @@ gem 'koala'
 # slack client
 gem 'slack-ruby-client', '~> 2.7.0'
 # for dialogflow integrations
-gem 'google-cloud-dialogflow-v2', '>= 0.24.0'
-gem 'grpc'
+#gem 'grpc'
 # Translate integrations
 # 'google-cloud-translate' gem depends on faraday 2.0 version
 # this dependency breaks the slack-ruby-client gem
@@ -230,7 +229,7 @@ group :development do
 
   # profiling
   gem 'rack-mini-profiler', '>= 3.2.0', require: false
-  gem 'stackprof'
+  # gem 'stackprof'
   # Should install the associated chrome extension to view query logs
   gem 'meta_request', '>= 0.8.3'
 
@@ -274,3 +273,5 @@ group :development, :test do
   gem 'spring'
   gem 'spring-watcher-listen'
 end
+
+gem 'io-console', '>= 0.7.2'

@@ -409,10 +409,10 @@ GEM
       signet (>= 0.16, < 2.a)
     groupdate (6.2.1)
       activesupport (>= 5.2)
-    grpc (1.72.0)
+    grpc (1.72.0-arm64-darwin)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
-    grpc (1.72.0-arm64-darwin)
+    grpc (1.72.0-x64-mingw-ucrt)
       google-protobuf (>= 3.25, < 5.0)
       googleapis-common-protos-types (~> 1.0)
     grpc (1.72.0-x86_64-darwin)
@@ -452,7 +452,7 @@ GEM
     image_processing (1.12.2)
       mini_magick (>= 4.9.5, < 5)
       ruby-vips (>= 2.0.17, < 3)
-    io-console (0.6.0)
+    io-console (0.8.2)
     irb (1.7.2)
       reline (>= 0.3.6)
     iso-639 (0.3.8)
@@ -663,7 +663,11 @@ GEM
     parser (3.3.8.0)
       ast (~> 2.4.1)
       racc
-    pg (1.5.3)
+    pg (1.6.3)
+    pg (1.6.3-arm64-darwin)
+    pg (1.6.3-x64-mingw-ucrt)
+    pg (1.6.3-x86_64-darwin)
+    pg (1.6.3-x86_64-linux)
     pg_search (2.3.6)
       activerecord (>= 5.2)
       activesupport (>= 5.2)
@@ -943,7 +947,6 @@ GEM
       sprockets (>= 3.0.0)
     squasher (0.7.2)
     ssrf_filter (1.5.0)
-    stackprof (0.2.25)
     statsd-ruby (1.5.0)
     stripe (18.0.1)
     telephone_number (1.4.20)
@@ -1022,6 +1025,7 @@ PLATFORMS
   arm64-darwin-21
   arm64-darwin-22
   ruby
+  x64-mingw-ucrt
   x86_64-darwin-18
   x86_64-darwin-20
   x86_64-darwin-21
@@ -1084,6 +1088,7 @@ DEPENDENCIES
   hashie
   html2text
   image_processing
+  io-console (>= 0.7.2)
   iso-639
   jbuilder
   json_refs
@@ -1113,7 +1118,7 @@ DEPENDENCIES
   opensearch-ruby
   opentelemetry-exporter-otlp
   opentelemetry-sdk
-  pg
+  pg (~> 1.6.0)
   pg_search
   pgvector
   procore-sift
@@ -1160,7 +1165,6 @@ DEPENDENCIES
   spring-watcher-listen
   squasher
   ssrf_filter (~> 1.5)
-  stackprof
   stripe (~> 18.0)
   telephone_number
   test-prof
@@ -1179,7 +1183,7 @@ DEPENDENCIES
   working_hours
 
 RUBY VERSION
-   ruby 3.4.4p34
+   ruby 3.3.11p205
 
 BUNDLED WITH
    2.5.16
