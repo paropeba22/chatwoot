@@ -1,3 +1,4 @@
+<script>
 import { defineAsyncComponent, ref, computed } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
 
@@ -48,7 +49,9 @@ export default {
     const currentUser = useMapGetter('getCurrentUser');
     const isAgent = computed(() => currentUser.value?.role === 'agent');
     const isFocusMode = ref(false);
-    const effectiveFocusMode = computed(() => isAgent.value || isFocusMode.value);
+    const effectiveFocusMode = computed(
+      () => isAgent.value || isFocusMode.value
+    );
 
     const toggleFocusMode = () => {
       isFocusMode.value = !isFocusMode.value;
@@ -156,13 +159,19 @@ export default {
     <main
       class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1"
     >
-      <button 
+      <button
         v-if="!isAgent"
-        @click="toggleFocusMode"
         class="fixed bottom-6 right-6 z-50 bg-n-brand text-white rounded-full px-4 py-2 shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out font-medium"
+        @click="toggleFocusMode"
       >
-        <span class="i-lucide-layout-panel-left size-4 inline-block align-text-bottom mr-1" v-if="effectiveFocusMode"></span>
-        <span class="i-lucide-maximize size-4 inline-block align-text-bottom mr-1" v-else></span>
+        <span
+          v-if="effectiveFocusMode"
+          class="i-lucide-layout-panel-left size-4 inline-block align-text-bottom mr-1"
+        />
+        <span
+          v-else
+          class="i-lucide-maximize size-4 inline-block align-text-bottom mr-1"
+        />
         {{ effectiveFocusMode ? 'Voltar à Gestão' : 'Atendimento Focado' }}
       </button>
 

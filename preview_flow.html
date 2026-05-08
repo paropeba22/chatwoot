@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview Flow - Grupo Telecom</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #0B0E14; color: white; overflow: hidden; }
+    .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .fade-enter { opacity: 0; transition: opacity 0.5s ease; }
+    .fade-enter-active { opacity: 1; }
+    .slide-in { transform: translateX(-20px); opacity: 0; animation: slideIn 0.3s forwards; }
+    @keyframes slideIn { to { transform: translateX(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <!-- VIEW 1: LOGIN -->
+  <main id="login-view" class="flex flex-col w-full min-h-screen py-20 bg-[#0B0E14] bg-[radial-gradient(circle_at_center,rgba(0,82,255,0.1)_0%,transparent_50%)] sm:px-6 lg:px-8 transition-opacity duration-500">
+    <section class="max-w-5xl mx-auto">
+      <div class="mx-auto flex items-center justify-center h-16 w-48 bg-white/10 rounded backdrop-blur-sm text-white font-bold tracking-widest border border-white/20">
+        LOGO_DARK.PNG
+      </div>
+      <h2 class="mt-6 text-3xl font-medium text-center text-white">Central de Comando</h2>
+    </section>
+
+    <section class="sm:mx-auto mt-11 sm:w-full sm:max-w-lg bg-[#0B0E14]/50 border border-[#24292F] backdrop-blur-sm p-11 sm:shadow-2xl sm:rounded-2xl">
+      <form class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium leading-6 text-white mb-1">Endereço de E-mail</label>
+          <input type="text" value="admin@grupotelecom.com" class="block w-full rounded-xl border-0 px-3 py-3 appearance-none shadow-sm ring-1 ring-inset text-white focus:ring-2 focus:ring-[#0052FF] sm:text-sm bg-black/20 ring-[#24292F]" style="color: #1a1a1a !important; background-color: #ffffff !important;" readonly />
+        </div>
+        <div>
+          <label class="block text-sm font-medium leading-6 text-white mb-1">Senha</label>
+          <input type="password" value="******" class="block w-full rounded-xl border-0 px-3 py-3 appearance-none shadow-sm ring-1 ring-inset text-white focus:ring-2 focus:ring-[#0052FF] sm:text-sm bg-black/20 ring-[#24292F]" style="color: #1a1a1a !important; background-color: #ffffff !important;" readonly />
+        </div>
+        <button type="button" id="login-btn" class="mt-6 flex items-center w-full justify-center rounded-xl bg-[#0052FF] py-3 px-3 text-base font-medium text-white shadow-sm hover:bg-[#003dbf] cursor-pointer transition-colors duration-200">
+          Acessar Central de Comando
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <!-- VIEW 2: APP DASHBOARD -->
+  <main id="app-view" class="hidden flex h-screen w-full bg-[#0B0E14] text-sm opacity-0 transition-opacity duration-500">
+    
+    <!-- Sidebar -->
+    <aside class="w-16 sm:w-64 border-r border-[#24292F] bg-black/50 flex flex-col justify-between">
+      <div>
+        <div class="h-16 flex items-center justify-center sm:justify-start sm:px-6 border-b border-[#24292F]">
+          <span class="font-bold tracking-widest hidden sm:block">GRUPO TELECOM</span>
+          <i data-lucide="zap" class="sm:hidden text-[#0052FF]"></i>
+        </div>
+        <nav class="mt-6 space-y-2 px-2 sm:px-4">
+          <button id="nav-all" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white/10 text-white font-medium">
+            <i data-lucide="inbox" class="w-5 h-5"></i> <span class="hidden sm:block">Todos (1)</span>
+          </button>
+          <button id="nav-mine" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+            <i data-lucide="user" class="w-5 h-5"></i> <span class="hidden sm:block">Meus Atendimentos</span>
+          </button>
+          <button class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+            <i data-lucide="users" class="w-5 h-5"></i> <span class="hidden sm:block">Em Fila</span>
+          </button>
+        </nav>
+      </div>
+      <div class="p-4 border-t border-[#24292F] flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-[#0052FF] flex items-center justify-center text-xs font-bold">A</div>
+        <span class="hidden sm:block font-medium">Admin</span>
+      </div>
+    </aside>
+
+    <!-- Conversation List -->
+    <section class="w-80 border-r border-[#24292F] bg-black/30 flex flex-col">
+      <div class="h-16 flex items-center px-4 border-b border-[#24292F]">
+        <h3 class="font-semibold text-lg" id="list-title">Todos Atendimentos</h3>
+      </div>
+      <div class="flex-1 overflow-y-auto p-3 space-y-2" id="conv-list">
+        <!-- Conversation Item -->
+        <div id="conv-item-1" class="p-3 rounded-lg bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+          <div class="flex justify-between items-start mb-1">
+            <span class="font-medium text-white">Cliente VIP</span>
+            <span class="text-xs text-slate-400">Agora</span>
+          </div>
+          <p class="text-xs text-slate-400 truncate mb-2">Olá, preciso de ajuda com meu plano.</p>
+          <div class="flex items-center gap-2">
+            <span id="status-badge" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1 transition-all duration-300">
+              <i data-lucide="bot" class="w-3 h-3"></i> Com IA
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chat Area -->
+    <section class="flex-1 flex flex-col bg-[#0B0E14] relative">
+      <div class="h-16 flex items-center px-6 border-b border-[#24292F] justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">C</div>
+          <div>
+            <h3 class="font-semibold text-white">Cliente VIP</h3>
+            <p class="text-xs text-slate-400">+55 11 99999-9999</p>
+          </div>
+        </div>
+        <button class="px-3 py-1.5 rounded-lg border border-[#24292F] text-xs font-medium hover:bg-white/5">Resolver</button>
+      </div>
+
+      <div class="flex-1 p-6 overflow-y-auto flex flex-col gap-4" id="chat-messages">
+        <div class="self-start max-w-md p-3 rounded-xl rounded-tl-sm bg-slate-800/80 border border-slate-700">
+          <p class="text-sm">Olá, preciso de ajuda com meu plano.</p>
+          <span class="text-[10px] text-slate-400 mt-1 block">10:00</span>
+        </div>
+        
+        <div class="self-start max-w-md p-3 rounded-xl rounded-tl-sm glass border-purple-500/30">
+          <div class="flex items-center gap-1 mb-1 text-purple-400 text-[10px] font-bold uppercase tracking-wider">
+            <i data-lucide="bot" class="w-3 h-3"></i> Bia (IA)
+          </div>
+          <p class="text-sm">Olá! Sou a Bia, assistente virtual do Grupo Telecom. Vi que você quer falar sobre seu plano. Para eu entender melhor, qual é a sua dúvida específica?</p>
+          <span class="text-[10px] text-slate-400 mt-1 block">10:00</span>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-[#24292F] bg-black/40">
+        <div class="relative">
+          <textarea class="w-full bg-slate-900 border border-[#24292F] rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:border-[#0052FF] resize-none h-12" placeholder="Digite uma mensagem..."></textarea>
+          <button class="absolute right-2 top-2 p-1.5 rounded-lg bg-[#0052FF] text-white hover:bg-[#003dbf]">
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Overlay for Simulation Controls -->
+      <div class="absolute top-20 right-6 glass p-4 rounded-xl shadow-2xl border border-white/20 z-50 w-64">
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Controles de Simulação</h4>
+        <button id="sim-msg" class="w-full mb-2 bg-slate-800 hover:bg-slate-700 py-2 rounded text-xs border border-slate-600 transition-colors">1. Receber Mensagem (Cliente)</button>
+        <button id="sim-status" class="w-full mb-2 bg-slate-800 hover:bg-slate-700 py-2 rounded text-xs border border-slate-600 transition-colors">2. Mudar Status: Em Fila</button>
+        <p class="text-[10px] text-slate-500 text-center mt-2">Clique em 'Meus Atendimentos' na barra lateral para finalizar o fluxo.</p>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    // DOM Elements
+    const loginView = document.getElementById('login-view');
+    const appView = document.getElementById('app-view');
+    const loginBtn = document.getElementById('login-btn');
+    const chatMessages = document.getElementById('chat-messages');
+    const statusBadge = document.getElementById('status-badge');
+    const simMsgBtn = document.getElementById('sim-msg');
+    const simStatusBtn = document.getElementById('sim-status');
+    const navMine = document.getElementById('nav-mine');
+    const navAll = document.getElementById('nav-all');
+    const listTitle = document.getElementById('list-title');
+
+    // Login Flow
+    loginBtn.addEventListener('click', () => {
+      loginBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
+      lucide.createIcons();
+      setTimeout(() => {
+        loginView.style.opacity = '0';
+        setTimeout(() => {
+          loginView.classList.add('hidden');
+          appView.classList.remove('hidden');
+          setTimeout(() => appView.style.opacity = '1', 50);
+        }, 500);
+      }, 800);
+    });
+
+    // Simulate New Message
+    simMsgBtn.addEventListener('click', () => {
+      const msg = document.createElement('div');
+      msg.className = 'self-start max-w-md p-3 rounded-xl rounded-tl-sm bg-slate-800/80 border border-slate-700 slide-in';
+      msg.innerHTML = `
+        <p class="text-sm">Quero falar com um humano, a IA não resolveu.</p>
+        <span class="text-[10px] text-slate-400 mt-1 block">Agora</span>
+      `;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      simMsgBtn.classList.replace('bg-slate-800', 'bg-green-900/50');
+      simMsgBtn.classList.replace('border-slate-600', 'border-green-500/50');
+      simMsgBtn.innerHTML = '<i data-lucide="check" class="inline w-3 h-3"></i> Mensagem Recebida';
+      lucide.createIcons();
+    });
+
+    // Simulate Status Change (IA -> Fila)
+    simStatusBtn.addEventListener('click', () => {
+      statusBadge.className = 'px-2 py-0.5 rounded text-[10px] font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center gap-1 transition-all duration-300';
+      statusBadge.innerHTML = '<i data-lucide="users" class="w-3 h-3"></i> Em Fila';
+      lucide.createIcons();
+      
+      // Add system message
+      setTimeout(() => {
+        const sysMsg = document.createElement('div');
+        sysMsg.className = 'self-center bg-black/50 border border-[#24292F] px-4 py-1.5 rounded-full text-[10px] text-slate-400 slide-in my-2';
+        sysMsg.innerText = 'Bia (IA) transferiu a conversa para Em Fila';
+        chatMessages.appendChild(sysMsg);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }, 500);
+
+      simStatusBtn.classList.replace('bg-slate-800', 'bg-green-900/50');
+      simStatusBtn.classList.replace('border-slate-600', 'border-green-500/50');
+      simStatusBtn.innerHTML = '<i data-lucide="check" class="inline w-3 h-3"></i> Status Atualizado';
+      lucide.createIcons();
+    });
+
+    // Simulate Tab Change
+    navMine.addEventListener('click', () => {
+      navMine.classList.replace('text-slate-400', 'text-white');
+      navMine.classList.replace('hover:bg-white/5', 'bg-white/10');
+      
+      navAll.classList.replace('text-white', 'text-slate-400');
+      navAll.classList.replace('bg-white/10', 'hover:bg-white/5');
+      
+      listTitle.innerText = 'Meus Atendimentos';
+      
+      document.getElementById('conv-list').innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full text-slate-500 space-y-3">
+          <i data-lucide="inbox" class="w-12 h-12 opacity-20"></i>
+          <p class="text-sm">Você não tem atendimentos ativos.</p>
+        </div>
+      `;
+      lucide.createIcons();
+    });
+
+  </script>
+</body>
+</html>
