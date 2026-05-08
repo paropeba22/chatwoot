@@ -175,53 +175,94 @@ const saveCpf = async () => {
     />
     <ContactInfo :contact="contact" :channel-type="channelType" />
     
-    <!-- SGP Panel -->
-    <div class="px-4 py-4 border-b border-n-weak">
-      <h3 class="text-sm font-semibold text-n-slate-12 mb-3">SGP - Grupo Telecom</h3>
+    <!-- SGP Panel — Grupo Telecom -->
+    <div
+      class="px-4 py-4 border-b border-n-weak"
+      style="background: radial-gradient(ellipse at top left, rgba(0, 82, 255, 0.08) 0%, transparent 60%);"
+    >
+      <h3 class="text-sm font-semibold text-n-slate-12 mb-3 flex items-center gap-2">
+        <span class="i-lucide-shield-check size-4 text-blue-400" />
+        SGP — Grupo Telecom
+      </h3>
       
       <!-- Custom Attributes Cards -->
-      <div class="grid grid-cols-2 gap-2 mb-4">
-        <div class="bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
-          <p class="text-xs text-n-slate-10 mb-1">Status Contrato</p>
-          <p class="text-sm font-medium" :class="{'text-green-600': contactAdditionalAttributes.status_contrato === 'Ativo', 'text-red-600': contactAdditionalAttributes.status_contrato === 'Bloqueado'}">{{ contactAdditionalAttributes.status_contrato || 'N/A' }}</p>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="p-2.5 rounded-2xl border shadow-sm transition-all duration-300 hover:shadow-md" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);">
+          <p class="text-[11px] text-n-slate-10 mb-1 uppercase tracking-wider">Contrato</p>
+          <p class="text-sm font-semibold" :class="{'text-emerald-400': contactAdditionalAttributes.status_contrato === 'Ativo', 'text-red-400': contactAdditionalAttributes.status_contrato === 'Bloqueado', 'text-n-slate-11': !contactAdditionalAttributes.status_contrato}">{{ contactAdditionalAttributes.status_contrato || 'N/A' }}</p>
         </div>
-        <div class="bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
-          <p class="text-xs text-n-slate-10 mb-1">Status ONU</p>
-          <p class="text-sm font-medium" :class="{'text-green-600': contactAdditionalAttributes.status_onu === 'Online', 'text-red-600': contactAdditionalAttributes.status_onu === 'Offline'}">{{ contactAdditionalAttributes.status_onu || 'N/A' }}</p>
+        <div class="p-2.5 rounded-2xl border shadow-sm transition-all duration-300 hover:shadow-md" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);">
+          <p class="text-[11px] text-n-slate-10 mb-1 uppercase tracking-wider">ONU</p>
+          <p class="text-sm font-semibold" :class="{'text-emerald-400': contactAdditionalAttributes.status_onu === 'Online', 'text-red-400': contactAdditionalAttributes.status_onu === 'Offline', 'text-n-slate-11': !contactAdditionalAttributes.status_onu}">{{ contactAdditionalAttributes.status_onu || 'N/A' }}</p>
         </div>
-        <div class="bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
-          <p class="text-xs text-n-slate-10 mb-1">Plano SGP</p>
-          <p class="text-sm font-medium truncate" :title="contactAdditionalAttributes.plano_sgp">{{ contactAdditionalAttributes.plano_sgp || 'N/A' }}</p>
+        <div class="p-2.5 rounded-2xl border shadow-sm transition-all duration-300 hover:shadow-md" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);">
+          <p class="text-[11px] text-n-slate-10 mb-1 uppercase tracking-wider">Plano</p>
+          <p class="text-sm font-semibold text-n-slate-12 truncate" :title="contactAdditionalAttributes.plano_sgp">{{ contactAdditionalAttributes.plano_sgp || 'N/A' }}</p>
         </div>
-        <div class="bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
-          <p class="text-xs text-n-slate-10 mb-1">Fatura / Venc</p>
-          <p class="text-sm font-medium truncate" :title="contactAdditionalAttributes.valor_fatura + ' - ' + contactAdditionalAttributes.vencimento_fatura">
-            {{ contactAdditionalAttributes.valor_fatura || 'N/A' }} - {{ contactAdditionalAttributes.vencimento_fatura || 'N/A' }}
+        <div class="p-2.5 rounded-2xl border shadow-sm transition-all duration-300 hover:shadow-md" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);">
+          <p class="text-[11px] text-n-slate-10 mb-1 uppercase tracking-wider">Fatura</p>
+          <p class="text-sm font-semibold text-n-slate-12 truncate" :title="(contactAdditionalAttributes.valor_fatura || '') + ' — ' + (contactAdditionalAttributes.vencimento_fatura || '')">
+            {{ contactAdditionalAttributes.valor_fatura || '—' }} · {{ contactAdditionalAttributes.vencimento_fatura || '—' }}
           </p>
         </div>
       </div>
 
       <!-- CPF inline edit -->
-      <div class="flex items-center justify-between mb-4 bg-n-surface-2 p-2 rounded-md border border-n-weak shadow-sm">
+      <div class="flex items-center justify-between mb-3 p-2.5 rounded-2xl border transition-all duration-300" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);">
         <div class="flex-1 mr-2">
-          <p class="text-xs text-n-slate-10 mb-0.5">CPF do Cliente</p>
-          <p class="text-sm font-medium" v-if="!isEditingCpf">{{ contactAdditionalAttributes.cpf || 'Não informado' }}</p>
-          <input v-else v-model="editCpfValue" type="text" class="w-full text-sm bg-n-background border border-n-strong rounded px-2 py-1 outline-none focus:border-n-brand" placeholder="000.000.000-00" />
+          <p class="text-[11px] text-n-slate-10 mb-0.5 uppercase tracking-wider">CPF</p>
+          <p v-if="!isEditingCpf" class="text-sm font-semibold text-n-slate-12">{{ contactAdditionalAttributes.cpf || 'Não informado' }}</p>
+          <input v-else v-model="editCpfValue" type="text" class="w-full text-sm bg-n-background border border-n-strong rounded-xl px-2.5 py-1 outline-none focus:border-blue-500 transition-colors duration-200" placeholder="000.000.000-00" />
         </div>
-        <button v-if="!isEditingCpf" @click="startEditCpf" class="text-xs text-n-brand font-medium hover:underline">Alterar</button>
+        <button v-if="!isEditingCpf" class="text-xs text-blue-400 font-medium hover:text-blue-300 transition-colors" @click="startEditCpf">Alterar</button>
         <div v-else class="flex gap-2 items-center">
-          <button @click="saveCpf" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium hover:bg-green-200">Salvar</button>
-          <button @click="isEditingCpf = false" class="text-xs text-n-slate-10 hover:text-n-slate-12">Cancelar</button>
+          <button class="text-xs px-2.5 py-1 rounded-xl font-medium transition-all duration-200 bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/25" @click="saveCpf">Salvar</button>
+          <button class="text-xs text-n-slate-10 hover:text-n-slate-12 transition-colors" @click="isEditingCpf = false">×</button>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        <button @click="triggerSgpAction('cmd_reiniciar_onu')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate">Reiniciar ONU</button>
-        <button @click="triggerSgpAction('cmd_gerar_pix')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate">Cód Pix</button>
-        <button @click="triggerSgpAction('cmd_codigo_barras')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate">Cód Barras</button>
-        <button @click="triggerSgpAction('cmd_pdf_fatura')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate">PDF Fatura</button>
-        <button @click="triggerSgpAction('cmd_promessa_pgto')" class="bg-n-surface-2 hover:bg-n-surface-3 text-n-slate-12 text-xs font-medium py-2 px-1 rounded border border-n-weak transition-colors text-center truncate col-span-2 sm:col-span-1">Promessa Pgto</button>
+      <div class="grid grid-cols-3 gap-1.5">
+        <button
+          class="py-2 px-1 rounded-xl text-[11px] font-semibold text-center truncate transition-all duration-300 border hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+          style="background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); color: var(--n-slate-12);"
+          @click="triggerSgpAction('cmd_reiniciar_onu')"
+        >
+          <span class="i-lucide-refresh-cw size-3 inline-block align-text-bottom mr-0.5" />
+          ONU
+        </button>
+        <button
+          class="py-2 px-1 rounded-xl text-[11px] font-semibold text-center truncate transition-all duration-300 border hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+          style="background: rgba(0, 82, 255, 0.08); border-color: rgba(0, 82, 255, 0.2); color: #60a5fa;"
+          @click="triggerSgpAction('cmd_gerar_pix')"
+        >
+          <span class="i-lucide-qr-code size-3 inline-block align-text-bottom mr-0.5" />
+          Pix
+        </button>
+        <button
+          class="py-2 px-1 rounded-xl text-[11px] font-semibold text-center truncate transition-all duration-300 border hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+          style="background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); color: var(--n-slate-12);"
+          @click="triggerSgpAction('cmd_codigo_barras')"
+        >
+          <span class="i-lucide-barcode size-3 inline-block align-text-bottom mr-0.5" />
+          Barras
+        </button>
+        <button
+          class="py-2 px-1 rounded-xl text-[11px] font-semibold text-center truncate transition-all duration-300 border hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+          style="background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); color: var(--n-slate-12);"
+          @click="triggerSgpAction('cmd_pdf_fatura')"
+        >
+          <span class="i-lucide-file-text size-3 inline-block align-text-bottom mr-0.5" />
+          PDF
+        </button>
+        <button
+          class="py-2 px-1 rounded-xl text-[11px] font-semibold text-center truncate transition-all duration-300 border col-span-2 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+          style="background: rgba(234, 179, 8, 0.06); border-color: rgba(234, 179, 8, 0.15); color: #fbbf24;"
+          @click="triggerSgpAction('cmd_promessa_pgto')"
+        >
+          <span class="i-lucide-handshake size-3 inline-block align-text-bottom mr-0.5" />
+          Promessa de Pagamento
+        </button>
       </div>
     </div>
 

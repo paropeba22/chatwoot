@@ -1,5 +1,5 @@
 <script>
-import { defineAsyncComponent, ref, computed } from 'vue';
+import { defineAsyncComponent, ref, computed, watch } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
 
 import NextSidebar from 'next/sidebar/Sidebar.vue';
@@ -48,10 +48,13 @@ export default {
 
     const currentUser = useMapGetter('getCurrentUser');
     const isAgent = computed(() => currentUser.value?.role === 'agent');
+    // Agents start in focus mode (sidebar hidden), admins start with sidebar open
     const isFocusMode = ref(false);
-    const effectiveFocusMode = computed(
-      () => isAgent.value || isFocusMode.value
-    );
+
+    // Initialize focus mode based on role once user data loads
+    watch(isAgent, (val) => {
+      if (val) isFocusMode.value = true;
+    }, { immediate: true });
 
     const toggleFocusMode = () => {
       isFocusMode.value = !isFocusMode.value;
@@ -65,8 +68,7 @@ export default {
       windowWidth,
       hasActiveCall: computed(() => callsStore.hasActiveCall),
       hasIncomingCall: computed(() => callsStore.hasIncomingCall),
-      isAgent,
-      effectiveFocusMode,
+      isFocusMode,
       toggleFocusMode,
     };
   },
@@ -146,33 +148,35 @@ export default {
 
 <template>
   <div class="flex flex-grow overflow-hidden text-n-slate-12 relative">
-    <NextSidebar
-      v-if="!effectiveFocusMode"
-      :is-mobile-sidebar-open="isMobileSidebarOpen"
-      @toggle-account-modal="toggleAccountModal"
-      @open-key-shortcut-modal="toggleKeyShortcutModal"
-      @close-key-shortcut-modal="closeKeyShortcutModal"
-      @show-create-account-modal="openCreateAccountModal"
-      @close-mobile-sidebar="closeMobileSidebar"
-    />
+    <Transition name="sidebar-slide">
+      <NextSidebar
+        v-if="!isFocusMode"
+        :is-mobile-sidebar-open="isMobileSidebarOpen"
+        @toggle-account-modal="toggleAccountModal"
+        @open-key-shortcut-modal="toggleKeyShortcutModal"
+        @close-key-shortcut-modal="closeKeyShortcutModal"
+        @show-create-account-modal="openCreateAccountModal"
+        @close-mobile-sidebar="closeMobileSidebar"
+      />
+    </Transition>
 
     <main
-      class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1"
+      class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1 transition-all duration-300 ease-in-out"
     >
       <button
-        v-if="!isAgent"
-        class="fixed bottom-6 right-6 z-50 bg-n-brand text-white rounded-full px-4 py-2 shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out font-medium"
+        class="fixed bottom-6 right-6 z-50 rounded-2xl px-5 py-2.5 shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out font-medium text-sm text-white"
+        style="background: radial-gradient(circle at 30% 50%, #1a3a6e 0%, #0a1628 100%); border: 1px solid rgba(0, 82, 255, 0.25);"
         @click="toggleFocusMode"
       >
         <span
-          v-if="effectiveFocusMode"
+          v-if="isFocusMode"
           class="i-lucide-layout-panel-left size-4 inline-block align-text-bottom mr-1"
         />
         <span
           v-else
           class="i-lucide-maximize size-4 inline-block align-text-bottom mr-1"
         />
-        {{ effectiveFocusMode ? 'Voltar à Gestão' : 'Atendimento Focado' }}
+        {{ isFocusMode ? 'Voltar à Gestão' : 'Atendimento Focado' }}
       </button>
 
       <UpgradePage
@@ -208,3 +212,15 @@ export default {
     </main>
   </div>
 </template>
+
+<style scoped>
+.sidebar-slide-enter-active,
+.sidebar-slide-leave-active {
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+.sidebar-slide-enter-from,
+.sidebar-slide-leave-to {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+</style>

@@ -176,6 +176,11 @@ const userPermissions = computed(() => {
   return getUserPermissions(currentUser.value, currentAccountId.value);
 });
 
+const botChatsCount = computed(() => {
+  const allConvs = store.getters.getAllConversations || [];
+  return allConvs.filter(c => c.labels && c.labels.includes('IA')).length;
+});
+
 const assigneeTabItems = computed(() => {
   return [
     {
@@ -191,7 +196,7 @@ const assigneeTabItems = computed(() => {
     {
       key: 'bot',
       name: 'Com IA',
-      count: 0,
+      count: botChatsCount.value,
     }
   ];
 });
@@ -329,11 +334,12 @@ const conversationList = computed(() => {
         participatingChatsList.value(filters)
       );
     } else if (activeAssigneeTab.value === 'me') {
-      localConversationList = mineChatsList.value(filters).filter(c => !c.labels || !c.labels.includes('IA'));
+      localConversationList = mineChatsList.value(filters);
     } else if (activeAssigneeTab.value === 'unassigned') {
-      localConversationList = unAssignedChatsList.value(filters).filter(c => !c.labels || !c.labels.includes('IA'));
+      localConversationList = unAssignedChatsList.value(filters);
     } else if (activeAssigneeTab.value === 'bot') {
-      localConversationList = allChatList.value(filters).filter(c => c.labels && c.labels.includes('IA'));
+      // Server already filters by label 'IA' — no redundant client filter
+      localConversationList = [...chatLists.value];
     } else {
       localConversationList = [...allChatList.value(filters)];
     }
@@ -949,16 +955,25 @@ watch(conversationFilters, (newVal, oldVal) => {
       @close="onCloseDeleteFoldersModal"
     />
 
-    <ChatTypeTabs
-      v-if="!hasAppliedFiltersOrActiveFolders"
-      :items="assigneeTabItems"
-      :active-tab="activeAssigneeTab"
-      is-compact
-      @chat-tab-change="updateAssigneeTab"
-    />
-    <div class="px-3 pb-2 text-sm text-n-slate-11 font-medium flex justify-between items-center border-b border-n-weak">
-      <span>Encerrados Hoje:</span>
-      <span class="bg-n-brand text-white px-2 py-0.5 rounded-full text-xs">{{ closedTodayCount }}</span>
+    <div
+      class="px-1 pt-1"
+      style="background: radial-gradient(ellipse at top, rgba(0, 82, 255, 0.06) 0%, transparent 70%);"
+    >
+      <ChatTypeTabs
+        v-if="!hasAppliedFiltersOrActiveFolders"
+        :items="assigneeTabItems"
+        :active-tab="activeAssigneeTab"
+        is-compact
+        class="[&_ul]:rounded-xl [&_ul]:border [&_ul]:border-n-weak/50"
+        @chat-tab-change="updateAssigneeTab"
+      />
+    </div>
+    <div class="px-3 py-2 text-sm text-n-slate-11 font-medium flex justify-between items-center border-b border-n-weak" style="background: linear-gradient(135deg, rgba(0, 82, 255, 0.04) 0%, transparent 100%);">
+      <span class="flex items-center gap-1.5">
+        <span class="i-lucide-check-circle size-3.5 text-green-500" />
+        Encerrados Hoje
+      </span>
+      <span class="bg-green-500/15 text-green-400 px-2.5 py-0.5 rounded-xl text-xs font-semibold border border-green-500/20">{{ closedTodayCount }}</span>
     </div>
 
     <p
