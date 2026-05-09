@@ -30,6 +30,7 @@ import {
 } from 'dashboard/composables/useTransformKeys';
 import { useEmitter } from 'dashboard/composables/emitter';
 import { useConversationRequiredAttributes } from 'dashboard/composables/useConversationRequiredAttributes';
+import { useFilter } from 'shared/composables/useFilter';
 
 import { emitter } from 'shared/helpers/mitt';
 
