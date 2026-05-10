@@ -1,6 +1,7 @@
 <script>
-import { defineAsyncComponent, ref, computed, watch } from 'vue';
+import { defineAsyncComponent, ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
+import { emitter } from 'shared/helpers/mitt';
 
 import NextSidebar from 'next/sidebar/Sidebar.vue';
 import WootKeyShortcutModal from 'dashboard/components/widgets/modal/WootKeyShortcutModal.vue';
@@ -55,7 +56,20 @@ export default {
 
     const toggleFocusMode = () => {
       isFocusMode.value = !isFocusMode.value;
+      // Broadcast to children (e.g. ChatListHeader) so they can mirror the state
+      emitter.emit('focus-mode-changed', isFocusMode.value);
     };
+
+    // Allow ChatListHeader (and others) to request a toggle without prop drilling
+    const onToggleRequest = () => toggleFocusMode();
+
+    onMounted(() => {
+      emitter.on('toggle-focus-mode', onToggleRequest);
+    });
+
+    onUnmounted(() => {
+      emitter.off('toggle-focus-mode', onToggleRequest);
+    });
 
     return {
       uiSettings,
@@ -66,7 +80,6 @@ export default {
       hasActiveCall: computed(() => callsStore.hasActiveCall),
       hasIncomingCall: computed(() => callsStore.hasIncomingCall),
       isFocusMode,
-      toggleFocusMode,
     };
   },
   data() {
@@ -163,22 +176,6 @@ export default {
     <main
       class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1 transition-all duration-300 ease-in-out"
     >
-      <button
-        class="fixed bottom-6 right-6 z-50 rounded-2xl px-5 py-2.5 shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out font-medium text-sm text-white"
-        style="background: radial-gradient(circle at 30% 50%, #1a3a6e 0%, #0a1628 100%); border: 1px solid rgba(0, 82, 255, 0.25);"
-        @click="toggleFocusMode"
-      >
-        <span
-          v-if="isFocusMode"
-          class="i-lucide-layout-panel-left size-4 inline-block align-text-bottom mr-1"
-        />
-        <span
-          v-else
-          class="i-lucide-maximize size-4 inline-block align-text-bottom mr-1"
-        />
-        {{ isFocusMode ? 'Voltar à Gestão' : 'Atendimento Focado' }}
-      </button>
-
       <UpgradePage
         v-show="showUpgradePage"
         ref="upgradePageRef"

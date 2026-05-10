@@ -21,7 +21,6 @@ import ConversationResolveAttributesModal from 'dashboard/components-next/Conver
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables';
 import { useBulkActions } from 'dashboard/composables/chatlist/useBulkActions';
-import ReportsAPI from 'dashboard/api/reports';
 import { useTrack } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 import {
@@ -91,7 +90,6 @@ const advancedFilterTypes = ref(
   }))
 );
 
-const closedTodayCount = ref(0);
 
 const currentUser = useMapGetter('getCurrentUser');
 const chatLists = useMapGetter('getFilteredConversations');
@@ -209,16 +207,23 @@ const showAssigneeInConversationCard = computed(() => {
   );
 });
 
+// Map the frontend-only 'bot' tab key to 'all' for pagination store reads,
+// because the API request uses assigneeType='all' when fetching bot conversations.
+const storePaginationKey = computed(() => {
+  if (activeAssigneeTab.value === 'bot') return 'all';
+  return activeAssigneeTab.value;
+});
+
 const currentPageFilterKey = computed(() => {
   return hasAppliedFiltersOrActiveFolders.value
     ? 'appliedFilters'
-    : activeAssigneeTab.value;
+    : storePaginationKey.value;
 });
 
 const inbox = useFunctionGetter('inboxes/getInbox', activeInbox);
 const currentPage = useFunctionGetter(
   'conversationPage/getCurrentPageFilter',
-  activeAssigneeTab
+  storePaginationKey
 );
 const currentFiltersPage = useFunctionGetter(
   'conversationPage/getCurrentPageFilter',
@@ -235,10 +240,10 @@ const conversationCustomAttributes = useFunctionGetter(
 );
 
 const activeAssigneeTabCount = computed(() => {
-  const count = assigneeTabItems.value.find(
+  const tabItem = assigneeTabItems.value.find(
     item => item.key === activeAssigneeTab.value
-  ).count;
-  return count;
+  );
+  return tabItem ? tabItem.count : 0;
 });
 
 const conversationListPagination = computed(() => {
@@ -395,26 +400,19 @@ function emitConversationLoaded() {
   emit('conversationLoad');
 }
 
-async function fetchClosedTodayCount() {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const since = Math.floor(today.getTime() / 1000).toString();
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-    const until = Math.floor(endOfDay.getTime() / 1000).toString();
+const isViewingResolved = computed(
+  () => activeStatus.value === wootConstants.STATUS_TYPE.RESOLVED
+);
 
-    const response = await ReportsAPI.getSummary(since, until, 'account');
-    if (response.data) {
-      const metrics = response.data;
-      const resolvedMetric = Array.isArray(metrics) ? metrics.find(m => m.name === 'resolutions_count') : null;
-      if (resolvedMetric) {
-        closedTodayCount.value = resolvedMetric.value;
-      }
-    }
-  } catch (error) {
-    // Ignore error
+function toggleResolvedView() {
+  if (isViewingResolved.value) {
+    activeStatus.value = wootConstants.STATUS_TYPE.OPEN;
+  } else {
+    activeStatus.value = wootConstants.STATUS_TYPE.RESOLVED;
+    // When entering resolved view, reset to 'all' so we don't filter by assignee
+    activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ALL;
   }
+  resetAndFetchData();
 }
 
 function fetchFilteredConversations(payload) {
@@ -593,28 +591,6 @@ function onToggleAdvanceFiltersModal() {
 function fetchConversations() {
   store.dispatch('updateChatListFilters', conversationFilters.value);
   store.dispatch('fetchAllConversations').then(emitConversationLoaded);
-}
-
-function showResolvedToday() {
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayStartTs = todayStart.getTime() / 1000;
-
-  activeStatus.value = wootConstants.STATUS_TYPE.RESOLVED;
-  activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ALL;
-  resetAndFetchData();
-
-  // After fetching, filter in-memory to only today's resolved conversations
-  // using updated_at (which reflects the resolution timestamp)
-  store.watch(
-    () => store.getters.getAllConversations,
-    conversations => {
-      chatsOnView.value = conversations.filter(
-        c => c.status === 'resolved' && c.updated_at >= todayStartTs
-      );
-    },
-    { once: true }
-  );
 }
 
 function resetAndFetchData() {
@@ -854,7 +830,6 @@ onMounted(() => {
   store.dispatch('setChatStatusFilter', activeStatus.value);
   store.dispatch('setChatSortFilter', activeSortBy.value);
   resetAndFetchData();
-  fetchClosedTodayCount();
   if (hasActiveFolders.value) {
     store.dispatch('campaigns/get');
   }
@@ -985,15 +960,19 @@ watch(conversationFilters, (newVal, oldVal) => {
       />
     </div>
     <div
-      class="px-3 py-2 text-sm text-n-slate-11 font-medium flex justify-between items-center border-b border-n-weak cursor-pointer hover:bg-n-alpha-1 transition-colors"
+      class="px-3 py-2 text-sm font-medium flex justify-between items-center border-b border-n-weak cursor-pointer hover:bg-n-alpha-1 transition-colors"
+      :class="isViewingResolved ? 'text-amber-400' : 'text-n-slate-11'"
       style="background: linear-gradient(135deg, rgba(0, 82, 255, 0.04) 0%, transparent 100%);"
-      @click="showResolvedToday"
+      @click="toggleResolvedView"
     >
       <span class="flex items-center gap-1.5">
-        <span class="i-lucide-check-circle size-3.5 text-green-500" />
-        Encerrados Hoje
+        <span
+          :class="isViewingResolved ? 'i-lucide-arrow-left' : 'i-lucide-check-circle'"
+          class="size-3.5"
+          :style="isViewingResolved ? '' : 'color: #22c55e'"
+        />
+        {{ isViewingResolved ? 'Voltar para Abertas' : 'Conversas Encerradas' }}
       </span>
-      <span class="bg-green-500/15 text-green-400 px-2.5 py-0.5 rounded-xl text-xs font-semibold border border-green-500/20">{{ closedTodayCount }}</span>
     </div>
 
     <p

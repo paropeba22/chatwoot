@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { formatNumber } from '@chatwoot/utils';
 import wootConstants from 'dashboard/constants/globals';
+import { emitter } from 'shared/helpers/mitt';
 
 import ConversationBasicFilter from './widgets/conversation/ConversationBasicFilter.vue';
 import SwitchLayout from 'dashboard/routes/dashboard/conversation/search/SwitchLayout.vue';
@@ -25,6 +26,26 @@ const emit = defineEmits([
   'basicFilterChange',
   'filtersModal',
 ]);
+
+// Local mirror of focus mode so we can show the correct icon/tooltip.
+// Dashboard.vue is the source of truth; it broadcasts changes via emitter.
+const isFocusMode = ref(false);
+
+function onFocusModeChanged(val) {
+  isFocusMode.value = val;
+}
+
+onMounted(() => {
+  emitter.on('focus-mode-changed', onFocusModeChanged);
+});
+
+onUnmounted(() => {
+  emitter.off('focus-mode-changed', onFocusModeChanged);
+});
+
+function requestToggleFocusMode() {
+  emitter.emit('toggle-focus-mode');
+}
 
 const { uiSettings, updateUISettings } = useUISettings();
 
@@ -162,6 +183,15 @@ const toggleConversationLayout = () => {
       <SwitchLayout
         :is-on-expanded-layout="isOnExpandedLayout"
         @toggle="toggleConversationLayout"
+      />
+      <!-- Atendimento Focado: recolhe/expande o sidebar sem bloquear o chat -->
+      <NextButton
+        v-tooltip.top-end="isFocusMode ? 'Voltar à Gestão' : 'Atendimento Focado'"
+        :icon="isFocusMode ? 'i-lucide-layout-panel-left' : 'i-lucide-maximize'"
+        slate
+        xs
+        faded
+        @click="requestToggleFocusMode"
       />
     </div>
   </div>
