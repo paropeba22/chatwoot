@@ -98,8 +98,10 @@ const getters = {
   getUnAssignedChats: _state => activeFilters => {
     return _state.allConversations.filter(conversation => {
       const isUnAssigned = !conversation.meta.assignee;
+      const labels = conversation.labels || [];
+      const hasBotLabel = labels.includes('bot-bia');
       const shouldFilter = applyPageFilters(conversation, activeFilters);
-      return isUnAssigned && shouldFilter;
+      return isUnAssigned && !hasBotLabel && shouldFilter;
     });
   },
   getParticipatingChats: (_state, _, __, rootGetters) => activeFilters => {

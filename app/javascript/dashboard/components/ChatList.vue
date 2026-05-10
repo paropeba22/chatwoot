@@ -179,7 +179,7 @@ const userPermissions = computed(() => {
 
 const botChatsCount = computed(() => {
   const allConvs = store.getters.getAllConversations || [];
-  return allConvs.filter(c => c.labels && c.labels.includes('IA')).length;
+  return allConvs.filter(c => c.labels && c.labels.includes('bot-bia')).length;
 });
 
 const assigneeTabItems = computed(() => {
@@ -268,7 +268,7 @@ const conversationFilters = computed(() => {
     status: activeStatus.value,
     sortBy: activeSortBy.value,
     page: conversationListPagination.value,
-    labels: activeAssigneeTab.value === 'bot' ? ['IA'] : (props.label ? [props.label] : undefined),
+    labels: activeAssigneeTab.value === 'bot' ? ['bot-bia'] : (props.label ? [props.label] : undefined),
     teamId: props.teamId || undefined,
     conversationType: props.conversationType || undefined,
   };
@@ -593,6 +593,28 @@ function onToggleAdvanceFiltersModal() {
 function fetchConversations() {
   store.dispatch('updateChatListFilters', conversationFilters.value);
   store.dispatch('fetchAllConversations').then(emitConversationLoaded);
+}
+
+function showResolvedToday() {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayStartTs = todayStart.getTime() / 1000;
+
+  activeStatus.value = wootConstants.STATUS_TYPE.RESOLVED;
+  activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ALL;
+  resetAndFetchData();
+
+  // After fetching, filter in-memory to only today's resolved conversations
+  // using updated_at (which reflects the resolution timestamp)
+  store.watch(
+    () => store.getters.getAllConversations,
+    conversations => {
+      chatsOnView.value = conversations.filter(
+        c => c.status === 'resolved' && c.updated_at >= todayStartTs
+      );
+    },
+    { once: true }
+  );
 }
 
 function resetAndFetchData() {
@@ -962,7 +984,11 @@ watch(conversationFilters, (newVal, oldVal) => {
         @chat-tab-change="updateAssigneeTab"
       />
     </div>
-    <div class="px-3 py-2 text-sm text-n-slate-11 font-medium flex justify-between items-center border-b border-n-weak" style="background: linear-gradient(135deg, rgba(0, 82, 255, 0.04) 0%, transparent 100%);">
+    <div
+      class="px-3 py-2 text-sm text-n-slate-11 font-medium flex justify-between items-center border-b border-n-weak cursor-pointer hover:bg-n-alpha-1 transition-colors"
+      style="background: linear-gradient(135deg, rgba(0, 82, 255, 0.04) 0%, transparent 100%);"
+      @click="showResolvedToday"
+    >
       <span class="flex items-center gap-1.5">
         <span class="i-lucide-check-circle size-3.5 text-green-500" />
         Encerrados Hoje
