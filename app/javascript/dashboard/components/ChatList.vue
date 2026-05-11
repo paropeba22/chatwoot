@@ -630,6 +630,7 @@ function updateAssigneeTab(selectedTab) {
     emitter.emit('clearSearchInput');
     activeAssigneeTab.value = selectedTab;
     resetAndFetchData();
+    redirectToConversationList();
   }
 }
 
@@ -821,7 +822,11 @@ function toggleSelectAll(check) {
 
 useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;
-  store.dispatch('conversationStats/get', conversationFilters.value);
+  const statsFilters = { ...conversationFilters.value };
+  if (activeAssigneeTab.value === 'bot') {
+    delete statsFilters.labels;
+  }
+  store.dispatch('conversationStats/get', statsFilters);
 });
 
 onMounted(() => {
