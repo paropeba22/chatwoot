@@ -877,18 +877,7 @@ useEmitter(BUS_EVENTS.INSERT_INTO_RICH_EDITOR, insertContentIntoEditor);
       :search-key="toolSearchKey"
       @select-tool="content => insertSpecialContent('tool', content)"
     />
-    <CopilotMenuBar
-      v-if="showSelectionMenu"
-      v-on-click-outside="handleClickOutside"
-      :has-selection="isTextSelected"
-      :is-editor-menu-popover="isEditorMenuPopover"
-      :editor-content="modelValue"
-      :conversation-id="conversationId"
-      :show-selection-menu="showSelectionMenu"
-      :show-general-menu="false"
-      class="copilot-editor-menu"
-      @execute-copilot-action="handleCopilotAction"
-    />
+    <!-- Native Captain/Copilot inline AI menu hidden — IA externa via n8n -->
     <input
       ref="imageUpload"
       type="file"

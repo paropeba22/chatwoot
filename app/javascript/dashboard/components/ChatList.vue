@@ -631,6 +631,7 @@ function updateAssigneeTab(selectedTab) {
     activeAssigneeTab.value = selectedTab;
     resetAndFetchData();
     redirectToConversationList();
+    fetchConversationStats();
   }
 }
 
@@ -820,14 +821,16 @@ function toggleSelectAll(check) {
   selectAllConversations(check, conversationList);
 }
 
-useEmitter('fetch_conversation_stats', () => {
+function fetchConversationStats() {
   if (hasAppliedFiltersOrActiveFolders.value) return;
   const statsFilters = { ...conversationFilters.value };
   if (activeAssigneeTab.value === 'bot') {
     delete statsFilters.labels;
   }
   store.dispatch('conversationStats/get', statsFilters);
-});
+}
+
+useEmitter('fetch_conversation_stats', fetchConversationStats);
 
 onMounted(() => {
   store.dispatch('setChatListFilters', conversationFilters.value);
@@ -835,6 +838,7 @@ onMounted(() => {
   store.dispatch('setChatStatusFilter', activeStatus.value);
   store.dispatch('setChatSortFilter', activeSortBy.value);
   resetAndFetchData();
+  fetchConversationStats();
   if (hasActiveFolders.value) {
     store.dispatch('campaigns/get');
   }
