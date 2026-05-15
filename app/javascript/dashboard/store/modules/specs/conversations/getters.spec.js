@@ -182,6 +182,39 @@ describe('#getters', () => {
         },
       ]);
     });
+
+    it('excludes bot-bia labeled conversations from unassigned list', () => {
+      const conversationList = [
+        {
+          id: 100,
+          inbox_id: 2,
+          status: 1,
+          meta: {},
+          labels: ['bot-bia'],
+        },
+        {
+          id: 101,
+          inbox_id: 2,
+          status: 1,
+          meta: {},
+          labels: ['suporte'],
+        },
+      ];
+
+      expect(
+        getters.getUnAssignedChats({ allConversations: conversationList })({
+          status: 1,
+        })
+      ).toEqual([
+        {
+          id: 101,
+          inbox_id: 2,
+          status: 1,
+          meta: {},
+          labels: ['suporte'],
+        },
+      ]);
+    });
   });
   describe('#getParticipatingChats', () => {
     const conversationList = [

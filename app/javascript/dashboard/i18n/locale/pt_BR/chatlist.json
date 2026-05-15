@@ -4,7 +4,7 @@
     "LOAD_MORE_CONVERSATIONS": "Carregar mais conversas",
     "EOF": "Todas as conversas carregadas 🎉",
     "LIST": {
-      "404": "Não há conversas ativas neste grupo."
+      "404": "Nenhum atendimento encontrado nesta fila."
     },
     "FAILED_TO_SEND": "Falha ao enviar",
     "TAB_HEADING": "Conversas",
@@ -15,8 +15,8 @@
     },
     "FILTER_ALL": "Todos",
     "ASSIGNEE_TYPE_TABS": {
-      "me": "Meus Atendimentos",
-      "unassigned": "Em Fila",
+      "me": "Meus atendimentos",
+      "unassigned": "Em fila",
       "all": "Com IA"
     },
     "CHAT_STATUS_FILTER_ITEMS": {
@@ -135,8 +135,8 @@
     "SENT": "Enviado com sucesso",
     "READ": "Lido com sucesso",
     "DELIVERED": "Entregue com sucesso",
-    "NO_MESSAGES": "Nova Mensagem",
-    "NO_CONTENT": "Nenhum conteúdo disponível",
+    "NO_MESSAGES": "Sem mensagens",
+    "NO_CONTENT": "Sem conteúdo disponível",
     "HIDE_QUOTED_TEXT": "Ocultar Texto Citado",
     "SHOW_QUOTED_TEXT": "Mostrar Texto Citado",
     "MESSAGE_READ": "Lida",

@@ -344,8 +344,8 @@ const conversationList = computed(() => {
     } else if (activeAssigneeTab.value === 'unassigned') {
       localConversationList = unAssignedChatsList.value(filters);
     } else if (activeAssigneeTab.value === 'bot') {
-      // Server already filters by label 'IA' — no redundant client filter
-      localConversationList = [...chatLists.value];
+      // Keep tab-scoped filtering to prevent realtime bleed from other tabs.
+      localConversationList = [...allChatList.value(filters)];
     } else {
       localConversationList = [...allChatList.value(filters)];
     }
