@@ -60,7 +60,7 @@ defineExpose({ conversationListRef });
 <template>
   <div
     ref="conversationListRef"
-    class="flex-1 min-h-0 overflow-y-auto conversations-list"
+    class="flex-1 min-h-0 overflow-y-auto conversations-list px-1.5 pb-2"
     :class="{ '!overflow-hidden': isContextMenuOpen }"
   >
     <Virtualizer
@@ -82,7 +82,10 @@ defineExpose({ conversationListRef });
     <div v-if="isLoading" class="flex justify-center my-4">
       <Spinner class="text-n-brand" />
     </div>
-    <p v-else-if="showEndOfListMessage" class="p-4 text-center text-n-slate-11">
+    <p
+      v-else-if="showEndOfListMessage"
+      class="p-3 mx-2 my-2 text-center text-n-slate-11 rounded-xl border border-n-weak/70 bg-n-surface-2/45"
+    >
       {{ $t('CHAT_LIST.EOF') }}
     </p>
     <IntersectionObserver

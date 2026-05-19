@@ -42,7 +42,7 @@ defineProps({
         }"
       >
         <div
-          class="flex flex-col items-center justify-center gap-6"
+          class="flex flex-col items-center justify-center gap-6 px-6 py-6 rounded-2xl border border-n-weak/70 bg-n-surface-2/35 shadow-[0_8px_24px_rgba(2,8,20,0.24)]"
           :class="{
             'mt-48': !showBackdrop,
           }"

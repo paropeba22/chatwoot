@@ -7,9 +7,9 @@ const { t } = useI18n();
 <template>
   <div class="flex justify-between items-center px-4 py-4 w-full">
     <div
-      class="flex justify-center items-center py-6 w-full custom-dashed-border"
+      class="flex justify-center items-center py-6 w-full custom-dashed-border rounded-2xl bg-n-surface-2/45"
     >
-      <span class="text-sm text-n-slate-11">
+      <span class="text-sm text-n-slate-11 text-center px-2">
         {{ t('CONVERSATION_WORKFLOW.REQUIRED_ATTRIBUTES.NO_ATTRIBUTES') }}
       </span>
     </div>

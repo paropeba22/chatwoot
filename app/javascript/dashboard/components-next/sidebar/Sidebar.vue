@@ -637,7 +637,7 @@ const menuItems = computed(() => {
         ],
       },
     ]"
-    class="bg-n-background flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full z-40 w-[200px] md:w-auto md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak"
+    class="neo-sidebar bg-n-background flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full z-40 w-[200px] md:w-auto md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak/80"
     :class="[
       {
         'shadow-lg md:shadow-none': isMobileSidebarOpen,
@@ -650,7 +650,7 @@ const menuItems = computed(() => {
   >
     <section
       class="grid"
-      :class="isEffectivelyCollapsed ? 'mt-3 mb-6 gap-4' : 'mt-1 mb-4 gap-2'"
+      :class="isEffectivelyCollapsed ? 'mt-3 mb-6 gap-4' : 'mt-2 mb-4 gap-3'"
     >
       <div
         class="flex gap-2 items-center min-w-0"
@@ -683,7 +683,7 @@ const menuItems = computed(() => {
         <RouterLink
           v-if="!isEffectivelyCollapsed"
           :to="{ name: 'search' }"
-          class="flex gap-2 items-center px-2 py-1 w-full h-7 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out"
+          class="neo-focus-ring flex gap-2 items-center px-2.5 py-1 w-full h-8 rounded-xl outline outline-1 outline-n-weak/80 bg-n-button-color/85 transition-all duration-150 ease-out hover:outline-n-blue-8/60 hover:bg-n-slate-3/40"
         >
           <span class="flex-shrink-0 i-lucide-search size-4 text-n-slate-10" />
           <span class="flex-grow text-start text-n-slate-10">
@@ -698,7 +698,7 @@ const menuItems = computed(() => {
         <RouterLink
           v-else
           :to="{ name: 'search' }"
-          class="flex items-center justify-center size-8 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out hover:bg-n-alpha-2 dark:hover:bg-n-slate-9/30"
+          class="neo-focus-ring flex items-center justify-center size-8 rounded-xl outline outline-1 outline-n-weak/80 bg-n-button-color transition-all duration-150 ease-out hover:bg-n-alpha-2 dark:hover:bg-n-slate-9/30"
           :title="t('COMBOBOX.SEARCH_PLACEHOLDER')"
         >
           <span class="i-lucide-search size-4 text-n-slate-11" />
@@ -709,12 +709,15 @@ const menuItems = computed(() => {
               icon="i-lucide-pen-line"
               color="slate"
               size="sm"
-              class="dark:hover:!bg-n-slate-9/30"
+              class="dark:hover:!bg-n-slate-9/30 !rounded-xl"
               :class="[
                 isEffectivelyCollapsed
                   ? '!size-8 !outline-n-weak !text-n-slate-11'
-                  : '!h-7 !outline-n-weak !text-n-slate-11',
-                { '!bg-n-alpha-2 dark:!bg-n-slate-9/30': isOpen },
+                  : '!h-8 !outline-n-weak !text-n-slate-11',
+                {
+                  '!bg-n-alpha-2 dark:!bg-n-slate-9/30 !outline-n-blue-8/50':
+                    isOpen,
+                },
               ]"
             />
           </template>
@@ -757,7 +760,7 @@ const menuItems = computed(() => {
         "
       />
       <div
-        class="px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center border-t border-n-weak shadow-[0px_-2px_4px_0px_rgba(27,28,29,0.02)]"
+        class="px-1 py-2 flex-shrink-0 flex w-full z-50 gap-2 items-center border-t border-n-weak/80 shadow-[0px_-6px_16px_0px_rgba(2,8,20,0.28)]"
         :class="isEffectivelyCollapsed ? 'justify-center' : 'justify-between'"
       >
         <SidebarProfileMenu
@@ -774,9 +777,21 @@ const menuItems = computed(() => {
       @dblclick="onResizeHandleDoubleClick"
     >
       <div
-        class="absolute top-0 h-full w-px ltr:right-0 rtl:left-0 bg-transparent group-hover:bg-n-brand transition-colors"
+        class="absolute top-0 h-full w-px ltr:right-0 rtl:left-0 bg-transparent group-hover:bg-n-blue-9/80 transition-colors"
         :class="{ 'bg-n-brand': isResizing }"
       />
     </div>
   </aside>
 </template>
+
+<style scoped>
+.neo-sidebar {
+  background-image:
+    radial-gradient(
+      ellipse at top left,
+      rgba(var(--blue-9), 0.1) 0%,
+      transparent 45%
+    ),
+    linear-gradient(180deg, rgba(var(--surface-1), 0.98), rgba(var(--surface-1), 0.98));
+}
+</style>

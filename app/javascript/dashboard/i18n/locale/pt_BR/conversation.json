@@ -1,14 +1,14 @@
 {
   "CONVERSATION": {
-    "SELECT_A_CONVERSATION": "Por favor, selecione uma conversa no painel da esquerda",
+    "SELECT_A_CONVERSATION": "Selecione um atendimento na lista para iniciar o acompanhamento.",
     "CSAT_REPLY_MESSAGE": "Por favor, classifique a conversa",
     "404": "Desculpe, não conseguimos encontrar a conversa. Por favor, tente novamente",
     "SWITCH_VIEW_LAYOUT": "Alternar o layout",
     "DASHBOARD_APP_TAB_MESSAGES": "Mensagens",
     "UNVERIFIED_SESSION": "A identidade deste usuário não foi verificada",
-    "NO_MESSAGE_1": "Oh oh! Parece que não há mensagens de clientes na sua caixa de entrada.",
+    "NO_MESSAGE_1": "Nenhuma mensagem de cliente nesta caixa no momento.",
     "NO_MESSAGE_2": " para enviar uma mensagem para sua página!",
-    "NO_INBOX_1": "Hola! Parece que você não adicionou nenhuma caixa de entrada ainda.",
+    "NO_INBOX_1": "Parece que ainda nao ha nenhuma caixa de entrada configurada.",
     "NO_INBOX_2": " para começar",
     "NO_INBOX_AGENT": "Uh Oh! Parece que você não faz parte de nenhuma caixa de entrada. Por favor, contate seu administrador",
     "SEARCH_MESSAGES": "Pesquisar por mensagens nas conversas",
@@ -23,7 +23,7 @@
       "RESULT_TITLE": "Resultados da Pesquisa",
       "LOADING_MESSAGE": "Preparando dados...",
       "PLACEHOLDER": "Digite qualquer texto para pesquisar mensagens",
-      "NO_MATCHING_RESULTS": "Nenhum resultado encontrado."
+      "NO_MATCHING_RESULTS": "Nenhum resultado encontrado para esta busca."
     },
     "UNREAD_MESSAGES": "Mensagens não lidas",
     "UNREAD_MESSAGE": "Mensagem não lida",

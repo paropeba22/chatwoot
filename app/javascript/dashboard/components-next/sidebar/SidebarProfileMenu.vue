@@ -113,9 +113,9 @@ const allowedMenuItems = computed(() => {
   >
     <template #trigger="{ toggle, isOpen }">
       <button
-        class="flex gap-2 items-center p-1 text-left rounded-lg cursor-pointer hover:bg-n-alpha-1"
+        class="neo-focus-ring flex gap-2 items-center p-1.5 text-left rounded-xl cursor-pointer hover:bg-n-alpha-1/70 transition-colors"
         :class="[
-          { 'bg-n-alpha-1': isOpen },
+          { 'bg-n-alpha-1/80 outline outline-1 outline-n-blue-8/45': isOpen },
           isCollapsed ? 'justify-center' : 'w-full',
         ]"
         :title="isCollapsed ? currentUser.available_name : undefined"
@@ -139,7 +139,9 @@ const allowedMenuItems = computed(() => {
         </div>
       </button>
     </template>
-    <DropdownBody class="bottom-12 z-50 mb-2 w-80 ltr:left-0 rtl:right-0">
+    <DropdownBody
+      class="bottom-12 z-50 mb-2 w-80 ltr:left-0 rtl:right-0 rounded-2xl border border-n-weak/80 shadow-[0_14px_36px_rgba(2,8,20,0.38)]"
+    >
       <SidebarProfileMenuStatus />
       <DropdownSeparator />
       <template v-for="item in allowedMenuItems" :key="item.label">

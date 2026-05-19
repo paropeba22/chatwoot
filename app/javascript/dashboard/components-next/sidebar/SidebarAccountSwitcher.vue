@@ -56,8 +56,8 @@ const emitNewAccount = () => {
       <!-- Collapsed view: Logo trigger -->
       <button
         v-if="isCollapsed"
-        class="grid flex-shrink-0 place-content-center p-2 rounded-lg cursor-pointer hover:bg-n-alpha-1"
-        :class="{ 'bg-n-alpha-1': isOpen }"
+        class="neo-focus-ring grid flex-shrink-0 place-content-center p-2 rounded-xl cursor-pointer hover:bg-n-alpha-1/70 transition-colors"
+        :class="{ 'bg-n-alpha-1/80 outline outline-1 outline-n-blue-8/45': isOpen }"
         :title="currentAccount.name"
         @click="toggle"
       >
@@ -70,11 +70,11 @@ const emitNewAccount = () => {
         :data-account-id="accountId"
         aria-haspopup="listbox"
         aria-controls="account-options"
-        class="flex items-center gap-2 justify-between w-full rounded-lg px-2"
+        class="neo-focus-ring flex items-center gap-2 justify-between w-full rounded-xl px-2.5 py-1 transition-colors"
         :class="[
-          isOpen && 'bg-n-alpha-1',
+          isOpen && 'bg-n-alpha-1/80 outline outline-1 outline-n-blue-8/45',
           showAccountSwitcher
-            ? 'hover:bg-n-alpha-1 cursor-pointer'
+            ? 'hover:bg-n-alpha-1/70 cursor-pointer'
             : 'cursor-default',
         ]"
         @click="() => showAccountSwitcher && toggle()"

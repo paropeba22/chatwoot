@@ -26,15 +26,17 @@ const count = computed(() =>
 <template>
   <component
     :is="to ? 'router-link' : 'div'"
-    class="flex items-center gap-2 px-1.5 py-1 rounded-lg h-8 min-w-0"
+    class="neo-focus-ring flex items-center gap-2 px-2 py-1 rounded-xl h-8 min-w-0 transition-all duration-150"
     role="button"
     draggable="false"
     :to="to"
     :title="label"
     :class="{
-      'text-n-slate-12 bg-n-alpha-2 font-medium': isActive && !hasActiveChild,
-      'text-n-slate-12 font-medium': hasActiveChild,
-      'text-n-slate-11 hover:bg-n-alpha-2': !isActive && !hasActiveChild,
+      'text-n-slate-12 bg-n-alpha-2/90 outline outline-1 outline-n-blue-8/45 font-medium':
+        isActive && !hasActiveChild,
+      'text-n-slate-12 font-medium bg-n-alpha-1/50': hasActiveChild,
+      'text-n-slate-11 hover:bg-n-alpha-2/70 hover:text-n-slate-12':
+        !isActive && !hasActiveChild,
     }"
     @click.stop="emit('toggle')"
   >
@@ -57,10 +59,10 @@ const count = computed(() =>
       </span>
       <span
         v-if="dynamicCount && !expandable"
-        class="rounded-md capitalize text-xs leading-5 font-medium text-center outline outline-1 px-1 flex-shrink-0"
+        class="rounded-lg capitalize text-xs leading-5 font-medium text-center outline outline-1 px-1.5 flex-shrink-0"
         :class="{
-          'text-n-slate-12 outline-n-slate-6': isActive,
-          'text-n-slate-11 outline-n-strong': !isActive,
+          'text-n-slate-12 outline-n-blue-8/45 bg-n-slate-3/60': isActive,
+          'text-n-slate-11 outline-n-strong bg-transparent': !isActive,
         }"
       >
         {{ count }}

@@ -62,12 +62,13 @@ const selectedModel = computed({
 
 <template>
   <div
-    class="conversation relative cursor-pointer group grid gap-4 items-center px-3 h-12 border-b border-n-slate-3 hover:border-n-surface-1 hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-n-surface-1 before:pointer-events-none hover:before:content-['']"
+    class="conversation relative cursor-pointer group grid gap-4 items-center px-3 h-12 my-1.5 mx-2 rounded-2xl border border-n-weak/75 bg-n-surface-2/55 shadow-[0_2px_10px_rgba(2,8,20,0.22)] hover:border-n-blue-8/45 hover:bg-n-alpha-1/70 transition-all duration-150"
     :class="{
-      'active animate-card-select bg-n-alpha-1 dark:bg-n-alpha-3 !border-n-surface-1':
+      'active animate-card-select bg-n-surface-active/80 !border-n-blue-8/45 shadow-[0_8px_20px_rgba(2,8,20,0.34)]':
         isActiveChat,
-      'selected bg-n-slate-2 dark:bg-n-slate-3 !border-n-surface-1': selected,
-      'hover:bg-n-alpha-1': !isActiveChat && !selected,
+      'selected bg-n-slate-2/75 dark:bg-n-slate-3/75 !border-n-blue-8/45':
+        selected,
+      'hover:bg-n-alpha-1/70': !isActiveChat && !selected,
       'grid-cols-[minmax(0,2fr)_minmax(0,1fr)]': showLabelsSection,
       'grid-cols-[minmax(0,2fr)_max-content]': !showLabelsSection,
     }"

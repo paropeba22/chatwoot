@@ -912,7 +912,7 @@ watch(conversationFilters, (newVal, oldVal) => {
 
 <template>
   <div
-    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-n-surface-1"
+    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-n-surface-1 border-r border-n-weak/70"
     :class="[
       { hidden: !showConversationList },
       isOnExpandedLayout ? 'basis-full' : 'w-[340px] 2xl:w-[412px]',
@@ -956,22 +956,22 @@ watch(conversationFilters, (newVal, oldVal) => {
     />
 
     <div
-      class="px-1 pt-1"
-      style="background: radial-gradient(ellipse at top, rgba(0, 82, 255, 0.06) 0%, transparent 70%);"
+      class="px-1.5 pt-1.5 pb-1 border-b border-n-weak/70"
+      style="background: radial-gradient(ellipse at top, rgba(29, 161, 255, 0.1) 0%, transparent 72%);"
     >
       <ChatTypeTabs
         v-if="!hasAppliedFiltersOrActiveFolders"
         :items="assigneeTabItems"
         :active-tab="activeAssigneeTab"
         is-compact
-        class="[&_ul]:rounded-xl [&_ul]:border [&_ul]:border-n-weak/50"
+        class="neo-focus-ring"
         @chat-tab-change="updateAssigneeTab"
       />
     </div>
     <div
-      class="px-3 py-2 text-sm font-medium flex justify-between items-center border-b border-n-weak cursor-pointer hover:bg-n-alpha-1 transition-colors"
+      class="mx-2 mb-1 px-3 py-2 text-sm font-medium flex justify-between items-center rounded-xl border border-n-weak/70 cursor-pointer hover:bg-n-alpha-1/70 transition-colors"
       :class="isViewingResolved ? 'text-amber-400' : 'text-n-slate-11'"
-      style="background: linear-gradient(135deg, rgba(0, 82, 255, 0.04) 0%, transparent 100%);"
+      style="background: linear-gradient(135deg, rgba(29, 161, 255, 0.07) 0%, transparent 100%);"
       @click="toggleResolvedView"
     >
       <span class="flex items-center gap-1.5">
@@ -986,7 +986,7 @@ watch(conversationFilters, (newVal, oldVal) => {
 
     <p
       v-if="!chatListLoading && !conversationList.length"
-      class="flex overflow-auto justify-center items-center p-4"
+      class="flex overflow-auto justify-center items-center p-4 mx-3 my-4 rounded-2xl border border-dashed border-n-weak/80 bg-n-surface-2/45 text-n-slate-11 text-center"
     >
       {{ $t('CHAT_LIST.LIST.404') }}
     </p>

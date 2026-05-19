@@ -86,7 +86,7 @@ const onShowLabels = e => {
             ? $t('CONVERSATION.CARD.HIDE_LABELS')
             : $t('CONVERSATION.CARD.SHOW_LABELS')
         "
-        class="h-5 py-0 px-1 flex-shrink-0 mr-6 ml-0 rtl:ml-6 rtl:mr-0 rtl:rotate-180 text-n-slate-11 border-n-strong dark:border-n-strong"
+        class="h-5 py-0 px-1 flex-shrink-0 mr-6 ml-0 rtl:ml-6 rtl:mr-0 rtl:rotate-180 text-n-slate-11 border border-n-strong/80 rounded-lg bg-n-surface-2/65 hover:bg-n-alpha-2/70 transition-colors"
         @click="onShowLabels"
       >
         <fluent-icon

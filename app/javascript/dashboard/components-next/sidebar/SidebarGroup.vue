@@ -235,10 +235,12 @@ watch(
           ref="triggerRef"
           :to="to && !hasChildren ? to : undefined"
           type="button"
-          class="flex items-center justify-center size-10 rounded-lg"
+          class="neo-focus-ring flex items-center justify-center size-10 rounded-xl transition-all duration-150"
           :class="{
-            'text-n-slate-12 bg-n-alpha-2': isActive || hasActiveChild,
-            'text-n-slate-11 hover:bg-n-alpha-2': !isActive && !hasActiveChild,
+            'text-n-slate-12 bg-n-alpha-2/90 outline outline-1 outline-n-blue-8/45':
+              isActive || hasActiveChild,
+            'text-n-slate-11 hover:bg-n-alpha-2/70 hover:text-n-slate-12':
+              !isActive && !hasActiveChild,
           }"
           :title="label"
           @click="hasChildren ? handleCollapsedClick() : undefined"

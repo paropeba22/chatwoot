@@ -145,6 +145,15 @@
     --black-alpha-2: 0, 0, 0, 0.04;
     --border-blue: 39, 129, 246, 0.5;
     --white-alpha: 255, 255, 255, 0.8;
+
+    // Grupo Telecom Neo Support tokens
+    --gt-radius-sm: 8px;
+    --gt-radius-md: 12px;
+    --gt-radius-lg: 16px;
+    --gt-radius-pill: 999px;
+    --gt-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.24);
+    --gt-shadow-md: 0 10px 24px rgba(0, 0, 0, 0.28);
+    --gt-focus-ring: 29, 161, 255, 0.24;
   }
 
   .dark {
@@ -175,18 +184,18 @@
     --iris-11: 158 177 255;
     --iris-12: 224 223 254;
 
-    --blue-1: 10 17 28;
-    --blue-2: 15 24 38;
-    --blue-3: 15 39 72;
-    --blue-4: 10 49 99;
-    --blue-5: 18 61 117;
-    --blue-6: 29 84 134;
-    --blue-7: 40 89 156;
-    --blue-8: 48 106 186;
-    --blue-9: 39 129 246;
-    --blue-10: 21 116 231;
-    --blue-11: 126 182 255;
-    --blue-12: 205 227 255;
+    --blue-1: 8 16 31;
+    --blue-2: 11 22 40;
+    --blue-3: 10 34 64;
+    --blue-4: 9 45 86;
+    --blue-5: 15 57 107;
+    --blue-6: 21 72 132;
+    --blue-7: 29 90 160;
+    --blue-8: 40 112 195;
+    --blue-9: 29 161 255;
+    --blue-10: 24 147 236;
+    --blue-11: 132 210 255;
+    --blue-12: 209 238 255;
 
     --ruby-1: 25 17 19;
     --ruby-2: 30 21 23;
@@ -214,18 +223,18 @@
     --amber-11: 255 202 22;
     --amber-12: 255 231 179;
 
-    --teal-1: 13 21 20;
-    --teal-2: 17 28 27;
-    --teal-3: 13 45 42;
-    --teal-4: 2 59 55;
-    --teal-5: 8 72 67;
-    --teal-6: 20 87 80;
-    --teal-7: 28 105 97;
-    --teal-8: 32 126 115;
-    --teal-9: 18 165 148;
-    --teal-10: 14 179 158;
-    --teal-11: 11 216 182;
-    --teal-12: 173 240 221;
+    --teal-1: 11 20 23;
+    --teal-2: 14 27 33;
+    --teal-3: 13 42 51;
+    --teal-4: 12 55 66;
+    --teal-5: 14 69 82;
+    --teal-6: 18 85 101;
+    --teal-7: 25 103 123;
+    --teal-8: 35 125 150;
+    --teal-9: 46 211 255;
+    --teal-10: 30 191 235;
+    --teal-11: 140 236 255;
+    --teal-12: 206 249 255;
 
     --gray-1: 17 17 17;
     --gray-2: 25 25 25;
@@ -253,44 +262,48 @@
     --violet-11: 169 153 236;
     --violet-12: 226 221 254;
 
-    --background-color: 28 29 32;
-    --surface-1: 20 21 23;
-    --surface-2: 22 23 26;
-    --surface-active: 53 57 66;
+    --background-color: 7 11 20;
+    --surface-1: 13 20 36;
+    --surface-2: 17 27 46;
+    --surface-active: 24 38 63;
     --background-input-box: 255, 255, 255, 0.02;
-    --text-blue: 213 234 255;
+    --text-blue: 214 237 255;
     --text-purple: 232 233 254;
     --text-amber: 255 247 234;
-    --border-strong: 46 45 50;
-    --border-weak: 31 31 37;
+    --border-strong: 38 57 87;
+    --border-weak: 29 43 67;
     --border-blue-strong: 201 226 255;
-    --solid-1: 23 23 26;
-    --solid-2: 29 30 36;
-    --solid-3: 44 45 54;
-    --solid-active: 53 57 66;
+    --solid-1: 17 26 44;
+    --solid-2: 22 34 57;
+    --solid-3: 30 44 71;
+    --solid-active: 39 58 92;
     --solid-amber: 56 50 41;
-    --solid-blue: 15 57 102;
-    --solid-blue-2: 26 29 35;
+    --solid-blue: 16 66 128;
+    --solid-blue-2: 21 31 50;
     --solid-iris: 38 42 101;
-    --solid-purple: 51 51 107;
+    --solid-purple: 63 60 130;
     --solid-red: 90 33 34;
     --solid-amber-button: 255 221 141;
-    --card-color: 28 30 34;
+    --card-color: 15 24 40;
     --overlay: 0, 0, 0, 0.4;
     --overlay-avatar: 0, 0, 0, 0.05;
-    --button-color: 42 43 51;
-    --button-hover-color: 0, 0, 0, 0.15;
-    --label-background: 36 38 45;
+    --button-color: 19 31 53;
+    --button-hover-color: 29, 48, 78, 0.82;
+    --label-background: 29 42 65;
     --label-border: 255, 255, 255, 0.03;
 
-    --alpha-1: 35, 36, 42, 0.8;
-    --alpha-2: 147, 153, 176, 0.12;
-    --alpha-3: 33, 34, 38, 0.95;
+    --alpha-1: 25, 39, 63, 0.72;
+    --alpha-2: 152, 184, 232, 0.14;
+    --alpha-3: 17, 27, 45, 0.95;
     --black-alpha-1: 0, 0, 0, 0.3;
     --black-alpha-2: 0, 0, 0, 0.2;
-    --border-blue: 39, 129, 246, 0.5;
+    --border-blue: 29, 161, 255, 0.5;
     --border-container: 255, 255, 255, 0;
     --white-alpha: 255, 255, 255, 0.1;
+
+    --gt-shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.26);
+    --gt-shadow-md: 0 14px 30px rgba(0, 0, 0, 0.32);
+    --gt-focus-ring: 29, 161, 255, 0.32;
   }
 }
 // NEXT COLORS END

@@ -30,6 +30,8 @@ body {
     sans-serif !important;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
+  background: rgb(var(--background-color));
+  color: rgb(var(--slate-12));
   height: 100%;
   margin: 0;
   padding: 0;
@@ -42,6 +44,16 @@ body {
 
 #app {
   @apply h-full w-full;
+  background-image: radial-gradient(
+    ellipse at top,
+    rgba(var(--blue-9), 0.08) 0%,
+    transparent 56%
+  );
+}
+
+::selection {
+  background: rgba(var(--blue-9), 0.28);
+  color: rgb(var(--slate-12));
 }
 
 .custom-dashed-border {
@@ -144,5 +156,19 @@ body {
     @apply font-inter text-xs font-440;
     line-height: 18px; /* 150% */
     letter-spacing: -0.24px;
+  }
+}
+
+@layer components {
+  .neo-surface-card {
+    background: rgb(var(--surface-2));
+    border: 1px solid rgb(var(--border-weak));
+    border-radius: var(--gt-radius-lg);
+    box-shadow: var(--gt-shadow-sm);
+  }
+
+  .neo-focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--gt-focus-ring));
   }
 }

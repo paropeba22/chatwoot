@@ -110,7 +110,7 @@ onMounted(async () => {
       @mouseleave="emit('mouseleave')"
     >
       <div
-        class="bg-n-alpha-3 backdrop-blur-[100px] outline outline-1 -outline-offset-1 w-56 outline-n-weak rounded-xl shadow-lg py-2 px-2"
+        class="bg-n-alpha-3 backdrop-blur-[100px] outline outline-1 -outline-offset-1 w-56 outline-n-weak/90 rounded-2xl shadow-[0_16px_40px_rgba(2,8,20,0.42)] py-2 px-2"
       >
         <div
           class="px-2 py-1.5 text-xs font-medium text-n-slate-11 uppercase tracking-wider border-b border-n-weak mb-1"
@@ -124,7 +124,7 @@ onMounted(async () => {
             <!-- SubGroup with children -->
             <li v-if="child.children" class="py-0.5">
               <button
-                class="flex items-center gap-2 px-2 py-1.5 w-full rounded-lg text-n-slate-11 hover:bg-n-alpha-2 transition-colors duration-150 ease-out text-left rtl:text-right"
+                class="neo-focus-ring flex items-center gap-2 px-2 py-1.5 w-full rounded-xl text-n-slate-11 hover:bg-n-alpha-2/70 hover:text-n-slate-12 transition-colors duration-150 ease-out text-left rtl:text-right"
                 @click="toggleSubGroup(child.name)"
               >
                 <Icon
@@ -151,10 +151,11 @@ onMounted(async () => {
                     class="py-0.5"
                   >
                     <button
-                      class="flex items-center gap-2 px-2 py-1.5 w-full rounded-lg text-sm text-left rtl:text-right transition-colors duration-150 ease-out"
+                      class="neo-focus-ring flex items-center gap-2 px-2 py-1.5 w-full rounded-xl text-sm text-left rtl:text-right transition-colors duration-150 ease-out"
                       :class="{
-                        'text-n-slate-12 bg-n-alpha-2': isActive(subChild),
-                        'text-n-slate-11 hover:bg-n-alpha-2':
+                        'text-n-slate-12 bg-n-alpha-2/85 outline outline-1 outline-n-blue-8/45':
+                          isActive(subChild),
+                        'text-n-slate-11 hover:bg-n-alpha-2/70':
                           !isActive(subChild),
                       }"
                       @click="navigateAndClose(subChild.to)"
@@ -174,11 +175,12 @@ onMounted(async () => {
             <!-- Direct child item -->
             <li v-else class="py-0.5">
               <button
-                class="flex items-center gap-2 px-2 py-1.5 w-full rounded-lg text-sm text-left rtl:text-right transition-colors duration-150 ease-out"
-                :class="{
-                  'text-n-slate-12 bg-n-alpha-2': isActive(child),
-                  'text-n-slate-11 hover:bg-n-alpha-2': !isActive(child),
-                }"
+              class="neo-focus-ring flex items-center gap-2 px-2 py-1.5 w-full rounded-xl text-sm text-left rtl:text-right transition-colors duration-150 ease-out"
+              :class="{
+                'text-n-slate-12 bg-n-alpha-2/85 outline outline-1 outline-n-blue-8/45':
+                  isActive(child),
+                'text-n-slate-11 hover:bg-n-alpha-2/70': !isActive(child),
+              }"
                 @click="navigateAndClose(child.to)"
               >
                 <component
