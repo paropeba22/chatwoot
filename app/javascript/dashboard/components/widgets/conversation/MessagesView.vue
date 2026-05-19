@@ -451,7 +451,7 @@ export default {
 <template>
   <div
     ref="messagesViewRef"
-    class="flex flex-col justify-between flex-grow h-full min-w-0 m-0"
+    class="flex flex-col justify-between flex-grow h-full min-w-0 m-0 bg-n-surface-1"
   >
     <div ref="topBannerRef">
       <Banner
@@ -471,7 +471,7 @@ export default {
     </div>
     <MessageList
       ref="conversationPanelRef"
-      class="conversation-panel flex-shrink flex-grow basis-px flex flex-col overflow-y-auto relative h-full m-0 pb-4"
+      class="conversation-panel flex-shrink flex-grow basis-px flex flex-col overflow-y-auto relative h-full m-0 pb-4 px-2"
       :current-user-id="currentUserId"
       :first-unread-id="unReadMessages[0]?.id"
       :is-an-email-channel="isAnEmailChannel"
@@ -495,7 +495,7 @@ export default {
           class="list-none flex justify-center items-center"
         >
           <span
-            class="shadow-lg rounded-full bg-n-brand text-white text-xs font-medium my-2.5 mx-auto px-2.5 py-1.5"
+            class="shadow-[0_8px_20px_rgba(2,8,20,0.36)] rounded-full bg-n-blue-9 text-white text-xs font-medium my-2.5 mx-auto px-3 py-1.5 border border-n-blue-8/45"
           >
             {{ unreadMessageLabel }}
           </span>
@@ -510,13 +510,13 @@ export default {
         />
       </template>
     </MessageList>
-    <div class="flex relative flex-col bg-n-surface-1">
+    <div class="flex relative flex-col bg-n-surface-1 border-t border-n-weak/70">
       <div
         v-if="isAnyoneTyping"
         class="absolute flex items-center w-full h-0 -top-7"
       >
         <div
-          class="flex py-2 pr-4 pl-5 shadow-md rounded-full bg-white dark:bg-n-solid-3 text-n-slate-11 text-xs font-semibold my-2.5 mx-auto"
+          class="flex py-2 pr-4 pl-5 shadow-[0_8px_20px_rgba(2,8,20,0.3)] rounded-full bg-n-surface-2 text-n-slate-11 text-xs font-semibold my-2.5 mx-auto border border-n-weak/70"
         >
           {{ typingUserNames }}
           <img

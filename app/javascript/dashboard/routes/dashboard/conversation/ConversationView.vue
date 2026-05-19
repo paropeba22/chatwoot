@@ -195,7 +195,10 @@ export default {
 </script>
 
 <template>
-  <section class="flex w-full h-full min-w-0">
+  <section
+    class="flex w-full h-full min-w-0 bg-n-background"
+    style="background: radial-gradient(ellipse at top right, rgba(29, 161, 255, 0.09) 0%, transparent 52%);"
+  >
     <ChatList
       :show-conversation-list="showConversationList"
       :conversation-inbox="inboxId"

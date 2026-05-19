@@ -41,7 +41,7 @@ const helpURL = getHelpUrlForFeature(props.featureName);
 </script>
 
 <template>
-  <div class="flex flex-col items-start w-full">
+  <div class="flex flex-col items-start w-full rounded-xl border border-n-weak/70 bg-n-surface-2/40 p-4">
     <BackButton
       v-if="backButtonLabel"
       compact

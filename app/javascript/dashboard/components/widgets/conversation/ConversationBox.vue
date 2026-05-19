@@ -91,7 +91,7 @@ export default {
 
 <template>
   <div
-    class="conversation-details-wrap flex flex-col min-w-0 w-full bg-n-surface-1 relative"
+    class="conversation-details-wrap flex flex-col min-w-0 w-full bg-n-surface-1 relative rounded-tl-2xl rounded-tr-2xl md:rounded-none border border-n-weak/70 shadow-[0_10px_26px_rgba(2,8,20,0.26)]"
     :class="{
       'border-l rtl:border-l-0 rtl:border-r border-n-weak': !isOnExpandedLayout,
     }"
@@ -107,7 +107,7 @@ export default {
     <woot-tabs
       v-if="dashboardApps.length && currentChat.id"
       :index="activeIndex"
-      class="h-10"
+      class="h-11 px-2 py-1 border-b border-n-weak/70 [&_ul]:rounded-[var(--gt-radius-pill)] [&_ul]:outline [&_ul]:outline-1 [&_ul]:outline-n-weak/70 [&_ul]:p-1 [&_a]:rounded-[var(--gt-radius-pill)] [&_a:hover]:bg-n-alpha-2/70 [&_.is-active>a]:bg-n-blue-9/20 [&_.is-active>a]:outline [&_.is-active>a]:outline-1 [&_.is-active>a]:outline-n-blue-8/45"
       @change="onDashboardAppTabChange"
     >
       <woot-tabs-item

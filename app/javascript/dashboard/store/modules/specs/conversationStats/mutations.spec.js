@@ -17,5 +17,24 @@ describe('#mutations', () => {
         updatedOn: expect.any(Date),
       });
     });
+
+    it('preserves previous counts when payload is partial', () => {
+      const state = {
+        mineCount: 10,
+        unAssignedCount: 85,
+        allCount: 200,
+      };
+
+      mutations[types.SET_CONV_TAB_META](state, {
+        all_count: 201,
+      });
+
+      expect(state).toEqual({
+        mineCount: 10,
+        unAssignedCount: 85,
+        allCount: 201,
+        updatedOn: expect.any(Date),
+      });
+    });
   });
 });

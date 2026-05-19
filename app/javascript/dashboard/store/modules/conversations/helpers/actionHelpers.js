@@ -53,8 +53,14 @@ export const buildConversationList = (
   filterType
 ) => {
   const { payload: conversationList, meta: metaData } = responseData;
+  const labels = requestPayload?.labels || [];
+  const hasBotTabLabel = Array.isArray(labels) && labels.includes('bot-bia');
+  const shouldSyncStatsFromList = filterType !== 'appliedFilters' && !hasBotTabLabel;
+
   context.commit(types.SET_ALL_CONVERSATION, conversationList);
-  context.dispatch('conversationStats/set', metaData);
+  if (shouldSyncStatsFromList) {
+    context.dispatch('conversationStats/set', metaData);
+  }
   context.dispatch(
     'conversationLabels/setBulkConversationLabels',
     conversationList

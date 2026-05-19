@@ -25,6 +25,7 @@ import vue from '@vitejs/plugin-vue';
 
 const isLibraryMode = process.env.BUILD_MODE === 'library';
 const isTestMode = process.env.TEST === 'true';
+const enableSourceMap = process.env.VITE_SOURCEMAP === 'true';
 
 const vueOptions = {
   template: {
@@ -45,6 +46,7 @@ if (isLibraryMode) {
 export default defineConfig({
   plugins: plugins,
   build: {
+    sourcemap: enableSourceMap,
     rollupOptions: {
       output: {
         // [NOTE] when not in library mode, no new keys will be addedd or overwritten

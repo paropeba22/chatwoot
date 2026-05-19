@@ -823,10 +823,13 @@ function toggleSelectAll(check) {
 
 function fetchConversationStats() {
   if (hasAppliedFiltersOrActiveFolders.value) return;
-  const statsFilters = { ...conversationFilters.value };
-  if (activeAssigneeTab.value === 'bot') {
-    delete statsFilters.labels;
-  }
+  const statsFilters = {
+    inboxId: props.conversationInbox || undefined,
+    status: activeStatus.value,
+    teamId: props.teamId || undefined,
+    conversationType: props.conversationType || undefined,
+    labels: props.label ? [props.label] : undefined,
+  };
   store.dispatch('conversationStats/get', statsFilters);
 }
 

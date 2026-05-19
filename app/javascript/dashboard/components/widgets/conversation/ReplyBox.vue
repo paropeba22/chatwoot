@@ -1442,10 +1442,16 @@ export default {
 }
 
 .reply-box {
-  @apply relative mb-2 mx-2 border border-n-weak rounded-xl bg-n-solid-1;
+  @apply relative mb-2 mx-2 border border-n-weak/80 rounded-2xl bg-n-solid-1 shadow-[0_10px_24px_rgba(2,8,20,0.26)] overflow-hidden;
 
   &.is-private {
-    @apply bg-n-solid-amber dark:border-n-amber-3/10 border-n-amber-12/5;
+    @apply bg-n-solid-amber/90 dark:border-n-amber-3/20 border-n-amber-12/15;
+  }
+
+  &.is-focused {
+    box-shadow:
+      0 12px 28px rgba(2, 8, 20, 0.3),
+      0 0 0 2px rgba(var(--gt-focus-ring));
   }
 }
 
@@ -1454,7 +1460,7 @@ export default {
 }
 
 .reply-box__top {
-  @apply relative py-0 px-3 -mt-px;
+  @apply relative py-1 px-3 -mt-px;
 }
 
 .emoji-dialog {

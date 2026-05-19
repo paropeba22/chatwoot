@@ -973,7 +973,7 @@ useEmitter(BUS_EVENTS.INSERT_INTO_RICH_EDITOR, insertContentIntoEditor);
 }
 
 .ProseMirror-woot-style {
-  @apply overflow-auto;
+  @apply overflow-auto rounded-xl;
 }
 
 .ProseMirror-woot-style:not(
@@ -1052,7 +1052,7 @@ useEmitter(BUS_EVENTS.INSERT_INTO_RICH_EDITOR, insertContentIntoEditor);
 }
 
 .message-editor {
-  @apply rounded-lg outline outline-1 outline-n-weak hover:outline-n-slate-6 dark:hover:outline-n-slate-6 bg-n-alpha-black2 py-0 px-1 mb-0;
+  @apply rounded-xl outline outline-1 outline-n-weak hover:outline-n-slate-6 dark:hover:outline-n-slate-6 bg-n-alpha-black2/80 py-0 px-1.5 mb-0 transition-colors;
 }
 
 .editor_warning {
@@ -1093,7 +1093,7 @@ useEmitter(BUS_EVENTS.INSERT_INTO_RICH_EDITOR, insertContentIntoEditor);
     }
 
     .ProseMirror-menubar {
-      @apply rounded-lg !px-3 !py-1.5 z-50 bg-n-background items-center gap-4 ml-0 mb-0 shadow-md outline outline-1 outline-n-weak;
+      @apply rounded-xl !px-3 !py-1.5 z-50 bg-n-background items-center gap-4 ml-0 mb-0 shadow-lg outline outline-1 outline-n-weak/80;
       display: flex;
       width: fit-content !important;
       position: absolute !important;

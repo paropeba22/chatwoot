@@ -58,9 +58,15 @@ export const mutations = {
       all_count: allCount,
     } = {}
   ) {
-    $state.mineCount = mineCount;
-    $state.allCount = allCount;
-    $state.unAssignedCount = unAssignedCount;
+    if (mineCount !== undefined) {
+      $state.mineCount = mineCount;
+    }
+    if (allCount !== undefined) {
+      $state.allCount = allCount;
+    }
+    if (unAssignedCount !== undefined) {
+      $state.unAssignedCount = unAssignedCount;
+    }
     $state.updatedOn = new Date();
   },
 };
