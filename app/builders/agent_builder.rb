@@ -9,13 +9,24 @@ class AgentBuilder
   # @param inviter [User] the user who is inviting the agent (Current.user in most cases).
   # @param availability [String] the availability status of the user, defaults to 'offline' if not provided.
   # @param auto_offline [Boolean] the auto offline status of the user.
-  pattr_initialize [:email, { name: '' }, :inviter, :account, { role: :agent }, { availability: :offline }, { auto_offline: false }]
+  pattr_initialize [
+    :email,
+    { name: '' },
+    { password: nil },
+    { password_confirmation: nil },
+    :inviter,
+    :account,
+    { role: :agent },
+    { availability: :offline },
+    { auto_offline: false }
+  ]
 
   # Creates a user and account user in a transaction.
   # @return [User] the created user.
   def perform
     ActiveRecord::Base.transaction do
       @user = find_or_create_user
+      confirm_user_if_enabled
       create_account_user
     end
     @user
@@ -29,14 +40,42 @@ class AgentBuilder
     user = User.from_email(email)
     return user if user
 
-    temp_password = "1!aA#{SecureRandom.alphanumeric(12)}"
-    User.create!(email: email, name: name, password: temp_password, password_confirmation: temp_password)
+    creation_password = if auto_confirm_on_create_enabled?
+                          password.presence
+                        else
+                          password.presence || generated_temp_password
+                        end
+    creation_password_confirmation = if auto_confirm_on_create_enabled?
+                                       password_confirmation.presence
+                                     else
+                                       password_confirmation.presence || creation_password
+                                     end
+
+    User.create!(
+      email: email,
+      name: name,
+      password: creation_password,
+      password_confirmation: creation_password_confirmation
+    )
   end
 
-  # Checks if the user needs confirmation.
-  # @return [Boolean] true if the user is persisted and not confirmed, false otherwise.
-  def user_needs_confirmation?
-    @user.persisted? && !@user.confirmed?
+  def generated_temp_password
+    @generated_temp_password ||= "1!aA#{SecureRandom.alphanumeric(12)}"
+  end
+
+  def auto_confirm_on_create_enabled?
+    ActiveModel::Type::Boolean.new.cast(
+      ENV.fetch('AGENT_AUTO_CONFIRM_ON_CREATE', true)
+    )
+  end
+
+  def confirm_user_if_enabled
+    return unless @user.persisted?
+    return unless auto_confirm_on_create_enabled?
+    return if @user.confirmed?
+
+    @user.skip_confirmation!
+    @user.save!
   end
 
   # Creates an account user linking the user to the current account.

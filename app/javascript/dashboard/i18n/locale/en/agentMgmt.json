@@ -40,6 +40,16 @@
           "LABEL": "Email Address",
           "PLACEHOLDER": "Please enter an email address of the agent"
         },
+        "PASSWORD": {
+          "LABEL": "Temporary Password",
+          "PLACEHOLDER": "Please enter a temporary password",
+          "ERROR": "Temporary password is required"
+        },
+        "PASSWORD_CONFIRMATION": {
+          "LABEL": "Confirm Temporary Password",
+          "PLACEHOLDER": "Please confirm the temporary password",
+          "ERROR": "Password confirmation must match the temporary password"
+        },
         "SUBMIT": "Add Agent"
       },
       "API": {

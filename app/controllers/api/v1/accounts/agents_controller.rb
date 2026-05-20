@@ -12,6 +12,8 @@ class Api::V1::Accounts::AgentsController < Api::V1::Accounts::BaseController
     builder = AgentBuilder.new(
       email: new_agent_params['email'],
       name: new_agent_params['name'],
+      password: new_agent_params['password'],
+      password_confirmation: new_agent_params['password_confirmation'],
       role: new_agent_params['role'],
       availability: new_agent_params['availability'],
       auto_offline: new_agent_params['auto_offline'],
@@ -80,7 +82,9 @@ class Api::V1::Accounts::AgentsController < Api::V1::Accounts::BaseController
   end
 
   def new_agent_params
-    params.require(:agent).permit(:email, :name, :role, :availability, :auto_offline)
+    params.require(:agent).permit(
+      :email, :name, :password, :password_confirmation, :role, :availability, :auto_offline
+    )
   end
 
   def agents
