@@ -44,6 +44,15 @@ const showChatSupport = computed(() => {
   );
 });
 
+const currentUserDisplayName = computed(() => {
+  return (
+    currentUser.value?.available_name ||
+    currentUser.value?.name ||
+    currentUser.value?.email ||
+    ''
+  );
+});
+
 const menuItems = computed(() => {
   return [
     {
@@ -118,12 +127,12 @@ const allowedMenuItems = computed(() => {
           { 'bg-n-alpha-1/80 outline outline-1 outline-n-blue-8/45': isOpen },
           isCollapsed ? 'justify-center' : 'w-full',
         ]"
-        :title="isCollapsed ? currentUser.available_name : undefined"
+        :title="isCollapsed ? currentUserDisplayName : undefined"
         @click="toggle"
       >
         <Avatar
           :size="32"
-          :name="currentUser.available_name"
+          :name="currentUserDisplayName"
           :src="currentUser.avatar_url"
           :status="currentUserAvailability"
           class="flex-shrink-0"
@@ -131,7 +140,7 @@ const allowedMenuItems = computed(() => {
         />
         <div v-if="!isCollapsed" class="min-w-0">
           <div class="text-sm font-medium leading-4 truncate text-n-slate-12">
-            {{ currentUser.available_name }}
+            {{ currentUserDisplayName }}
           </div>
           <div class="text-xs truncate text-n-slate-11">
             {{ currentUser.email }}

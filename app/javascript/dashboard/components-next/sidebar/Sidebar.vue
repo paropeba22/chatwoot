@@ -1,5 +1,5 @@
 <script setup>
-import { h, ref, computed, onMounted } from 'vue';
+import { h, ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { provideSidebarContext, useSidebarResize } from './provider';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useKbd } from 'dashboard/composables/utils/useKbd';
@@ -19,7 +19,6 @@ import SidebarChangelogButton from './SidebarChangelogButton.vue';
 import ChannelLeaf from './ChannelLeaf.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
-import Logo from 'next/icon/Logo.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 
 const props = defineProps({
@@ -96,6 +95,10 @@ const isEffectivelyCollapsed = computed(
 const isResizing = ref(false);
 const startX = ref(0);
 const startWidth = ref(0);
+const previousBodyStyle = ref({
+  cursor: '',
+  userSelect: '',
+});
 
 provideSidebarContext({
   expandedItem,
@@ -113,6 +116,10 @@ const onResizeStart = event => {
   isResizing.value = true;
   startX.value = getClientX(event);
   startWidth.value = sidebarWidth.value;
+  previousBodyStyle.value = {
+    cursor: document.body.style.cursor,
+    userSelect: document.body.style.userSelect,
+  };
   Object.assign(document.body.style, {
     cursor: 'col-resize',
     userSelect: 'none',
@@ -134,7 +141,7 @@ const onResizeEnd = () => {
   if (!isResizing.value) return;
 
   isResizing.value = false;
-  Object.assign(document.body.style, { cursor: '', userSelect: '' });
+  Object.assign(document.body.style, previousBodyStyle.value);
 
   // Snap to collapsed state if below threshold
   if (sidebarWidth.value < COLLAPSED_THRESHOLD) {
@@ -154,6 +161,14 @@ useEventListener(document, 'mousemove', onResizeMove);
 useEventListener(document, 'mouseup', onResizeEnd);
 useEventListener(document, 'touchmove', onResizeMove, { passive: false });
 useEventListener(document, 'touchend', onResizeEnd);
+useEventListener(document, 'touchcancel', onResizeEnd);
+useEventListener(window, 'blur', onResizeEnd);
+
+onBeforeUnmount(() => {
+  if (!isResizing.value) return;
+  isResizing.value = false;
+  Object.assign(document.body.style, previousBodyStyle.value);
+});
 
 const inboxes = useMapGetter('inboxes/getInboxes');
 const labels = useMapGetter('labels/getLabelsOnSidebar');
@@ -421,75 +436,6 @@ const menuItems = computed(() => {
           name: 'Reports Bot',
           label: t('SIDEBAR.REPORTS_BOT'),
           to: accountScopedRoute('bot_reports'),
-        },
-      ],
-    },
-    {
-      name: 'Campaigns',
-      label: t('SIDEBAR.CAMPAIGNS'),
-      icon: 'i-lucide-megaphone',
-      children: [
-        {
-          name: 'Live chat',
-          label: t('SIDEBAR.LIVE_CHAT'),
-          to: accountScopedRoute('campaigns_livechat_index'),
-        },
-        // {
-        //   name: 'SMS',
-        //   label: t('SIDEBAR.SMS'),
-        //   to: accountScopedRoute('campaigns_sms_index'),
-        // },
-        {
-          name: 'WhatsApp',
-          label: t('SIDEBAR.WHATSAPP'),
-          to: accountScopedRoute('campaigns_whatsapp_index'),
-        },
-      ],
-    },
-    {
-      name: 'Portals',
-      label: t('SIDEBAR.HELP_CENTER.TITLE'),
-      icon: 'i-lucide-library-big',
-      children: [
-        {
-          name: 'Articles',
-          label: t('SIDEBAR.HELP_CENTER.ARTICLES'),
-          activeOn: [
-            'portals_articles_index',
-            'portals_articles_new',
-            'portals_articles_edit',
-          ],
-          to: accountScopedRoute('portals_index', {
-            navigationPath: 'portals_articles_index',
-          }),
-        },
-        {
-          name: 'Categories',
-          label: t('SIDEBAR.HELP_CENTER.CATEGORIES'),
-          activeOn: [
-            'portals_categories_index',
-            'portals_categories_articles_index',
-            'portals_categories_articles_edit',
-          ],
-          to: accountScopedRoute('portals_index', {
-            navigationPath: 'portals_categories_index',
-          }),
-        },
-        {
-          name: 'Locales',
-          label: t('SIDEBAR.HELP_CENTER.LOCALES'),
-          activeOn: ['portals_locales_index'],
-          to: accountScopedRoute('portals_index', {
-            navigationPath: 'portals_locales_index',
-          }),
-        },
-        {
-          name: 'Settings',
-          label: t('SIDEBAR.HELP_CENTER.SETTINGS'),
-          activeOn: ['portals_settings_index'],
-          to: accountScopedRoute('portals_index', {
-            navigationPath: 'portals_settings_index',
-          }),
         },
       ],
     },

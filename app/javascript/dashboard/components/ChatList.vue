@@ -52,6 +52,7 @@ import {
 import { matchesFilters } from '../store/modules/conversations/helpers/filterHelpers';
 import { CONVERSATION_EVENTS } from '../helper/AnalyticsHelper/events';
 import { ASSIGNEE_TYPE_TAB_PERMISSIONS } from 'dashboard/constants/permissions.js';
+import ConversationApi from 'dashboard/api/inbox/conversation';
 
 const props = defineProps({
   conversationInbox: { type: [String, Number], default: 0 },
@@ -83,6 +84,10 @@ const foldersQuery = ref({});
 const showAddFoldersModal = ref(false);
 const showDeleteFoldersModal = ref(false);
 const appliedFilter = ref([]);
+const botTabCounts = ref({
+  total: 0,
+  unassigned: 0,
+});
 const advancedFilterTypes = ref(
   advancedFilterOptions.map(filter => ({
     ...filter,
@@ -175,10 +180,12 @@ const userPermissions = computed(() => {
   return getUserPermissions(currentUser.value, currentAccountId.value);
 });
 
-const botChatsCount = computed(() => {
-  const allConvs = store.getters.getAllConversations || [];
-  return allConvs.filter(c => c.labels && c.labels.includes('bot-bia')).length;
+const unassignedTabCount = computed(() => {
+  const rawUnassignedCount = conversationStats.value.unAssignedCount || 0;
+  return Math.max(rawUnassignedCount - botTabCounts.value.unassigned, 0);
 });
+
+const botChatsCount = computed(() => botTabCounts.value.total || 0);
 
 const assigneeTabItems = computed(() => {
   return [
@@ -190,7 +197,7 @@ const assigneeTabItems = computed(() => {
     {
       key: 'unassigned',
       name: 'Em fila',
-      count: conversationStats.value.unAssignedCount || 0,
+      count: unassignedTabCount.value,
     },
     {
       key: 'bot',
@@ -607,10 +614,19 @@ function resetAndFetchData() {
     return;
   }
   fetchConversations();
+  fetchConversationStats();
 }
 
 function loadMoreConversations() {
   if (hasCurrentPageEndReached.value || chatListLoading.value) {
+    return;
+  }
+
+  if (
+    !hasAppliedFiltersOrActiveFolders.value &&
+    !conversationList.value.length &&
+    activeAssigneeTabCount.value === 0
+  ) {
     return;
   }
 
@@ -831,6 +847,42 @@ function fetchConversationStats() {
     labels: props.label ? [props.label] : undefined,
   };
   store.dispatch('conversationStats/get', statsFilters);
+  fetchBotTabCounts(statsFilters);
+}
+
+async function fetchBotTabCounts(baseFilters = {}) {
+  if (hasAppliedFiltersOrActiveFolders.value || props.label) {
+    botTabCounts.value = { total: 0, unassigned: 0 };
+    return;
+  }
+
+  try {
+    const sharedFilters = {
+      inboxId: baseFilters.inboxId,
+      status: baseFilters.status,
+      teamId: baseFilters.teamId,
+      conversationType: baseFilters.conversationType,
+      labels: ['bot-bia'],
+    };
+
+    const [allBotResponse, unassignedBotResponse] = await Promise.all([
+      ConversationApi.meta({
+        ...sharedFilters,
+        assigneeType: wootConstants.ASSIGNEE_TYPE.ALL,
+      }),
+      ConversationApi.meta({
+        ...sharedFilters,
+        assigneeType: wootConstants.ASSIGNEE_TYPE.UNASSIGNED,
+      }),
+    ]);
+
+    const total = allBotResponse?.data?.meta?.all_count || 0;
+    const unassigned = unassignedBotResponse?.data?.meta?.unassigned_count || 0;
+
+    botTabCounts.value = { total, unassigned };
+  } catch {
+    botTabCounts.value = { total: 0, unassigned: 0 };
+  }
 }
 
 useEmitter('fetch_conversation_stats', fetchConversationStats);

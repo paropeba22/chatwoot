@@ -20,6 +20,10 @@ const editorHeight = ref(DEFAULT_HEIGHT);
 const isResizing = ref(false);
 const startY = ref(0);
 const startHeight = ref(0);
+const previousBodyStyle = ref({
+  cursor: '',
+  userSelect: '',
+});
 let resetTimeoutId = null;
 
 const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
@@ -53,7 +57,7 @@ const clampToBounds = val =>
   clamp(val, sizeBounds.value.min, sizeBounds.value.max);
 
 const clearDragStyles = () => {
-  Object.assign(document.body.style, { cursor: '', userSelect: '' });
+  Object.assign(document.body.style, previousBodyStyle.value);
 };
 
 const getClientY = e => (e.touches ? e.touches[0].clientY : e.clientY);
@@ -65,6 +69,10 @@ const onResizeStart = event => {
   startY.value = getClientY(event);
   startHeight.value = clampToBounds(editorHeight.value);
   editorHeight.value = startHeight.value;
+  previousBodyStyle.value = {
+    cursor: document.body.style.cursor,
+    userSelect: document.body.style.userSelect,
+  };
   Object.assign(document.body.style, {
     cursor: 'row-resize',
     userSelect: 'none',

@@ -100,7 +100,7 @@ const replyToPreview = computed(() => {
 
 <template>
   <div
-    class="text-sm"
+    class="text-sm select-text"
     :class="[
       messageClass,
       {
