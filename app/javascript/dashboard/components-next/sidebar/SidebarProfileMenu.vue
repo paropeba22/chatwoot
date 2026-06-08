@@ -48,8 +48,7 @@ const currentUserDisplayName = computed(() => {
   return (
     currentUser.value?.available_name ||
     currentUser.value?.name ||
-    currentUser.value?.email ||
-    ''
+    t('SIDEBAR_ITEMS.OPERATOR')
   );
 });
 
@@ -141,9 +140,6 @@ const allowedMenuItems = computed(() => {
         <div v-if="!isCollapsed" class="min-w-0">
           <div class="text-sm font-medium leading-4 truncate text-n-slate-12">
             {{ currentUserDisplayName }}
-          </div>
-          <div class="text-xs truncate text-n-slate-11">
-            {{ currentUser.email }}
           </div>
         </div>
       </button>

@@ -241,6 +241,7 @@
     "SUPER_ADMIN_CONSOLE": "SuperAdmin console",
     "DOCS": "Read documentation",
     "CHANGELOG": "Changelog",
+    "OPERATOR": "Operator",
     "LOGOUT": "Log out"
   },
   "APP_GLOBAL": {

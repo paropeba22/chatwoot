@@ -289,6 +289,35 @@
       "CONTACT": "Contact",
       "COPILOT": "Copilot"
     },
+    "SGP": {
+      "TITLE": "SGP — Grupo Telecom",
+      "UPDATED_AT": "Updated at {value}",
+      "NOT_INFORMED": "Not informed",
+      "DOCUMENT_PLACEHOLDER": "CPF or CNPJ",
+      "CHANGE": "Change",
+      "SAVE_AND_CONSULT": "Save",
+      "CANCEL": "Cancel",
+      "SUCCESS": "SGP data updated.",
+      "FIELDS": {
+        "DOCUMENT": "CPF/CNPJ",
+        "HOLDER": "Account holder",
+        "CONTRACT": "Contract",
+        "ONU": "ONU",
+        "PLAN": "Plan",
+        "INVOICE": "Invoice"
+      },
+      "ACTIONS": {
+        "ONU": "Check ONU",
+        "PIX": "Pix",
+        "BARCODE": "Barcode",
+        "PDF": "PDF",
+        "PAYMENT_PROMISE": "Payment promise"
+      },
+      "ERRORS": {
+        "INVALID_DOCUMENT": "Enter a valid CPF or CNPJ.",
+        "SGP_UNAVAILABLE": "The SGP service could not be reached."
+      }
+    },
     "VOICE_WIDGET": {
       "INCOMING_CALL": "Incoming call",
       "OUTGOING_CALL": "Outgoing call",

@@ -288,6 +288,35 @@
       "CONTACT": "Contatos",
       "COPILOT": "Copiloto"
     },
+    "SGP": {
+      "TITLE": "SGP — Grupo Telecom",
+      "UPDATED_AT": "Atualizado em {value}",
+      "NOT_INFORMED": "Não informado",
+      "DOCUMENT_PLACEHOLDER": "CPF ou CNPJ",
+      "CHANGE": "Alterar",
+      "SAVE_AND_CONSULT": "Salvar",
+      "CANCEL": "Cancelar",
+      "SUCCESS": "Dados do SGP atualizados.",
+      "FIELDS": {
+        "DOCUMENT": "CPF/CNPJ",
+        "HOLDER": "Titular",
+        "CONTRACT": "Contrato",
+        "ONU": "ONU",
+        "PLAN": "Plano",
+        "INVOICE": "Fatura"
+      },
+      "ACTIONS": {
+        "ONU": "Consultar ONU",
+        "PIX": "Pix",
+        "BARCODE": "Barras",
+        "PDF": "PDF",
+        "PAYMENT_PROMISE": "Promessa de Pagamento"
+      },
+      "ERRORS": {
+        "INVALID_DOCUMENT": "Informe um CPF ou CNPJ válido.",
+        "SGP_UNAVAILABLE": "Não foi possível consultar o SGP agora."
+      }
+    },
     "VOICE_WIDGET": {
       "INCOMING_CALL": "Chamada recebida",
       "OUTGOING_CALL": "Chamada realizada",
