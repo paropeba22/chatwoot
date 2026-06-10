@@ -30,6 +30,15 @@ const globalConfig = useMapGetter('globalConfig/get');
 
 const userAccounts = useMapGetter('getUserAccounts');
 
+const accountDisplayName = account => {
+  const name = account?.name?.trim();
+  return name && !name.includes('@') ? name : 'Grupo Telecom';
+};
+
+const currentAccountDisplayName = computed(() =>
+  accountDisplayName(currentAccount.value)
+);
+
 const showAccountSwitcher = computed(
   () => userAccounts.value.length > 1 && currentAccount.value.name
 );
@@ -57,8 +66,10 @@ const emitNewAccount = () => {
       <button
         v-if="isCollapsed"
         class="neo-focus-ring grid flex-shrink-0 place-content-center p-2 rounded-xl cursor-pointer hover:bg-n-alpha-1/70 transition-colors"
-        :class="{ 'bg-n-alpha-1/80 outline outline-1 outline-n-blue-8/45': isOpen }"
-        :title="currentAccount.name"
+        :class="{
+          'bg-n-alpha-1/80 outline outline-1 outline-n-blue-8/45': isOpen,
+        }"
+        :title="currentAccountDisplayName"
         @click="toggle"
       >
         <Logo class="size-7" />
@@ -83,7 +94,7 @@ const emitNewAccount = () => {
           class="text-sm font-medium leading-5 text-n-slate-12 truncate"
           aria-live="polite"
         >
-          {{ currentAccount.name }}
+          {{ currentAccountDisplayName }}
         </span>
 
         <span
@@ -112,15 +123,12 @@ const emitNewAccount = () => {
             >
               <span
                 class="text-n-slate-12 max-w-36 truncate min-w-0"
-                :title="account.name"
+                :title="accountDisplayName(account)"
               >
-                {{ account.name }}
+                {{ accountDisplayName(account) }}
               </span>
               <div class="flex-shrink-0 w-px h-3 bg-n-strong" />
-              <span
-                class="text-n-slate-11 max-w-24 truncate capitalize"
-                :title="account.name"
-              >
+              <span class="text-n-slate-11 max-w-24 truncate capitalize">
                 {{
                   account.custom_role_id
                     ? account.custom_role.name

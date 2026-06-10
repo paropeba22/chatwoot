@@ -127,6 +127,9 @@ Rails.application.routes.draw do
           namespace :channels do
             resource :twilio_channel, only: [:create]
           end
+          post 'conversations/:conversation_id/sgp',
+               to: 'conversations/sgp#create',
+               as: :conversation_sgp
           resources :conversations, only: [:index, :create, :show, :update, :destroy] do
             collection do
               get :meta
@@ -145,7 +148,6 @@ Rails.application.routes.draw do
               resource :participants, only: [:show, :create, :update, :destroy]
               resource :direct_uploads, only: [:create]
               resource :draft_messages, only: [:show, :update, :destroy]
-              resource :sgp, only: [:create]
             end
             member do
               post :mute
