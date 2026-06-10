@@ -297,7 +297,15 @@
       "CHANGE": "Change",
       "SAVE_AND_CONSULT": "Save",
       "CANCEL": "Cancel",
+      "CONFIRM": "Confirm",
+      "SEND": "Send",
       "SUCCESS": "SGP data updated.",
+      "SELECT_INVOICE": "Select an invoice",
+      "INVOICE_SUMMARY": "{date} · {value}",
+      "INVOICE_NUMBER": "#{number}",
+      "MORE_INVOICES": "+{count} invoice(s)",
+      "PROMISE_CONFIRMATION": "Release payment promise for 2 days?",
+      "PROMISE_HELP": "SGP will attempt it now. No message will be sent to the customer automatically.",
       "FIELDS": {
         "DOCUMENT": "CPF/CNPJ",
         "HOLDER": "Account holder",
@@ -311,6 +319,7 @@
         "PIX": "Pix",
         "BARCODE": "Barcode",
         "PDF": "PDF",
+        "PAYMENT_LINK": "Payment link",
         "PAYMENT_PROMISE": "Payment promise"
       },
       "ERRORS": {

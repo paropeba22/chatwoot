@@ -23,6 +23,9 @@ const activeAction = ref('');
 const documentValue = ref('');
 const statusMessage = ref('');
 const statusType = ref('');
+const pendingFinancialAction = ref(null);
+const selectedInvoiceId = ref('');
+const showPromiseConfirmation = ref(false);
 
 const customAttributes = computed(() => props.contact?.custom_attributes || {});
 const legacyAttributes = computed(
@@ -33,6 +36,36 @@ const attributeValue = (customKey, legacyKey) =>
   customAttributes.value[customKey] ??
   legacyAttributes.value[legacyKey] ??
   null;
+
+const parseInvoices = value => {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const invoices = computed(() =>
+  parseInvoices(customAttributes.value.sgp_faturas)
+    .map(invoice => ({
+      id: String(invoice.id || invoice.numero || ''),
+      number: String(invoice.numero || invoice.fatura || invoice.id || ''),
+      dueDate: invoice.vencimento || null,
+      value: invoice.valor ?? null,
+      pixAvailable: Boolean(invoice.pix_disponivel),
+      barcodeAvailable: Boolean(invoice.codigo_barras_disponivel),
+      pdfAvailable: Boolean(invoice.pdf_disponivel),
+      paymentLinkAvailable: Boolean(invoice.link_cobranca_disponivel),
+    }))
+    .filter(invoice => invoice.id)
+    .sort((left, right) =>
+      String(left.dueDate || '').localeCompare(String(right.dueDate || ''))
+    )
+);
 
 const sgpData = computed(() => ({
   cpfCnpj: attributeValue('sgp_cpf_cnpj', 'cpf'),
@@ -45,14 +78,62 @@ const sgpData = computed(() => ({
   invoiceStatus: attributeValue('sgp_fatura_status', 'fatura_status'),
   invoiceDueDate: attributeValue('sgp_fatura_vencimento', 'vencimento_fatura'),
   invoiceValue: attributeValue('sgp_fatura_valor', 'valor_fatura'),
+  pixAvailable: Boolean(customAttributes.value.sgp_pix_disponivel),
+  barcodeAvailable: Boolean(
+    customAttributes.value.sgp_codigo_barras_disponivel
+  ),
+  pdfAvailable: Boolean(customAttributes.value.sgp_pdf_disponivel),
+  paymentLinkAvailable: Boolean(
+    customAttributes.value.sgp_link_cobranca_disponivel
+  ),
   updatedAt: customAttributes.value.sgp_atualizado_em,
 }));
 
-const disabledActions = computed(() => [
-  { key: 'pix', label: t('CONVERSATION.SGP.ACTIONS.PIX') },
-  { key: 'barcode', label: t('CONVERSATION.SGP.ACTIONS.BARCODE') },
-  { key: 'pdf', label: t('CONVERSATION.SGP.ACTIONS.PDF') },
+const financialActions = computed(() => [
+  {
+    key: 'pix',
+    action: 'enviar_pix',
+    label: t('CONVERSATION.SGP.ACTIONS.PIX'),
+    icon: 'i-lucide-qr-code',
+    invoiceFlag: 'pixAvailable',
+    fallbackFlag: 'pixAvailable',
+  },
+  {
+    key: 'barcode',
+    action: 'enviar_barras',
+    label: t('CONVERSATION.SGP.ACTIONS.BARCODE'),
+    icon: 'i-lucide-scan-line',
+    invoiceFlag: 'barcodeAvailable',
+    fallbackFlag: 'barcodeAvailable',
+  },
+  {
+    key: 'pdf',
+    action: 'enviar_pdf',
+    label: t('CONVERSATION.SGP.ACTIONS.PDF'),
+    icon: 'i-lucide-file-text',
+    invoiceFlag: 'pdfAvailable',
+    fallbackFlag: 'pdfAvailable',
+  },
+  {
+    key: 'payment-link',
+    action: 'enviar_link_pagamento',
+    label: t('CONVERSATION.SGP.ACTIONS.PAYMENT_LINK'),
+    icon: 'i-lucide-link',
+    invoiceFlag: 'paymentLinkAvailable',
+    fallbackFlag: 'paymentLinkAvailable',
+  },
 ]);
+
+const previewInvoices = computed(() => invoices.value.slice(0, 3));
+const remainingInvoiceCount = computed(() =>
+  Math.max(invoices.value.length - previewInvoices.value.length, 0)
+);
+
+const eligibleInvoices = action =>
+  invoices.value.filter(invoice => invoice[action.invoiceFlag]);
+
+const isFinancialActionAvailable = action =>
+  eligibleInvoices(action).length > 0 || sgpData.value[action.fallbackFlag];
 
 const digitsOnly = value => String(value || '').replace(/\D/g, '');
 
@@ -92,6 +173,23 @@ const isValidDocument = value =>
   (value.length === 11 && isValidCpf(value)) ||
   (value.length === 14 && isValidCnpj(value));
 
+const formatDate = value => {
+  if (!value) return '—';
+  const date = new Date(`${String(value).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat('pt-BR').format(date);
+};
+
+const formatMoney = value => {
+  if (value === null || value === undefined || value === '') return '—';
+  const amount = Number(String(value).replace(',', '.'));
+  if (Number.isNaN(amount)) return String(value);
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(amount);
+};
+
 const setStatus = (message, type) => {
   statusMessage.value = message;
   statusType.value = type;
@@ -130,9 +228,16 @@ const performAction = async (action, payload = {}) => {
   }
 };
 
+const closePrompts = () => {
+  pendingFinancialAction.value = null;
+  selectedInvoiceId.value = '';
+  showPromiseConfirmation.value = false;
+};
+
 const startEditDocument = () => {
   documentValue.value = sgpData.value.cpfCnpj || '';
   isEditingDocument.value = true;
+  closePrompts();
   setStatus('', '');
 };
 
@@ -149,13 +254,51 @@ const saveDocument = async () => {
   if (result.ok || result.cpf_saved) isEditingDocument.value = false;
 };
 
-const consultOnu = () => performAction('consultar_status_onu');
+const consultOnu = () => {
+  closePrompts();
+  return performAction('consultar_status_onu');
+};
+
+const requestFinancialAction = action => {
+  const eligible = eligibleInvoices(action);
+  closePrompts();
+
+  if (invoices.value.length > 1 && eligible.length) {
+    pendingFinancialAction.value = action;
+    selectedInvoiceId.value = eligible[0].id;
+    return;
+  }
+
+  performAction(action.action, {
+    ...(eligible[0]?.id && { fatura_id: eligible[0].id }),
+  });
+};
+
+const confirmFinancialAction = async () => {
+  if (!pendingFinancialAction.value || !selectedInvoiceId.value) return;
+
+  const action = pendingFinancialAction.value.action;
+  const faturaId = selectedInvoiceId.value;
+  closePrompts();
+  await performAction(action, { fatura_id: faturaId });
+};
+
+const requestPaymentPromise = () => {
+  closePrompts();
+  showPromiseConfirmation.value = true;
+};
+
+const confirmPaymentPromise = async () => {
+  closePrompts();
+  await performAction('liberar_promessa_2_dias');
+};
 
 watch(
   () => props.contact?.id,
   () => {
     isEditingDocument.value = false;
     documentValue.value = '';
+    closePrompts();
     setStatus('', '');
   }
 );
@@ -225,12 +368,35 @@ watch(
         <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
           {{ t('CONVERSATION.SGP.FIELDS.INVOICE') }}
         </p>
-        <p class="mt-1 text-sm font-semibold text-n-slate-12 truncate">
-          {{ sgpData.invoiceValue || 'N/A' }}
-        </p>
-        <p class="text-[11px] text-n-slate-10 truncate">
-          {{ sgpData.invoiceDueDate || sgpData.invoiceStatus || '—' }}
-        </p>
+        <div v-if="previewInvoices.length" class="mt-1 space-y-1">
+          <p
+            v-for="invoice in previewInvoices"
+            :key="invoice.id"
+            class="text-[11px] leading-tight text-n-slate-11"
+          >
+            {{
+              t('CONVERSATION.SGP.INVOICE_SUMMARY', {
+                date: formatDate(invoice.dueDate),
+                value: formatMoney(invoice.value),
+              })
+            }}
+          </p>
+          <p v-if="remainingInvoiceCount" class="text-[10px] text-n-slate-9">
+            {{
+              t('CONVERSATION.SGP.MORE_INVOICES', {
+                count: remainingInvoiceCount,
+              })
+            }}
+          </p>
+        </div>
+        <template v-else>
+          <p class="mt-1 text-sm font-semibold text-n-slate-12 truncate">
+            {{ sgpData.invoiceValue || 'N/A' }}
+          </p>
+          <p class="text-[11px] text-n-slate-10 truncate">
+            {{ sgpData.invoiceDueDate || sgpData.invoiceStatus || '—' }}
+          </p>
+        </template>
       </div>
     </div>
 
@@ -311,6 +477,86 @@ watch(
       {{ statusMessage }}
     </p>
 
+    <div
+      v-if="pendingFinancialAction"
+      class="p-3 mb-3 rounded-xl border border-n-strong bg-n-alpha-2"
+      data-testid="sgp-invoice-selector"
+    >
+      <p class="text-xs font-semibold text-n-slate-12">
+        {{ t('CONVERSATION.SGP.SELECT_INVOICE') }}
+      </p>
+      <div class="mt-2 space-y-1.5">
+        <label
+          v-for="invoice in eligibleInvoices(pendingFinancialAction)"
+          :key="invoice.id"
+          class="flex items-center gap-2 p-2 rounded-lg cursor-pointer bg-n-alpha-1 hover:bg-n-alpha-2"
+        >
+          <input
+            v-model="selectedInvoiceId"
+            type="radio"
+            :value="invoice.id"
+            class="accent-n-blue-9"
+          />
+          <span class="flex-1 text-[11px] text-n-slate-11">
+            {{
+              t('CONVERSATION.SGP.INVOICE_SUMMARY', {
+                date: formatDate(invoice.dueDate),
+                value: formatMoney(invoice.value),
+              })
+            }}
+          </span>
+          <span class="text-[10px] text-n-slate-9">
+            {{
+              t('CONVERSATION.SGP.INVOICE_NUMBER', {
+                number: invoice.number,
+              })
+            }}
+          </span>
+        </label>
+      </div>
+      <div class="flex justify-end gap-2 mt-2">
+        <button
+          class="text-xs text-n-slate-10 hover:text-n-slate-12"
+          @click="closePrompts"
+        >
+          {{ t('CONVERSATION.SGP.CANCEL') }}
+        </button>
+        <button
+          class="px-2.5 py-1 text-xs font-medium rounded-lg bg-n-blue-9 text-white"
+          @click="confirmFinancialAction"
+        >
+          {{ t('CONVERSATION.SGP.SEND') }}
+        </button>
+      </div>
+    </div>
+
+    <div
+      v-if="showPromiseConfirmation"
+      class="p-3 mb-3 rounded-xl border border-n-strong bg-n-alpha-2"
+      data-testid="sgp-promise-confirmation"
+    >
+      <p class="text-xs font-semibold text-n-slate-12">
+        {{ t('CONVERSATION.SGP.PROMISE_CONFIRMATION') }}
+      </p>
+      <p class="mt-1 text-[11px] text-n-slate-10">
+        {{ t('CONVERSATION.SGP.PROMISE_HELP') }}
+      </p>
+      <div class="flex justify-end gap-2 mt-2">
+        <button
+          class="text-xs text-n-slate-10 hover:text-n-slate-12"
+          @click="closePrompts"
+        >
+          {{ t('CONVERSATION.SGP.CANCEL') }}
+        </button>
+        <button
+          class="px-2.5 py-1 text-xs font-medium rounded-lg bg-n-blue-9 text-white"
+          @click="confirmPaymentPromise"
+        >
+          {{ t('CONVERSATION.SGP.CONFIRM') }}
+        </button>
+      </div>
+    </div>
+
     <div class="grid grid-cols-3 gap-1.5">
       <button
         class="py-2 px-1 rounded-lg text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-50"
@@ -328,17 +574,39 @@ watch(
         {{ t('CONVERSATION.SGP.ACTIONS.ONU') }}
       </button>
       <button
-        v-for="action in disabledActions"
+        v-for="action in financialActions"
         :key="action.key"
-        class="py-2 px-1 rounded-lg text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-9 cursor-not-allowed"
-        disabled
+        class="py-2 px-1 rounded-lg text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-40 disabled:cursor-not-allowed"
+        :disabled="
+          isLoading || !sgpData.cpfCnpj || !isFinancialActionAvailable(action)
+        "
+        :data-testid="`sgp-action-${action.key}`"
+        @click="requestFinancialAction(action)"
       >
+        <span
+          class="size-3 inline-block align-text-bottom mr-0.5"
+          :class="
+            activeAction === action.action
+              ? 'i-lucide-loader-circle animate-spin'
+              : action.icon
+          "
+        />
         {{ action.label }}
       </button>
       <button
-        class="col-span-2 py-2 px-1 rounded-lg text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-9 cursor-not-allowed"
-        disabled
+        class="col-span-2 py-2 px-1 rounded-lg text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-50"
+        :disabled="isLoading || !sgpData.cpfCnpj"
+        data-testid="sgp-action-payment-promise"
+        @click="requestPaymentPromise"
       >
+        <span
+          class="size-3 inline-block align-text-bottom mr-0.5"
+          :class="
+            activeAction === 'liberar_promessa_2_dias'
+              ? 'i-lucide-loader-circle animate-spin'
+              : 'i-lucide-calendar-clock'
+          "
+        />
         {{ t('CONVERSATION.SGP.ACTIONS.PAYMENT_PROMISE') }}
       </button>
     </div>

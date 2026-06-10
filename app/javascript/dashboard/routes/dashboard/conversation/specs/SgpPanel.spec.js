@@ -5,7 +5,14 @@ import SgpAPI from 'dashboard/api/integrations/sgp';
 const dispatch = vi.fn(() => Promise.resolve());
 
 vi.mock('vue-i18n', () => ({
-  useI18n: () => ({ t: key => key }),
+  useI18n: () => ({
+    t: (key, params = {}) => {
+      if (key === 'CONVERSATION.SGP.INVOICE_SUMMARY') {
+        return `${params.date} · ${params.value}`;
+      }
+      return key;
+    },
+  }),
 }));
 
 vi.mock('dashboard/composables/store', () => ({
@@ -75,12 +82,121 @@ describe('SgpPanel', () => {
     expect(dispatch).toHaveBeenCalledWith('contacts/show', { id: 7 });
   });
 
-  it('keeps future financial actions disabled', () => {
+  it('renders plan and invoice summaries from custom attributes', () => {
     const wrapper = mount(SgpPanel, {
-      props: { conversationId: 42, contact },
+      props: {
+        conversationId: 42,
+        contact: {
+          ...contact,
+          custom_attributes: {
+            sgp_cpf_cnpj: '52998224725',
+            sgp_plano: '600 Mega',
+            sgp_faturas: [
+              {
+                id: '1',
+                numero: '1001',
+                vencimento: '2026-06-15',
+                valor: '60.00',
+                pix_disponivel: true,
+              },
+              {
+                id: '2',
+                numero: '1002',
+                vencimento: '2026-07-15',
+                valor: '70.00',
+                pix_disponivel: true,
+              },
+            ],
+          },
+        },
+      },
     });
-    const disabledButtons = wrapper.findAll('button[disabled]');
 
-    expect(disabledButtons).toHaveLength(4);
+    expect(wrapper.text()).toContain('600 Mega');
+    expect(wrapper.text()).toContain('15/06/2026');
+    expect(wrapper.text()).toContain('R$ 60,00');
+  });
+
+  it('asks for an invoice when a financial action has multiple options', async () => {
+    SgpAPI.perform.mockResolvedValue({
+      data: { ok: true, message: 'Pix enviado.' },
+    });
+    const wrapper = mount(SgpPanel, {
+      props: {
+        conversationId: 42,
+        contact: {
+          ...contact,
+          custom_attributes: {
+            sgp_cpf_cnpj: '52998224725',
+            sgp_faturas: [
+              {
+                id: '1',
+                numero: '1001',
+                vencimento: '2026-06-15',
+                valor: '60.00',
+                pix_disponivel: true,
+              },
+              {
+                id: '2',
+                numero: '1002',
+                vencimento: '2026-07-15',
+                valor: '70.00',
+                pix_disponivel: true,
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    await wrapper.get('[data-testid="sgp-action-pix"]').trigger('click');
+    expect(wrapper.find('[data-testid="sgp-invoice-selector"]').exists()).toBe(
+      true
+    );
+
+    const radios = wrapper.findAll('input[type="radio"]');
+    await radios[1].setValue();
+    const sendButton = wrapper
+      .findAll('button')
+      .find(button => button.text().includes('CONVERSATION.SGP.SEND'));
+    await sendButton.trigger('click');
+    await flushPromises();
+
+    expect(SgpAPI.perform).toHaveBeenCalledWith(42, {
+      sgp_action: 'enviar_pix',
+      fatura_id: '2',
+    });
+  });
+
+  it('requests a payment promise only after confirmation', async () => {
+    SgpAPI.perform.mockResolvedValue({
+      data: { ok: true, message: 'Promessa liberada.' },
+    });
+    const wrapper = mount(SgpPanel, {
+      props: {
+        conversationId: 42,
+        contact: {
+          ...contact,
+          custom_attributes: { sgp_cpf_cnpj: '52998224725' },
+        },
+      },
+    });
+
+    await wrapper
+      .get('[data-testid="sgp-action-payment-promise"]')
+      .trigger('click');
+    expect(
+      wrapper.find('[data-testid="sgp-promise-confirmation"]').exists()
+    ).toBe(true);
+
+    const confirmButton = wrapper
+      .findAll('button')
+      .find(button => button.text().includes('CONVERSATION.SGP.CONFIRM'));
+    await confirmButton.trigger('click');
+    await flushPromises();
+
+    expect(SgpAPI.perform).toHaveBeenCalledWith(42, {
+      sgp_action: 'liberar_promessa_2_dias',
+    });
   });
 });

@@ -1,7 +1,16 @@
 class Integrations::Sgp::ProcessorService
-  pattr_initialize [:account!, :conversation!]
+  pattr_initialize [:account!, :conversation!, :user!]
 
-  ACTIONS = %w[consultar_sgp_por_cpf consultar_status_onu].freeze
+  ACTIONS = %w[
+    consultar_sgp_por_cpf
+    consultar_status_onu
+    enviar_pix
+    enviar_barras
+    enviar_pdf
+    enviar_link_pagamento
+    liberar_promessa_2_dias
+  ].freeze
+  DELIVERY_ACTIONS = %w[enviar_pix enviar_barras enviar_pdf enviar_link_pagamento].freeze
   RESPONSE_ATTRIBUTES = {
     cpf_cnpj: 'sgp_cpf_cnpj',
     nome: 'sgp_nome_titular',
@@ -17,10 +26,12 @@ class Integrations::Sgp::ProcessorService
     pix_disponivel: 'sgp_pix_disponivel',
     codigo_barras_disponivel: 'sgp_codigo_barras_disponivel',
     pdf_disponivel: 'sgp_pdf_disponivel',
+    link_cobranca_disponivel: 'sgp_link_cobranca_disponivel',
+    faturas: 'sgp_faturas',
     updated_at: 'sgp_atualizado_em'
   }.freeze
 
-  def perform(action:, cpf_cnpj: nil)
+  def perform(action:, cpf_cnpj: nil, fatura_id: nil)
     return error('acao_invalida', 'Ação SGP inválida.') unless ACTIONS.include?(action)
 
     document = document_for(action, cpf_cnpj)
@@ -29,17 +40,19 @@ class Integrations::Sgp::ProcessorService
     persist_document(document)
     request_id = SecureRandom.uuid
     log_request(request_id, action, 'started')
-    response = client.perform(payload(action, document, request_id))
+    response = client.perform(payload(action, document, request_id, fatura_id))
 
     return handle_error_response(response, request_id, action) unless response[:ok]
 
     persist_response(response)
+    message = create_delivery_message(response[:delivery_content]) if DELIVERY_ACTIONS.include?(action)
     log_request(request_id, action, 'completed')
     response.slice(:ok, :reason, :message, :request_id).merge(
       cpf_saved: true,
       contact_id: contact.id,
+      message_id: message&.id,
       custom_attributes: contact.custom_attributes.slice(*RESPONSE_ATTRIBUTES.values)
-    )
+    ).compact
   rescue Integrations::Sgp::Client::ConfigurationError => e
     log_failure(request_id, action, e)
     error('configuracao_incompleta', 'Integração SGP não configurada.', cpf_saved: document.present?, request_id: request_id)
@@ -84,18 +97,29 @@ class Integrations::Sgp::ProcessorService
     contact.update!(custom_attributes: contact.custom_attributes.merge(attributes))
   end
 
-  def payload(action, document, request_id)
+  def payload(action, document, request_id, fatura_id)
     {
       action: action,
       account_id: account.id,
       conversation_id: conversation.display_id,
       contact_id: contact.id,
       cpf_cnpj: document,
-      contrato_id: contact.custom_attributes['sgp_contrato_id'],
+      contract_id: contact.custom_attributes['sgp_contrato_id'],
+      fatura_id: fatura_id.presence,
       onu: contact.custom_attributes['sgp_onu'],
       source: 'chatwoot_sidebar',
       request_id: request_id
     }
+  end
+
+  def create_delivery_message(content)
+    raise Integrations::Sgp::Client::Error, 'n8n returned empty delivery content' if content.blank?
+
+    Messages::MessageBuilder.new(
+      user,
+      conversation,
+      { content: content.to_s, message_type: 'outgoing', private: false, content_type: 'text' }
+    ).perform
   end
 
   def handle_error_response(response, request_id, action)

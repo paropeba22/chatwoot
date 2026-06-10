@@ -2,7 +2,8 @@ class Api::V1::Accounts::Conversations::SgpController < Api::V1::Accounts::Conve
   def create
     result = processor_service.perform(
       action: permitted_params[:sgp_action],
-      cpf_cnpj: permitted_params[:cpf_cnpj]
+      cpf_cnpj: permitted_params[:cpf_cnpj],
+      fatura_id: permitted_params[:fatura_id]
     )
 
     render json: result, status: response_status(result)
@@ -13,12 +14,13 @@ class Api::V1::Accounts::Conversations::SgpController < Api::V1::Accounts::Conve
   def processor_service
     Integrations::Sgp::ProcessorService.new(
       account: Current.account,
-      conversation: @conversation
+      conversation: @conversation,
+      user: Current.user
     )
   end
 
   def permitted_params
-    params.permit(:sgp_action, :cpf_cnpj)
+    params.permit(:sgp_action, :cpf_cnpj, :fatura_id)
   end
 
   def response_status(result)

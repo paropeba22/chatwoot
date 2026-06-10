@@ -1,10 +1,11 @@
 require 'rails_helper'
 
 RSpec.describe Integrations::Sgp::ProcessorService do
-  subject(:service) { described_class.new(account: account, conversation: conversation) }
+  subject(:service) { described_class.new(account: account, conversation: conversation, user: agent) }
 
   let(:account) { create(:account) }
   let(:conversation) { create(:conversation, account: account) }
+  let(:agent) { create(:user, account: account, role: :agent) }
   let(:contact) { conversation.contact }
   let(:client) { instance_double(Integrations::Sgp::Client) }
 
@@ -27,6 +28,15 @@ RSpec.describe Integrations::Sgp::ProcessorService do
       fatura_vencimento: '2026-06-10',
       fatura_valor: '99.90',
       pix_disponivel: true,
+      faturas: [
+        {
+          id: '405488',
+          numero: '309442',
+          vencimento: '2026-06-15',
+          valor: '60.00',
+          pix_disponivel: true
+        }
+      ],
       ignored_secret: 'must-not-be-persisted'
     )
 
@@ -36,7 +46,16 @@ RSpec.describe Integrations::Sgp::ProcessorService do
     expect(contact.reload.custom_attributes).to include(
       'sgp_cpf_cnpj' => '52998224725',
       'sgp_nome_titular' => 'Cliente Teste',
-      'sgp_status_onu' => 'ONLINE'
+      'sgp_status_onu' => 'ONLINE',
+      'sgp_faturas' => [
+        {
+          'id' => '405488',
+          'numero' => '309442',
+          'vencimento' => '2026-06-15',
+          'valor' => '60.00',
+          'pix_disponivel' => true
+        }
+      ]
     )
     expect(contact.custom_attributes).not_to have_key('ignored_secret')
   end
@@ -64,10 +83,52 @@ RSpec.describe Integrations::Sgp::ProcessorService do
       hash_including(
         action: 'consultar_status_onu',
         cpf_cnpj: '52998224725',
-        contrato_id: '456',
+        contract_id: '456',
         onu: 'ONU-1'
       )
     )
+  end
+
+  it 'sends only the delivery content returned by n8n' do
+    contact.update!(custom_attributes: {
+                      'sgp_cpf_cnpj' => '52998224725',
+                      'sgp_contrato_id' => '456'
+                    })
+    allow(client).to receive(:perform).and_return(
+      ok: true,
+      message: 'Pix enviado.',
+      delivery_content: 'https://example.test/pix/405488/html/'
+    )
+    message = instance_double(Message, id: 321)
+    builder = instance_double(Messages::MessageBuilder, perform: message)
+    allow(Messages::MessageBuilder).to receive(:new).and_return(builder)
+
+    result = service.perform(action: 'enviar_pix', fatura_id: '405488')
+
+    expect(client).to have_received(:perform).with(hash_including(action: 'enviar_pix', fatura_id: '405488'))
+    expect(Messages::MessageBuilder).to have_received(:new).with(
+      agent,
+      conversation,
+      {
+        content: 'https://example.test/pix/405488/html/',
+        message_type: 'outgoing',
+        private: false,
+        content_type: 'text'
+      }
+    )
+    expect(result).to include(ok: true, message_id: 321)
+    expect(result).not_to have_key(:delivery_content)
+  end
+
+  it 'does not send a customer message for payment promise feedback' do
+    contact.update!(custom_attributes: { 'sgp_cpf_cnpj' => '52998224725', 'sgp_contrato_id' => '456' })
+    allow(client).to receive(:perform).and_return(ok: true, message: 'Promessa liberada por 2 dias.')
+    allow(Messages::MessageBuilder).to receive(:new)
+
+    result = service.perform(action: 'liberar_promessa_2_dias')
+
+    expect(result).to include(ok: true, message: 'Promessa liberada por 2 dias.')
+    expect(Messages::MessageBuilder).not_to have_received(:new)
   end
 
   it 'rejects invalid documents without calling n8n' do

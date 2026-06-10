@@ -14,7 +14,9 @@ RSpec.describe 'Conversation SGP API', type: :request do
 
   before do
     create(:inbox_member, inbox: conversation.inbox, user: agent)
-    allow(Integrations::Sgp::ProcessorService).to receive(:new).and_return(processor)
+    allow(Integrations::Sgp::ProcessorService).to receive(:new)
+      .with(account: account, conversation: conversation, user: agent)
+      .and_return(processor)
   end
 
   it 'requires authentication' do
@@ -25,7 +27,7 @@ RSpec.describe 'Conversation SGP API', type: :request do
 
   it 'returns the processor response to an authorized agent' do
     expect(processor).to receive(:perform)
-      .with(action: 'consultar_sgp_por_cpf', cpf_cnpj: '52998224725')
+      .with(action: 'consultar_sgp_por_cpf', cpf_cnpj: '52998224725', fatura_id: nil)
       .and_return(ok: true, contact_id: conversation.contact_id)
 
     post endpoint,
@@ -39,7 +41,7 @@ RSpec.describe 'Conversation SGP API', type: :request do
 
   it 'maps SGP availability failures to service unavailable' do
     expect(processor).to receive(:perform)
-      .with(action: 'consultar_status_onu', cpf_cnpj: nil)
+      .with(action: 'consultar_status_onu', cpf_cnpj: nil, fatura_id: nil)
       .and_return(
       ok: false,
       reason: 'sgp_indisponivel',
@@ -52,5 +54,19 @@ RSpec.describe 'Conversation SGP API', type: :request do
          as: :json
 
     expect(response).to have_http_status(:service_unavailable)
+  end
+
+  it 'forwards the selected invoice to the processor' do
+    expect(processor).to receive(:perform)
+      .with(action: 'enviar_pix', cpf_cnpj: nil, fatura_id: '405488')
+      .and_return(ok: true, message_id: 123)
+
+    post endpoint,
+         params: { sgp_action: 'enviar_pix', fatura_id: '405488' },
+         headers: agent.create_new_auth_token,
+         as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body).to include('ok' => true, 'message_id' => 123)
   end
 end

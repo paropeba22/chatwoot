@@ -296,7 +296,15 @@
       "CHANGE": "Alterar",
       "SAVE_AND_CONSULT": "Salvar",
       "CANCEL": "Cancelar",
+      "CONFIRM": "Confirmar",
+      "SEND": "Enviar",
       "SUCCESS": "Dados do SGP atualizados.",
+      "SELECT_INVOICE": "Selecione a fatura",
+      "INVOICE_SUMMARY": "{date} · {value}",
+      "INVOICE_NUMBER": "#{number}",
+      "MORE_INVOICES": "+{count} fatura(s)",
+      "PROMISE_CONFIRMATION": "Liberar promessa por 2 dias?",
+      "PROMISE_HELP": "O SGP fará a tentativa agora. Nenhuma mensagem será enviada automaticamente ao cliente.",
       "FIELDS": {
         "DOCUMENT": "CPF/CNPJ",
         "HOLDER": "Titular",
@@ -310,6 +318,7 @@
         "PIX": "Pix",
         "BARCODE": "Barras",
         "PDF": "PDF",
+        "PAYMENT_LINK": "Link Pagamento",
         "PAYMENT_PROMISE": "Promessa de Pagamento"
       },
       "ERRORS": {
