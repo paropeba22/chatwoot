@@ -1,7 +1,7 @@
 class Api::V1::Accounts::Conversations::SgpController < Api::V1::Accounts::Conversations::BaseController
   def create
     result = processor_service.perform(
-      action: permitted_params[:action],
+      action: permitted_params[:sgp_action],
       cpf_cnpj: permitted_params[:cpf_cnpj]
     )
 
@@ -18,7 +18,7 @@ class Api::V1::Accounts::Conversations::SgpController < Api::V1::Accounts::Conve
   end
 
   def permitted_params
-    params.permit(:action, :cpf_cnpj)
+    params.permit(:sgp_action, :cpf_cnpj)
   end
 
   def response_status(result)

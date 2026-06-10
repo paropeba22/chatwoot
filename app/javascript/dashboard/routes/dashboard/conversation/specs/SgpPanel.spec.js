@@ -69,7 +69,7 @@ describe('SgpPanel', () => {
     await flushPromises();
 
     expect(SgpAPI.perform).toHaveBeenCalledWith(42, {
-      action: 'consultar_sgp_por_cpf',
+      sgp_action: 'consultar_sgp_por_cpf',
       cpf_cnpj: '52998224725',
     });
     expect(dispatch).toHaveBeenCalledWith('contacts/show', { id: 7 });

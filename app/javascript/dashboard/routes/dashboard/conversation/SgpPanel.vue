@@ -110,7 +110,7 @@ const performAction = async (action, payload = {}) => {
 
   try {
     const { data } = await SgpAPI.perform(props.conversationId, {
-      action,
+      sgp_action: action,
       ...payload,
     });
     await refreshContact();

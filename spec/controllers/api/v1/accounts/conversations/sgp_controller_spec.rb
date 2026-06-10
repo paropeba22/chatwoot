@@ -18,16 +18,18 @@ RSpec.describe 'Conversation SGP API', type: :request do
   end
 
   it 'requires authentication' do
-    post endpoint, params: { action: 'consultar_sgp_por_cpf', cpf_cnpj: '52998224725' }, as: :json
+    post endpoint, params: { sgp_action: 'consultar_sgp_por_cpf', cpf_cnpj: '52998224725' }, as: :json
 
     expect(response).to have_http_status(:unauthorized)
   end
 
   it 'returns the processor response to an authorized agent' do
-    allow(processor).to receive(:perform).and_return(ok: true, contact_id: conversation.contact_id)
+    expect(processor).to receive(:perform)
+      .with(action: 'consultar_sgp_por_cpf', cpf_cnpj: '52998224725')
+      .and_return(ok: true, contact_id: conversation.contact_id)
 
     post endpoint,
-         params: { action: 'consultar_sgp_por_cpf', cpf_cnpj: '52998224725' },
+         params: { sgp_action: 'consultar_sgp_por_cpf', cpf_cnpj: '52998224725' },
          headers: agent.create_new_auth_token,
          as: :json
 
@@ -36,14 +38,16 @@ RSpec.describe 'Conversation SGP API', type: :request do
   end
 
   it 'maps SGP availability failures to service unavailable' do
-    allow(processor).to receive(:perform).and_return(
+    expect(processor).to receive(:perform)
+      .with(action: 'consultar_status_onu', cpf_cnpj: nil)
+      .and_return(
       ok: false,
       reason: 'sgp_indisponivel',
       message: 'O SGP está indisponível no momento.'
-    )
+      )
 
     post endpoint,
-         params: { action: 'consultar_status_onu' },
+         params: { sgp_action: 'consultar_status_onu' },
          headers: agent.create_new_auth_token,
          as: :json
 
