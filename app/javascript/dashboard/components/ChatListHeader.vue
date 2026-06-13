@@ -78,7 +78,7 @@ const toggleConversationLayout = () => {
 
 <template>
   <div
-    class="flex items-center justify-between gap-2 px-3 h-[3.25rem] border-b border-n-weak/60 bg-n-surface-2/45 backdrop-blur-[1px]"
+    class="gt-rail-header flex items-center justify-between gap-2 px-3 h-[3.5rem] border-b border-n-weak/60 bg-n-surface-2/45 backdrop-blur-[1px]"
     :class="{
       'border-b border-n-strong/70': hasAppliedFiltersOrActiveFolders,
     }"
@@ -186,7 +186,11 @@ const toggleConversationLayout = () => {
       />
       <!-- Atendimento Focado: recolhe/expande o sidebar sem bloquear o chat -->
       <NextButton
-        v-tooltip.top-end="isFocusMode ? 'Voltar à Gestão' : 'Atendimento Focado'"
+        v-tooltip.top-end="
+          isFocusMode
+            ? $t('CHAT_LIST.FOCUS_MODE.DISABLE')
+            : $t('CHAT_LIST.FOCUS_MODE.ENABLE')
+        "
         :icon="isFocusMode ? 'i-lucide-layout-panel-left' : 'i-lucide-maximize'"
         slate
         xs

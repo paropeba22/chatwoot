@@ -48,7 +48,7 @@ const backButtonUrl = computed(() => {
     conversation_through_participating: 'participating',
     conversation_through_unattended: 'unattended',
   };
-  return conversationListPageURL({
+  const listUrl = conversationListPageURL({
     accountId: accountId.value,
     inboxId,
     label,
@@ -56,6 +56,11 @@ const backButtonUrl = computed(() => {
     conversationType: conversationTypeMap[name],
     customViewId,
   });
+
+  if (!route.query.view) return listUrl;
+
+  const query = new URLSearchParams({ view: String(route.query.view) });
+  return `${listUrl}?${query.toString()}`;
 });
 
 const isHMACVerified = computed(() => {
@@ -96,7 +101,7 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
 <template>
   <div
     ref="conversationHeader"
-    class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-14 border-b border-n-weak/70 bg-n-surface-2/70 backdrop-blur-[1px]"
+    class="gt-conversation-header flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-14 border-b border-n-weak/70 bg-n-surface-2/70 backdrop-blur-[1px]"
   >
     <div
       class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1"

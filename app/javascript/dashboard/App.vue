@@ -55,9 +55,13 @@ export default {
       currentUser: 'getCurrentUser',
       authUIFlags: 'getAuthUIFlags',
       accountUIFlags: 'accounts/getUIFlags',
+      globalConfig: 'globalConfig/get',
     }),
     hideOnOnboardingView() {
       return !isOnOnboardingView(this.$route);
+    },
+    gtUiV2Enabled() {
+      return this.globalConfig.gtUiV2Enabled;
     },
   },
 
@@ -127,6 +131,7 @@ export default {
     v-if="!authUIFlags.isFetching && !accountUIFlags.isFetchingItem"
     id="app"
     class="flex flex-col w-full h-screen min-h-0 bg-n-background"
+    :class="{ 'gt-ui-v2': gtUiV2Enabled }"
     :dir="isRTL ? 'rtl' : 'ltr'"
   >
     <template v-if="currentAccountId">

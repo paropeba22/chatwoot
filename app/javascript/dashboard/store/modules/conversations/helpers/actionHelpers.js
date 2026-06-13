@@ -10,7 +10,7 @@ export const setPageFilter = ({ dispatch, filter, page, markEndReached }) => {
 export const setContacts = (commit, chatList) => {
   commit(
     `contacts/${types.SET_CONTACTS}`,
-    chatList.map(chat => chat.meta.sender)
+    chatList.map(chat => chat?.meta?.sender).filter(Boolean)
   );
 };
 
@@ -55,7 +55,8 @@ export const buildConversationList = (
   const { payload: conversationList, meta: metaData } = responseData;
   const labels = requestPayload?.labels || [];
   const hasBotTabLabel = Array.isArray(labels) && labels.includes('bot-bia');
-  const shouldSyncStatsFromList = filterType !== 'appliedFilters' && !hasBotTabLabel;
+  const shouldSyncStatsFromList =
+    filterType !== 'appliedFilters' && !hasBotTabLabel;
 
   context.commit(types.SET_ALL_CONVERSATION, conversationList);
   if (shouldSyncStatsFromList) {

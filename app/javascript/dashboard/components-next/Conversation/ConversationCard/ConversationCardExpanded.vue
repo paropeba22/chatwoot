@@ -62,7 +62,7 @@ const selectedModel = computed({
 
 <template>
   <div
-    class="conversation relative cursor-pointer group grid gap-4 items-center px-3 h-12 my-1.5 mx-2 rounded-2xl border border-n-weak/75 bg-n-surface-2/55 shadow-[0_2px_10px_rgba(2,8,20,0.22)] hover:border-n-blue-8/45 hover:bg-n-alpha-1/70 transition-all duration-150"
+    class="gt-conversation-card conversation relative cursor-pointer group grid gap-4 items-center px-3 h-12 my-1.5 mx-2 rounded-2xl border border-n-weak/75 bg-n-surface-2/55 shadow-[0_2px_10px_rgba(2,8,20,0.22)] hover:border-n-blue-8/45 hover:bg-n-alpha-1/70 transition-all duration-150"
     :class="{
       'active animate-card-select bg-n-surface-active/80 !border-n-blue-8/45 shadow-[0_8px_20px_rgba(2,8,20,0.34)]':
         isActiveChat,

@@ -19,6 +19,14 @@
       "unassigned": "Em fila",
       "all": "Com IA"
     },
+    "FOCUS_MODE": {
+      "ENABLE": "Atendimento focado",
+      "DISABLE": "Voltar à gestão"
+    },
+    "RESOLVED_VIEW": {
+      "OPEN": "Conversas encerradas",
+      "BACK": "Voltar para abertas"
+    },
     "CHAT_STATUS_FILTER_ITEMS": {
       "open": {
         "TEXT": "Abertas"

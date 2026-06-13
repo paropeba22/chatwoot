@@ -12,7 +12,6 @@ import ConversationList from './ConversationList.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import ConversationFilter from 'next/filter/ConversationFilter.vue';
 import SaveCustomView from 'next/filter/SaveCustomView.vue';
-import ChatTypeTabs from './widgets/ChatTypeTabs.vue';
 import DeleteCustomViews from 'dashboard/routes/dashboard/customviews/DeleteCustomViews.vue';
 import ConversationBulkActions from './widgets/conversation/conversationBulkActions/Index.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
@@ -45,13 +44,8 @@ import {
   isOnParticipatingView,
   isOnUnattendedView,
 } from '../store/modules/conversations/helpers/actionHelpers';
-import {
-  getUserPermissions,
-  filterItemsByPermission,
-} from 'dashboard/helper/permissionsHelper.js';
 import { matchesFilters } from '../store/modules/conversations/helpers/filterHelpers';
 import { CONVERSATION_EVENTS } from '../helper/AnalyticsHelper/events';
-import { ASSIGNEE_TYPE_TAB_PERMISSIONS } from 'dashboard/constants/permissions.js';
 import ConversationApi from 'dashboard/api/inbox/conversation';
 
 const props = defineProps({
@@ -73,7 +67,14 @@ const store = useStore();
 
 const resolveAttributesModalRef = ref(null);
 
-const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
+const normalizeAssigneeView = view => {
+  const normalizedView = String(view || '');
+  return ['me', 'unassigned', 'bot'].includes(normalizedView)
+    ? normalizedView
+    : wootConstants.ASSIGNEE_TYPE.ME;
+};
+
+const activeAssigneeTab = ref(normalizeAssigneeView(route.query.view));
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const showAdvancedFilters = ref(false);
@@ -95,7 +96,6 @@ const advancedFilterTypes = ref(
   }))
 );
 
-
 const currentUser = useMapGetter('getCurrentUser');
 const chatLists = useMapGetter('getFilteredConversations');
 const mineChatsList = useMapGetter('getMineChats');
@@ -112,7 +112,6 @@ const teamsList = useMapGetter('teams/getTeams');
 const inboxesList = useMapGetter('inboxes/getInboxes');
 const campaigns = useMapGetter('campaigns/getAllCampaigns');
 const labels = useMapGetter('labels/getLabels');
-const currentAccountId = useMapGetter('getCurrentAccountId');
 // We can't useFunctionGetter here since it needs to be called on setup?
 const getTeamFn = useMapGetter('teams/getTeam');
 const getConversationById = useMapGetter('getConversationById');
@@ -176,36 +175,12 @@ const currentUserDetails = computed(() => {
   return { id, name };
 });
 
-const userPermissions = computed(() => {
-  return getUserPermissions(currentUser.value, currentAccountId.value);
-});
-
 const unassignedTabCount = computed(() => {
   const rawUnassignedCount = conversationStats.value.unAssignedCount || 0;
   return Math.max(rawUnassignedCount - botTabCounts.value.unassigned, 0);
 });
 
 const botChatsCount = computed(() => botTabCounts.value.total || 0);
-
-const assigneeTabItems = computed(() => {
-  return [
-    {
-      key: 'me',
-      name: 'Meus atendimentos',
-      count: conversationStats.value.mineCount || 0,
-    },
-    {
-      key: 'unassigned',
-      name: 'Em fila',
-      count: unassignedTabCount.value,
-    },
-    {
-      key: 'bot',
-      name: 'Com IA',
-      count: botChatsCount.value,
-    }
-  ];
-});
 
 const showAssigneeInConversationCard = computed(() => {
   return (
@@ -247,10 +222,13 @@ const conversationCustomAttributes = useFunctionGetter(
 );
 
 const activeAssigneeTabCount = computed(() => {
-  const tabItem = assigneeTabItems.value.find(
-    item => item.key === activeAssigneeTab.value
-  );
-  return tabItem ? tabItem.count : 0;
+  if (activeAssigneeTab.value === 'unassigned') {
+    return unassignedTabCount.value;
+  }
+  if (activeAssigneeTab.value === 'bot') {
+    return botChatsCount.value;
+  }
+  return conversationStats.value.mineCount || 0;
 });
 
 const conversationListPagination = computed(() => {
@@ -274,13 +252,21 @@ const conversationListPagination = computed(() => {
 });
 
 const conversationFilters = computed(() => {
+  let filterLabels;
+  if (activeAssigneeTab.value === 'bot') {
+    filterLabels = ['bot-bia'];
+  } else if (props.label) {
+    filterLabels = [props.label];
+  }
+
   return {
     inboxId: props.conversationInbox ? props.conversationInbox : undefined,
-    assigneeType: activeAssigneeTab.value === 'bot' ? 'all' : activeAssigneeTab.value,
+    assigneeType:
+      activeAssigneeTab.value === 'bot' ? 'all' : activeAssigneeTab.value,
     status: activeStatus.value,
     sortBy: activeSortBy.value,
     page: conversationListPagination.value,
-    labels: activeAssigneeTab.value === 'bot' ? ['bot-bia'] : (props.label ? [props.label] : undefined),
+    labels: filterLabels,
     teamId: props.teamId || undefined,
     conversationType: props.conversationType || undefined,
   };
@@ -419,6 +405,9 @@ function toggleResolvedView() {
     // When entering resolved view, reset to 'all' so we don't filter by assignee
     activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ALL;
   }
+  // Function declarations are hoisted; keeping handlers near their UI state
+  // makes this large component easier to scan.
+  // eslint-disable-next-line no-use-before-define
   resetAndFetchData();
 }
 
@@ -614,6 +603,7 @@ function resetAndFetchData() {
     return;
   }
   fetchConversations();
+  // eslint-disable-next-line no-use-before-define
   fetchConversationStats();
 }
 
@@ -637,17 +627,6 @@ function loadMoreConversations() {
     fetchSavedFilteredConversations(payload);
   } else if (hasAppliedFilters.value) {
     fetchFilteredConversations(appliedFilters.value);
-  }
-}
-
-function updateAssigneeTab(selectedTab) {
-  if (activeAssigneeTab.value !== selectedTab) {
-    resetBulkActions();
-    emitter.emit('clearSearchInput');
-    activeAssigneeTab.value = selectedTab;
-    resetAndFetchData();
-    redirectToConversationList();
-    fetchConversationStats();
   }
 }
 
@@ -692,16 +671,19 @@ function redirectToConversationList() {
   } else if (isOnUnattendedView({ route: { name } })) {
     conversationType = wootConstants.CONVERSATION_TYPE.UNATTENDED;
   }
-  router.push(
-    conversationListPageURL({
-      accountId,
-      conversationType: conversationType,
-      customViewId: props.foldersId,
-      inboxId,
-      label,
-      teamId,
-    })
-  );
+  const path = conversationListPageURL({
+    accountId,
+    conversationType: conversationType,
+    customViewId: props.foldersId,
+    inboxId,
+    label,
+    teamId,
+  });
+
+  router.push({
+    path,
+    query: route.query.view ? { view: route.query.view } : undefined,
+  });
 }
 
 async function assignPriority(priority, conversationId = null) {
@@ -847,6 +829,7 @@ function fetchConversationStats() {
     labels: props.label ? [props.label] : undefined,
   };
   store.dispatch('conversationStats/get', statsFilters);
+  // eslint-disable-next-line no-use-before-define
   fetchBotTabCounts(statsFilters);
 }
 
@@ -947,6 +930,19 @@ watch(
   () => resetAndFetchData()
 );
 
+watch(
+  () => route.query.view,
+  view => {
+    const nextView = normalizeAssigneeView(view);
+    if (activeAssigneeTab.value === nextView) return;
+
+    activeAssigneeTab.value = nextView;
+    resetBulkActions();
+    emitter.emit('clearSearchInput');
+    resetAndFetchData();
+  }
+);
+
 watch(activeFolder, (newVal, oldVal) => {
   if (newVal !== oldVal) {
     store.dispatch('customViews/setActiveConversationFolder', newVal || null);
@@ -967,10 +963,10 @@ watch(conversationFilters, (newVal, oldVal) => {
 
 <template>
   <div
-    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-n-surface-1 border-r border-n-weak/70"
+    class="gt-conversation-rail flex flex-col flex-shrink-0 conversations-list-wrap bg-n-surface-1 border-r border-n-weak/70"
     :class="[
       { hidden: !showConversationList },
-      isOnExpandedLayout ? 'basis-full' : 'w-[380px] 2xl:w-[428px]',
+      isOnExpandedLayout ? 'basis-full' : 'w-[360px] 2xl:w-[404px]',
     ]"
   >
     <slot />
@@ -1011,31 +1007,24 @@ watch(conversationFilters, (newVal, oldVal) => {
     />
 
     <div
-      class="px-1.5 pt-1.5 pb-1 border-b border-n-weak/70"
-      style="background: radial-gradient(ellipse at top, rgba(29, 161, 255, 0.1) 0%, transparent 72%);"
-    >
-      <ChatTypeTabs
-        v-if="!hasAppliedFiltersOrActiveFolders"
-        :items="assigneeTabItems"
-        :active-tab="activeAssigneeTab"
-        is-compact
-        class="neo-focus-ring"
-        @chat-tab-change="updateAssigneeTab"
-      />
-    </div>
-    <div
-      class="mx-2 mb-1 px-3 py-2 text-sm font-medium flex justify-between items-center rounded-xl border border-n-weak/70 cursor-pointer hover:bg-n-alpha-1/70 transition-colors"
+      class="resolved-view-toggle mx-2 mt-2 mb-1 px-3 py-2 text-sm font-medium flex justify-between items-center rounded-xl border border-n-weak/70 cursor-pointer hover:bg-n-alpha-1/70 transition-colors"
       :class="isViewingResolved ? 'text-amber-400' : 'text-n-slate-11'"
-      style="background: linear-gradient(135deg, rgba(29, 161, 255, 0.07) 0%, transparent 100%);"
       @click="toggleResolvedView"
     >
       <span class="flex items-center gap-1.5">
         <span
-          :class="isViewingResolved ? 'i-lucide-arrow-left' : 'i-lucide-check-circle'"
+          :class="
+            isViewingResolved
+              ? 'i-lucide-arrow-left'
+              : 'i-lucide-check-circle text-n-teal-10'
+          "
           class="size-3.5"
-          :style="isViewingResolved ? '' : 'color: #22c55e'"
         />
-        {{ isViewingResolved ? 'Voltar para Abertas' : 'Conversas Encerradas' }}
+        {{
+          isViewingResolved
+            ? $t('CHAT_LIST.RESOLVED_VIEW.BACK')
+            : $t('CHAT_LIST.RESOLVED_VIEW.OPEN')
+        }}
       </span>
     </div>
 
@@ -1103,3 +1092,13 @@ watch(conversationFilters, (newVal, oldVal) => {
     />
   </div>
 </template>
+
+<style scoped>
+.resolved-view-toggle {
+  background-image: linear-gradient(
+    135deg,
+    rgba(29, 161, 255, 0.07) 0%,
+    transparent 100%
+  );
+}
+</style>

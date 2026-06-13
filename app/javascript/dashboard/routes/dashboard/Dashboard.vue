@@ -1,5 +1,12 @@
 <script>
-import { defineAsyncComponent, ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import {
+  defineAsyncComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onUnmounted,
+} from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
 import { emitter } from 'shared/helpers/mitt';
 
@@ -47,9 +54,13 @@ export default {
     const isFocusMode = ref(false);
 
     // Initialize focus mode based on role once user data loads
-    watch(isAgent, (val) => {
-      if (val) isFocusMode.value = true;
-    }, { immediate: true });
+    watch(
+      isAgent,
+      val => {
+        if (val) isFocusMode.value = true;
+      },
+      { immediate: true }
+    );
 
     const toggleFocusMode = () => {
       isFocusMode.value = !isFocusMode.value;
@@ -156,7 +167,7 @@ export default {
   <div class="flex flex-grow overflow-hidden text-n-slate-12 relative">
     <div
       class="flex-shrink-0 transition-all duration-300 ease-in-out overflow-hidden"
-      :style="{ width: isFocusMode ? '0px' : undefined, minWidth: isFocusMode ? '0px' : undefined }"
+      :class="{ 'w-0 min-w-0': isFocusMode }"
     >
       <NextSidebar
         v-show="!isFocusMode"

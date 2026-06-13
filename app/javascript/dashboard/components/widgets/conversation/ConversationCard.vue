@@ -96,14 +96,13 @@ watch(
 
 <template>
   <div
-    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border border-n-weak/75 rounded-2xl bg-n-surface-2/55 shadow-[0_2px_10px_rgba(2,8,20,0.22)] hover:border-n-blue-8/45 hover:bg-n-alpha-1/75 group hover:z-[1] transition-all duration-150"
+    class="gt-conversation-card relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 my-1.5 cursor-pointer conversation border border-n-weak/75 rounded-2xl bg-n-surface-2/55 shadow-[0_2px_10px_rgba(2,8,20,0.22)] hover:border-n-blue-8/45 hover:bg-n-alpha-1/75 group hover:z-[1] transition-all duration-150"
     :class="{
       'active animate-card-select bg-n-surface-active/80 !border-n-blue-8/45 shadow-[0_8px_20px_rgba(2,8,20,0.34)]':
         isActiveChat,
       'selected bg-n-slate-2/75 !border-n-blue-8/45': selected,
       'px-0': compact,
       'px-2.5': !compact,
-      'my-1.5': true,
     }"
     @click="$emit('click', $event)"
     @contextmenu="$emit('contextmenu', $event)"

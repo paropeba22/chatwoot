@@ -17,5 +17,7 @@ describe('SidebarAccountSwitcher', () => {
     expect(source).not.toContain('{{ account.name }}');
     expect(source).not.toContain(':title="currentAccount.name"');
     expect(source).not.toContain(':title="account.name"');
+    expect(source).toContain('/brand-assets/logo_thumbnail.png');
+    expect(source).not.toContain("import Logo from 'next/icon/Logo.vue'");
   });
 });

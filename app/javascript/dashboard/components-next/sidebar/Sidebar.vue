@@ -39,6 +39,7 @@ const { accountScopedRoute, isOnChatwootCloud } = useAccount();
 const store = useStore();
 const searchShortcut = useKbd([`$mod`, 'k']);
 const { t } = useI18n();
+const brandLogoUrl = '/brand-assets/logo_thumbnail.png';
 
 const isACustomBrandedInstance = useMapGetter(
   'globalConfig/isACustomBrandedInstance'
@@ -225,6 +226,11 @@ const newReportRoutes = () => [
 
 const reportRoutes = computed(() => newReportRoutes());
 
+const conversationViewRoute = view => ({
+  ...accountScopedRoute('home'),
+  query: { view },
+});
+
 const menuItems = computed(() => {
   return [
     {
@@ -246,7 +252,19 @@ const menuItems = computed(() => {
           name: 'All',
           label: t('SIDEBAR.ALL_CONVERSATIONS'),
           activeOn: ['inbox_conversation'],
-          to: accountScopedRoute('home'),
+          to: conversationViewRoute('me'),
+        },
+        {
+          name: 'Queue',
+          label: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.unassigned'),
+          activeOn: ['inbox_conversation'],
+          to: conversationViewRoute('unassigned'),
+        },
+        {
+          name: 'AI',
+          label: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.all'),
+          activeOn: ['inbox_conversation'],
+          to: conversationViewRoute('bot'),
         },
         {
           name: 'Mentions',
@@ -583,7 +601,7 @@ const menuItems = computed(() => {
         ],
       },
     ]"
-    class="neo-sidebar bg-n-background flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full z-40 w-[200px] md:w-auto md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak/80"
+    class="gt-sidebar neo-sidebar bg-n-background flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full z-40 w-[220px] md:w-auto md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak/80"
     :class="[
       {
         'shadow-lg md:shadow-none': isMobileSidebarOpen,
@@ -595,7 +613,7 @@ const menuItems = computed(() => {
     :style="isMobile ? undefined : { width: `${sidebarWidth}px` }"
   >
     <section
-      class="grid"
+      class="gt-sidebar-brand grid"
       :class="isEffectivelyCollapsed ? 'mt-3 mb-6 gap-4' : 'mt-2 mb-4 gap-3'"
     >
       <div
@@ -613,7 +631,7 @@ const menuItems = computed(() => {
         </template>
         <template v-else>
           <div class="grid flex-shrink-0 place-content-center size-6">
-            <img :src="'/brand-assets/logo_thumbnail.png'" class="size-4" alt="Grupo Telecom" />
+            <img :src="brandLogoUrl" class="size-4" alt="Grupo Telecom" />
           </div>
           <div class="flex-shrink-0 w-px h-3 bg-n-strong" />
           <SidebarAccountSwitcher
@@ -671,7 +689,7 @@ const menuItems = computed(() => {
       </div>
     </section>
     <nav
-      class="grid overflow-y-scroll flex-grow gap-2 pb-5 no-scrollbar min-w-0"
+      class="gt-sidebar-nav grid overflow-y-scroll flex-grow gap-2 pb-5 no-scrollbar min-w-0"
       :class="isEffectivelyCollapsed ? 'px-1' : 'px-2'"
     >
       <ul
@@ -732,12 +750,15 @@ const menuItems = computed(() => {
 
 <style scoped>
 .neo-sidebar {
-  background-image:
-    radial-gradient(
+  background-image: radial-gradient(
       ellipse at top left,
       rgba(var(--blue-9), 0.1) 0%,
       transparent 45%
     ),
-    linear-gradient(180deg, rgba(var(--surface-1), 0.98), rgba(var(--surface-1), 0.98));
+    linear-gradient(
+      180deg,
+      rgba(var(--surface-1), 0.98),
+      rgba(var(--surface-1), 0.98)
+    );
 }
 </style>

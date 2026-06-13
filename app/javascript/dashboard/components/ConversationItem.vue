@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch, inject } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import ConversationCard from './widgets/conversation/ConversationCard.vue';
@@ -19,6 +19,7 @@ const props = defineProps({
 });
 
 const router = useRouter();
+const route = useRoute();
 const store = useStore();
 
 const selectConversation = inject('selectConversation');
@@ -89,7 +90,8 @@ const conversationPath = computed(() =>
       teamId: props.teamId,
       conversationType: props.conversationType,
       foldersId: props.foldersId,
-    })
+    }),
+    route.query.view ? { view: route.query.view } : undefined
   )
 );
 

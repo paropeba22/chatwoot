@@ -123,12 +123,33 @@ const isActive = computed(() => {
   return false;
 });
 
+const routeQueryMatches = to => {
+  const targetQuery = to?.query || {};
+  const targetKeys = Object.keys(targetQuery);
+  if (!targetKeys.length) return true;
+
+  return targetKeys.every(key => {
+    const routeValue = route.query[key];
+    const targetValue = targetQuery[key];
+    const isDefaultConversationView =
+      key === 'view' && targetValue === 'me' && routeValue === undefined;
+
+    return (
+      isDefaultConversationView ||
+      String(routeValue ?? '') === String(targetValue ?? '')
+    );
+  });
+};
+
 // We could use the RouterLink isActive too, but our routes are not always
 // nested correctly, so we need to check the active state ourselves
 // TODO: Audit the routes and fix the nesting and remove this
 const activeChild = computed(() => {
   const pathSame = navigableChildren.value.find(
-    child => child.to && route.path === resolvePath(child.to)
+    child =>
+      child.to &&
+      route.path === resolvePath(child.to) &&
+      routeQueryMatches(child.to)
   );
   if (pathSame) return pathSame;
 
@@ -143,11 +164,13 @@ const activeChild = computed(() => {
 
   if (activeOnPages.length > 0) {
     const rankedPage = activeOnPages.find(child => {
-      return Object.keys(child.to.params)
+      const paramsMatch = Object.keys(child.to.params || {})
         .map(key => {
           return String(child.to.params[key]) === String(route.params[key]);
         })
         .every(match => match);
+
+      return paramsMatch && routeQueryMatches(child.to);
     });
 
     // If there is no ranked page, return the first activeOn page anyway
@@ -161,7 +184,10 @@ const activeChild = computed(() => {
   return navigableChildren.value.find(child => {
     if (!child.to) return false;
     const childPath = resolvePath(child.to);
-    return route.path === childPath || route.path.startsWith(`${childPath}/`);
+    return (
+      routeQueryMatches(child.to) &&
+      (route.path === childPath || route.path.startsWith(`${childPath}/`))
+    );
   });
 });
 

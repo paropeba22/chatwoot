@@ -171,4 +171,244 @@ body {
     outline: none;
     box-shadow: 0 0 0 3px rgba(var(--gt-focus-ring));
   }
+
+  #app.gt-ui-v2 {
+    --gt-cyan: 46, 211, 255;
+    --gt-blue: 29, 161, 255;
+    --gt-ink: 5, 11, 22;
+
+    position: relative;
+    isolation: isolate;
+    background-color: rgb(var(--background-color));
+    background-image: radial-gradient(
+        circle at 18% -10%,
+        rgba(var(--gt-blue), 0.14),
+        transparent 32rem
+      ),
+      radial-gradient(
+        circle at 96% 8%,
+        rgba(var(--gt-cyan), 0.08),
+        transparent 28rem
+      );
+
+    &::before {
+      position: fixed;
+      z-index: -1;
+      inset: 0;
+      pointer-events: none;
+      content: '';
+      opacity: 0.16;
+      background-image: linear-gradient(
+          rgba(255, 255, 255, 0.025) 1px,
+          transparent 1px
+        ),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: linear-gradient(to bottom, black, transparent 76%);
+    }
+
+    .gt-sidebar {
+      border-color: rgba(var(--blue-8), 0.14);
+      box-shadow: 12px 0 34px rgba(var(--gt-ink), 0.16);
+    }
+
+    .gt-sidebar-brand {
+      position: relative;
+      padding-top: 0.35rem;
+
+      &::after {
+        position: absolute;
+        right: 0.75rem;
+        bottom: -0.35rem;
+        left: 0.75rem;
+        height: 1px;
+        content: '';
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(var(--gt-cyan), 0.28),
+          transparent
+        );
+      }
+    }
+
+    .gt-sidebar-nav {
+      padding-top: 0.35rem;
+    }
+
+    .gt-conversation-rail {
+      position: relative;
+      background: linear-gradient(
+        180deg,
+        rgba(var(--surface-2), 0.84),
+        rgba(var(--surface-1), 0.98)
+      );
+      box-shadow: 10px 0 32px rgba(var(--gt-ink), 0.12);
+    }
+
+    .gt-rail-header {
+      background: linear-gradient(
+        135deg,
+        rgba(var(--blue-9), 0.08),
+        rgba(var(--surface-2), 0.74) 45%,
+        rgba(var(--teal-9), 0.04)
+      );
+    }
+
+    .gt-conversation-card {
+      position: relative;
+      overflow: hidden;
+      animation: gt-card-enter 280ms ease both;
+      backdrop-filter: blur(10px);
+
+      &::before {
+        position: absolute;
+        top: 0.65rem;
+        bottom: 0.65rem;
+        left: 0;
+        width: 2px;
+        content: '';
+        opacity: 0;
+        border-radius: 999px;
+        background: linear-gradient(
+          to bottom,
+          rgb(var(--blue-9)),
+          rgb(var(--teal-9))
+        );
+        transition: opacity 160ms ease;
+      }
+
+      &:hover {
+        transform: translateX(2px);
+        box-shadow: 0 10px 24px rgba(var(--gt-ink), 0.3);
+      }
+
+      &.active::before {
+        opacity: 1;
+      }
+    }
+
+    .gt-conversation-stage {
+      overflow: hidden;
+      background: radial-gradient(
+          circle at 75% 0%,
+          rgba(var(--blue-9), 0.07),
+          transparent 25rem
+        ),
+        rgb(var(--surface-1));
+    }
+
+    .gt-conversation-header {
+      background: linear-gradient(
+        90deg,
+        rgba(var(--surface-2), 0.92),
+        rgba(var(--blue-2), 0.54)
+      );
+      box-shadow: 0 8px 24px rgba(var(--gt-ink), 0.1);
+    }
+
+    .gt-customer-sidebar {
+      background: radial-gradient(
+          circle at 50% -8%,
+          rgba(var(--teal-9), 0.1),
+          transparent 22rem
+        ),
+        rgb(var(--surface-2));
+      box-shadow: -16px 0 38px rgba(var(--gt-ink), 0.2);
+    }
+
+    .gt-customer-panel {
+      min-height: 100%;
+    }
+
+    .gt-customer-360 {
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(
+          circle at 92% 0%,
+          rgba(var(--teal-9), 0.1),
+          transparent 12rem
+        ),
+        linear-gradient(
+          145deg,
+          rgba(var(--blue-2), 0.9),
+          rgba(var(--surface-2), 0.72) 48%,
+          rgba(var(--teal-2), 0.52)
+        );
+
+      &::before {
+        position: absolute;
+        top: -4rem;
+        right: -3rem;
+        width: 9rem;
+        height: 9rem;
+        pointer-events: none;
+        content: '';
+        border: 1px solid rgba(var(--teal-9), 0.12);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 1.5rem rgba(var(--blue-9), 0.025),
+          0 0 0 3rem rgba(var(--blue-9), 0.018);
+      }
+
+      .sgp-metric-card,
+      .sgp-detail-card {
+        background: linear-gradient(
+          145deg,
+          rgba(var(--solid-2), 0.84),
+          rgba(var(--alpha-1))
+        );
+        box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+        backdrop-filter: blur(12px);
+      }
+
+      .sgp-action-button {
+        box-shadow:
+          inset 0 1px rgba(255, 255, 255, 0.035),
+          0 4px 12px rgba(var(--gt-ink), 0.1);
+      }
+    }
+  }
+}
+
+@keyframes gt-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  #app.gt-ui-v2 {
+    .gt-customer-sidebar {
+      top: auto;
+      bottom: 0;
+      height: min(88vh, 720px);
+      max-width: none;
+      border-top: 1px solid rgba(var(--blue-8), 0.28);
+      border-radius: 1.25rem 1.25rem 0 0;
+      box-shadow: 0 -24px 60px rgba(var(--gt-ink), 0.52);
+    }
+
+    .gt-conversation-stage {
+      border-radius: 1.25rem 1.25rem 0 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app.gt-ui-v2 {
+    .gt-conversation-card,
+    .sgp-action-button,
+    .sgp-metric-card,
+    .sgp-detail-card {
+      animation: none;
+      transition: none;
+    }
+  }
 }

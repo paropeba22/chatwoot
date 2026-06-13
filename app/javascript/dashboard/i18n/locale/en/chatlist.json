@@ -19,6 +19,14 @@
       "unassigned": "Unassigned",
       "all": "All"
     },
+    "FOCUS_MODE": {
+      "ENABLE": "Focused service",
+      "DISABLE": "Back to management"
+    },
+    "RESOLVED_VIEW": {
+      "OPEN": "Closed conversations",
+      "BACK": "Back to open"
+    },
     "CHAT_STATUS_FILTER_ITEMS": {
       "open": {
         "TEXT": "Open"

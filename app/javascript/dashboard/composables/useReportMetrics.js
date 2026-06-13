@@ -1,5 +1,6 @@
 import { useMapGetter } from 'dashboard/composables/store';
 import { formatTime } from '@chatwoot/utils';
+import { useNumberFormatter } from 'shared/composables/useNumberFormatter';
 
 /**
  * A composable function for report metrics calculations and display.
@@ -13,6 +14,7 @@ export function useReportMetrics(
 ) {
   const accountSummary = useMapGetter(accountSummaryKey);
   const fetchingStatus = useMapGetter(summarFetchingKey);
+  const { formatFullNumber } = useNumberFormatter();
 
   /**
    * Calculates the trend percentage for a given metric.
@@ -50,7 +52,7 @@ export function useReportMetrics(
     if (isAverageMetricType(key)) {
       return formatTime(accountSummary.value[key]);
     }
-    return Number(accountSummary.value[key] || '').toLocaleString();
+    return formatFullNumber(Number(accountSummary.value[key] || 0));
   };
 
   return {

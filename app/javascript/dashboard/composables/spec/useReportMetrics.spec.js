@@ -7,6 +7,11 @@ vi.mock('dashboard/composables/store');
 vi.mock('@chatwoot/utils', () => ({
   formatTime: vi.fn(time => `formatted_${time}`),
 }));
+vi.mock('shared/composables/useNumberFormatter', () => ({
+  useNumberFormatter: () => ({
+    formatFullNumber: value => new Intl.NumberFormat('en-US').format(value),
+  }),
+}));
 
 describe('useReportMetrics', () => {
   beforeEach(() => {

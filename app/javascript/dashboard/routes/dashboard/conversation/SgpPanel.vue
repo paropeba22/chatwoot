@@ -89,6 +89,13 @@ const sgpData = computed(() => ({
   updatedAt: customAttributes.value.sgp_atualizado_em,
 }));
 
+const onuStatusClass = computed(() => {
+  const status = String(sgpData.value.onuStatus || '').toLowerCase();
+  if (status.includes('online')) return 'text-n-teal-11';
+  if (status.includes('offline')) return 'text-n-ruby-11';
+  return 'text-n-slate-12';
+});
+
 const financialActions = computed(() => [
   {
     key: 'pix',
@@ -174,14 +181,14 @@ const isValidDocument = value =>
   (value.length === 14 && isValidCnpj(value));
 
 const formatDate = value => {
-  if (!value) return '—';
+  if (!value) return '-';
   const date = new Date(`${String(value).slice(0, 10)}T00:00:00`);
   if (Number.isNaN(date.getTime())) return String(value);
   return new Intl.DateTimeFormat('pt-BR').format(date);
 };
 
 const formatMoney = value => {
-  if (value === null || value === undefined || value === '') return '—';
+  if (value === null || value === undefined || value === '') return '-';
   const amount = Number(String(value).replace(',', '.'));
   if (Number.isNaN(amount)) return String(value);
   return new Intl.NumberFormat('pt-BR', {
@@ -306,15 +313,19 @@ watch(
 
 <template>
   <section
-    class="px-4 py-4 border-b border-n-weak bg-gradient-to-br from-n-blue-2/70 via-transparent to-n-teal-2/30"
+    class="gt-customer-360 px-4 py-4 border-b border-n-weak bg-gradient-to-br from-n-blue-2/70 via-transparent to-n-teal-2/30"
     data-testid="sgp-panel"
   >
     <div class="flex items-start justify-between gap-3 mb-3">
-      <div>
+      <div class="min-w-0">
         <h3
-          class="flex items-center gap-2 text-sm font-semibold text-n-slate-12"
+          class="flex items-center gap-2 text-sm font-semibold tracking-tight text-n-slate-12"
         >
-          <span class="i-lucide-shield-check size-4 text-n-blue-10" />
+          <span
+            class="grid place-items-center size-7 rounded-lg bg-n-blue-9/15 border border-n-blue-8/30"
+          >
+            <span class="i-lucide-shield-check size-4 text-n-blue-10" />
+          </span>
           {{ t('CONVERSATION.SGP.TITLE') }}
         </h3>
         <p v-if="sgpData.updatedAt" class="mt-1 text-[11px] text-n-slate-10">
@@ -328,7 +339,9 @@ watch(
     </div>
 
     <div class="grid grid-cols-2 gap-2 mb-3">
-      <div class="p-2.5 rounded-xl border border-n-weak bg-n-alpha-1">
+      <div
+        class="sgp-metric-card p-3 rounded-xl border border-n-weak bg-n-alpha-1"
+      >
         <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
           {{ t('CONVERSATION.SGP.FIELDS.CONTRACT') }}
         </p>
@@ -342,11 +355,13 @@ watch(
           {{ sgpData.contractStatus }}
         </p>
       </div>
-      <div class="p-2.5 rounded-xl border border-n-weak bg-n-alpha-1">
+      <div
+        class="sgp-metric-card p-3 rounded-xl border border-n-weak bg-n-alpha-1"
+      >
         <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
           {{ t('CONVERSATION.SGP.FIELDS.ONU') }}
         </p>
-        <p class="mt-1 text-sm font-semibold text-n-slate-12 truncate">
+        <p class="mt-1 text-sm font-semibold truncate" :class="onuStatusClass">
           {{ sgpData.onuStatus || sgpData.onu || 'N/A' }}
         </p>
         <p
@@ -356,7 +371,9 @@ watch(
           {{ sgpData.onu }}
         </p>
       </div>
-      <div class="p-2.5 rounded-xl border border-n-weak bg-n-alpha-1">
+      <div
+        class="sgp-metric-card p-3 rounded-xl border border-n-weak bg-n-alpha-1"
+      >
         <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
           {{ t('CONVERSATION.SGP.FIELDS.PLAN') }}
         </p>
@@ -364,7 +381,9 @@ watch(
           {{ sgpData.plan || 'N/A' }}
         </p>
       </div>
-      <div class="p-2.5 rounded-xl border border-n-weak bg-n-alpha-1">
+      <div
+        class="sgp-metric-card p-3 rounded-xl border border-n-weak bg-n-alpha-1"
+      >
         <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
           {{ t('CONVERSATION.SGP.FIELDS.INVOICE') }}
         </p>
@@ -394,7 +413,7 @@ watch(
             {{ sgpData.invoiceValue || 'N/A' }}
           </p>
           <p class="text-[11px] text-n-slate-10 truncate">
-            {{ sgpData.invoiceDueDate || sgpData.invoiceStatus || '—' }}
+            {{ sgpData.invoiceDueDate || sgpData.invoiceStatus || '-' }}
           </p>
         </template>
       </div>
@@ -402,7 +421,7 @@ watch(
 
     <div
       v-if="sgpData.holderName"
-      class="p-2.5 mb-2 rounded-xl border border-n-weak bg-n-alpha-1"
+      class="sgp-detail-card p-3 mb-2 rounded-xl border border-n-weak bg-n-alpha-1"
     >
       <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
         {{ t('CONVERSATION.SGP.FIELDS.HOLDER') }}
@@ -413,7 +432,7 @@ watch(
     </div>
 
     <div
-      class="flex items-center justify-between p-2.5 mb-3 rounded-xl border border-n-weak bg-n-alpha-1"
+      class="sgp-detail-card flex items-center justify-between p-3 mb-3 rounded-xl border border-n-weak bg-n-alpha-1"
     >
       <div class="flex-1 min-w-0 mr-2">
         <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
@@ -466,11 +485,11 @@ watch(
 
     <p
       v-if="statusMessage"
-      class="p-2 mb-3 text-xs rounded-lg"
+      class="sgp-status-message p-2.5 mb-3 text-xs rounded-xl border"
       :class="
         statusType === 'success'
-          ? 'bg-n-teal-3 text-n-teal-11'
-          : 'bg-n-ruby-3 text-n-ruby-11'
+          ? 'bg-n-teal-3 text-n-teal-11 border-n-teal-7/30'
+          : 'bg-n-ruby-3 text-n-ruby-11 border-n-ruby-7/30'
       "
       role="status"
     >
@@ -557,14 +576,14 @@ watch(
       </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-1.5">
+    <div class="grid grid-cols-2 gap-2">
       <button
-        class="py-2 px-1 rounded-lg text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-50"
+        class="sgp-action-button py-2.5 px-2 rounded-xl text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-50"
         :disabled="isLoading || !sgpData.cpfCnpj"
         @click="consultOnu"
       >
         <span
-          class="size-3 inline-block align-text-bottom mr-0.5"
+          class="size-3.5 inline-block align-text-bottom mr-1"
           :class="
             activeAction === 'consultar_status_onu'
               ? 'i-lucide-loader-circle animate-spin'
@@ -576,7 +595,7 @@ watch(
       <button
         v-for="action in financialActions"
         :key="action.key"
-        class="py-2 px-1 rounded-lg text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-40 disabled:cursor-not-allowed"
+        class="sgp-action-button py-2.5 px-2 rounded-xl text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-40 disabled:cursor-not-allowed"
         :disabled="
           isLoading || !sgpData.cpfCnpj || !isFinancialActionAvailable(action)
         "
@@ -584,7 +603,7 @@ watch(
         @click="requestFinancialAction(action)"
       >
         <span
-          class="size-3 inline-block align-text-bottom mr-0.5"
+          class="size-3.5 inline-block align-text-bottom mr-1"
           :class="
             activeAction === action.action
               ? 'i-lucide-loader-circle animate-spin'
@@ -594,13 +613,13 @@ watch(
         {{ action.label }}
       </button>
       <button
-        class="col-span-2 py-2 px-1 rounded-lg text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-50"
+        class="sgp-action-button col-span-2 py-2.5 px-2 rounded-xl text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-50"
         :disabled="isLoading || !sgpData.cpfCnpj"
         data-testid="sgp-action-payment-promise"
         @click="requestPaymentPromise"
       >
         <span
-          class="size-3 inline-block align-text-bottom mr-0.5"
+          class="size-3.5 inline-block align-text-bottom mr-1"
           :class="
             activeAction === 'liberar_promessa_2_dias'
               ? 'i-lucide-loader-circle animate-spin'
@@ -612,3 +631,29 @@ watch(
     </div>
   </section>
 </template>
+
+<style scoped>
+.sgp-metric-card,
+.sgp-detail-card,
+.sgp-action-button {
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.sgp-metric-card:hover,
+.sgp-detail-card:hover {
+  border-color: rgba(var(--blue-8), 0.42);
+}
+
+.sgp-action-button:not(:disabled):hover {
+  background: rgba(var(--blue-9), 0.12);
+  border-color: rgba(var(--blue-8), 0.5);
+  transform: translateY(-1px);
+}
+
+.sgp-action-button:not(:disabled):active {
+  transform: translateY(0);
+}
+</style>

@@ -5,7 +5,6 @@ import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import ButtonNext from 'next/button/Button.vue';
 import Icon from 'next/icon/Icon.vue';
-import Logo from 'next/icon/Logo.vue';
 
 import {
   DropdownContainer,
@@ -24,6 +23,7 @@ defineProps({
 const emit = defineEmits(['showCreateAccountModal']);
 
 const { t } = useI18n();
+const brandLogoUrl = '/brand-assets/logo_thumbnail.png';
 const { accountId, currentAccount } = useAccount();
 const currentUser = useMapGetter('getCurrentUser');
 const globalConfig = useMapGetter('globalConfig/get');
@@ -72,7 +72,11 @@ const emitNewAccount = () => {
         :title="currentAccountDisplayName"
         @click="toggle"
       >
-        <Logo class="size-7" />
+        <img
+          :src="brandLogoUrl"
+          class="size-7 object-contain"
+          alt="Grupo Telecom"
+        />
       </button>
       <!-- Expanded view: Account name trigger -->
       <button
