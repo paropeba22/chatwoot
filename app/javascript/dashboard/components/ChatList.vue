@@ -12,6 +12,7 @@ import ConversationList from './ConversationList.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import ConversationFilter from 'next/filter/ConversationFilter.vue';
 import SaveCustomView from 'next/filter/SaveCustomView.vue';
+import ChatTypeTabs from './widgets/ChatTypeTabs.vue';
 import DeleteCustomViews from 'dashboard/routes/dashboard/customviews/DeleteCustomViews.vue';
 import ConversationBulkActions from './widgets/conversation/conversationBulkActions/Index.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
@@ -181,6 +182,24 @@ const unassignedTabCount = computed(() => {
 });
 
 const botChatsCount = computed(() => botTabCounts.value.total || 0);
+
+const assigneeTabItems = computed(() => [
+  {
+    key: 'me',
+    name: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.me'),
+    count: conversationStats.value.mineCount || 0,
+  },
+  {
+    key: 'unassigned',
+    name: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.unassigned'),
+    count: unassignedTabCount.value,
+  },
+  {
+    key: 'bot',
+    name: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.all'),
+    count: botChatsCount.value,
+  },
+]);
 
 const showAssigneeInConversationCard = computed(() => {
   return (
@@ -630,6 +649,19 @@ function loadMoreConversations() {
   }
 }
 
+function updateAssigneeTab(selectedTab) {
+  if (activeAssigneeTab.value === selectedTab) return;
+
+  resetBulkActions();
+  emitter.emit('clearSearchInput');
+  activeAssigneeTab.value = selectedTab;
+  resetAndFetchData();
+  // eslint-disable-next-line no-use-before-define
+  redirectToConversationList(selectedTab);
+  // eslint-disable-next-line no-use-before-define
+  fetchConversationStats();
+}
+
 function onBasicFilterChange(value, type) {
   if (type === 'status') {
     activeStatus.value = value;
@@ -657,7 +689,7 @@ function openLastItemAfterDeleteInFolder() {
   }
 }
 
-function redirectToConversationList() {
+function redirectToConversationList(assigneeView = route.query.view) {
   const {
     params: { accountId, inbox_id: inboxId, label, teamId },
     name,
@@ -682,7 +714,7 @@ function redirectToConversationList() {
 
   router.push({
     path,
-    query: route.query.view ? { view: route.query.view } : undefined,
+    query: assigneeView ? { view: assigneeView } : undefined,
   });
 }
 
@@ -1007,6 +1039,18 @@ watch(conversationFilters, (newVal, oldVal) => {
     />
 
     <div
+      v-if="!hasAppliedFiltersOrActiveFolders"
+      class="gt-assignee-tabs px-2 pt-2 pb-1 border-b border-n-weak/70"
+    >
+      <ChatTypeTabs
+        :items="assigneeTabItems"
+        :active-tab="activeAssigneeTab"
+        class="neo-focus-ring"
+        @chat-tab-change="updateAssigneeTab"
+      />
+    </div>
+
+    <div
       class="resolved-view-toggle mx-2 mt-2 mb-1 px-3 py-2 text-sm font-medium flex justify-between items-center rounded-xl border border-n-weak/70 cursor-pointer hover:bg-n-alpha-1/70 transition-colors"
       :class="isViewingResolved ? 'text-amber-400' : 'text-n-slate-11'"
       @click="toggleResolvedView"
@@ -1100,5 +1144,14 @@ watch(conversationFilters, (newVal, oldVal) => {
     rgba(29, 161, 255, 0.07) 0%,
     transparent 100%
   );
+}
+
+.gt-assignee-tabs {
+  background: radial-gradient(
+      ellipse at 50% -40%,
+      rgba(29, 161, 255, 0.14),
+      transparent 72%
+    ),
+    rgba(var(--surface-1), 0.72);
 }
 </style>

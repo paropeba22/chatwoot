@@ -255,18 +255,6 @@ const menuItems = computed(() => {
           to: conversationViewRoute('me'),
         },
         {
-          name: 'Queue',
-          label: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.unassigned'),
-          activeOn: ['inbox_conversation'],
-          to: conversationViewRoute('unassigned'),
-        },
-        {
-          name: 'AI',
-          label: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.all'),
-          activeOn: ['inbox_conversation'],
-          to: conversationViewRoute('bot'),
-        },
-        {
           name: 'Mentions',
           label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
           activeOn: ['conversation_through_mentions'],
