@@ -63,6 +63,44 @@ export default {
     additionalAttributes() {
       return this.contact.additional_attributes || {};
     },
+    emailAddress() {
+      return this.contact.email?.trim() || '';
+    },
+    displayPhoneNumber() {
+      return this.contact.phone_number?.trim() || '';
+    },
+    companyName() {
+      return this.additionalAttributes.company_name?.trim() || '';
+    },
+    visibleIdentifier() {
+      const identifier = this.contact.identifier?.trim() || '';
+      if (!identifier) {
+        return '';
+      }
+
+      const normalizedIdentifier = identifier.toLowerCase();
+      const technicalSuffixes = [
+        '@s.whatsapp.net',
+        '@lid',
+        '@g.us',
+        '@broadcast',
+      ];
+
+      if (
+        technicalSuffixes.some(suffix => normalizedIdentifier.endsWith(suffix))
+      ) {
+        return '';
+      }
+
+      const phoneDigits = this.displayPhoneNumber.replace(/\D/g, '');
+      const identifierDigits = identifier.replace(/\D/g, '');
+
+      if (phoneDigits && identifierDigits && phoneDigits === identifierDigits) {
+        return '';
+      }
+
+      return identifier;
+    },
     location() {
       const {
         country = '',
@@ -91,6 +129,20 @@ export default {
         twitter,
         telegram,
       };
+    },
+    hasSocialProfiles() {
+      return Object.values(this.socialProfiles).some(value => !!value);
+    },
+    hasContactDetails() {
+      return Boolean(
+        this.emailAddress ||
+          this.displayPhoneNumber ||
+          this.visibleIdentifier ||
+          this.companyName ||
+          this.location ||
+          this.additionalAttributes.location ||
+          this.hasSocialProfiles
+      );
     },
   },
   watch: {
@@ -175,15 +227,18 @@ export default {
 </script>
 
 <template>
-  <div class="relative items-center w-full p-4">
-    <div class="flex flex-col w-full gap-2 text-left rtl:text-right">
+  <section
+    class="relative mx-3 my-3 overflow-hidden rounded-2xl border border-n-weak/80 bg-n-alpha-1 shadow-[0_8px_24px_rgba(2,8,20,0.12)]"
+    data-testid="contact-identity-card"
+  >
+    <div class="flex flex-col w-full gap-3 p-4 text-left rtl:text-right">
       <div class="flex flex-row justify-between">
         <Avatar
           v-if="showAvatar"
           :src="contact.thumbnail"
           :name="contact.name"
           :status="contact.availability_status"
-          :size="48"
+          :size="52"
           hide-offline-status
           rounded-full
         />
@@ -236,10 +291,15 @@ export default {
         <p v-if="additionalAttributes.description" class="break-words mb-0.5">
           {{ additionalAttributes.description }}
         </p>
-        <div class="flex flex-col items-start w-full gap-2">
+        <div
+          v-if="hasContactDetails"
+          class="flex flex-col items-start w-full gap-2 pt-1"
+          data-testid="contact-details"
+        >
           <ContactInfoRow
-            :href="contact.email ? `mailto:${contact.email}` : ''"
-            :value="contact.email"
+            v-if="emailAddress"
+            :href="`mailto:${emailAddress}`"
+            :value="emailAddress"
             icon="mail"
             emoji="✉️"
             :title="$t('CONTACT_PANEL.EMAIL_ADDRESS')"
@@ -248,8 +308,9 @@ export default {
             @update="value => onFieldUpdate('email', value)"
           />
           <ContactInfoRow
-            :href="contact.phone_number ? `tel:${contact.phone_number}` : ''"
-            :value="contact.phone_number"
+            v-if="displayPhoneNumber"
+            :href="`tel:${displayPhoneNumber}`"
+            :value="displayPhoneNumber"
             icon="call"
             emoji="📞"
             :title="$t('CONTACT_PANEL.PHONE_NUMBER')"
@@ -258,14 +319,15 @@ export default {
             @update="value => onFieldUpdate('phone_number', value)"
           />
           <ContactInfoRow
-            v-if="contact.identifier"
-            :value="contact.identifier"
+            v-if="visibleIdentifier"
+            :value="visibleIdentifier"
             icon="contact-identify"
             emoji="🪪"
             :title="$t('CONTACT_PANEL.IDENTIFIER')"
           />
           <ContactInfoRow
-            :value="additionalAttributes.company_name"
+            v-if="companyName"
+            :value="companyName"
             icon="building-bank"
             emoji="🏢"
             :title="$t('CONTACT_PANEL.COMPANY')"
@@ -287,10 +349,16 @@ export default {
             emoji="🌍"
             :title="$t('CONTACT_PANEL.LOCATION')"
           />
-          <SocialIcons :social-profiles="socialProfiles" />
+          <SocialIcons
+            v-if="hasSocialProfiles"
+            :social-profiles="socialProfiles"
+          />
         </div>
       </div>
-      <div class="flex items-center w-full mt-0.5 gap-2">
+      <div
+        class="flex items-center w-full gap-2 pt-3 border-t border-n-weak/70"
+        data-testid="contact-actions"
+      >
         <ComposeConversation :contact-id="String(contact.id)">
           <template #trigger>
             <NextButton
@@ -303,7 +371,8 @@ export default {
           </template>
         </ComposeConversation>
         <VoiceCallButton
-          :phone="contact.phone_number"
+          v-if="displayPhoneNumber"
+          :phone="displayPhoneNumber"
           :contact-id="contact.id"
           icon="i-ri-phone-fill"
           size="sm"
@@ -355,5 +424,5 @@ export default {
         @cancel="toggleEditModal"
       />
     </div>
-  </div>
+  </section>
 </template>
