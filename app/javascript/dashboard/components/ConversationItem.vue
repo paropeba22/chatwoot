@@ -2,8 +2,7 @@
 import { computed, ref, watch, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
-import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
-import { buildConversationFilterQuery } from 'dashboard/helper/conversationFilterQueryHelper';
+import { buildConversationRouteLocation } from 'dashboard/helper/conversationRouteHelper';
 import ConversationCard from './widgets/conversation/ConversationCard.vue';
 import ConversationCardExpanded from 'dashboard/components-next/Conversation/ConversationCard/ConversationCardExpanded.vue';
 import ContextMenu from 'dashboard/components/ui/ContextMenu.vue';
@@ -81,32 +80,34 @@ const showAssigneeForExpandedCard = computed(
   () => props.showExpanded || props.showAssignee
 );
 
-const conversationPath = computed(() =>
-  frontendURL(
-    conversationUrl({
-      accountId: accountId.value,
-      activeInbox: activeInbox.value,
-      id: props.source.id,
-      label: props.label,
-      teamId: props.teamId,
-      conversationType: props.conversationType,
-      foldersId: props.foldersId,
-    }),
-    buildConversationFilterQuery({
-      view: route.query.view,
-      status: route.query.status,
-    })
-  )
+const conversationRoute = computed(() =>
+  buildConversationRouteLocation({
+    accountId: accountId.value,
+    activeInbox: activeInbox.value,
+    id: props.source.id,
+    label: props.label,
+    teamId: props.teamId,
+    conversationType: props.conversationType,
+    foldersId: props.foldersId,
+    view: route.query.view,
+    status: route.query.status,
+  })
+);
+
+const conversationHref = computed(
+  () => router.resolve(conversationRoute.value).href
 );
 
 const onCardClick = e => {
-  const path = conversationPath.value;
+  const routeLocation = conversationRoute.value;
+  const href = conversationHref.value;
+  const path = routeLocation.path;
   if (!path) return;
 
   if (e.metaKey || e.ctrlKey) {
     e.preventDefault();
     window.open(
-      `${window.chatwootConfig.hostURL}${path}`,
+      `${window.chatwootConfig.hostURL}${href}`,
       '_blank',
       'noopener,noreferrer'
     );
@@ -114,7 +115,7 @@ const onCardClick = e => {
   }
 
   if (isActiveChat.value) return;
-  router.push({ path });
+  router.push(routeLocation);
 };
 
 const onExpandedSelect = checked => {
@@ -234,7 +235,7 @@ const onDeleteConversation = () => {
       :chat-id="source.id"
       :has-unread-messages="source.unread_count > 0"
       :conversation-labels="source.labels"
-      :conversation-url="conversationPath"
+      :conversation-url="conversationHref"
       @update-conversation="onUpdateConversation"
       @assign-agent="onAssignAgent"
       @assign-label="onAssignLabel"

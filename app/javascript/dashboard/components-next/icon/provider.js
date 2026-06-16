@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { getInboxDisplayIcon } from 'dashboard/helper/inboxPresentationHelper';
 
 export function useChannelIcon(inbox) {
   const channelTypeIconMap = {
@@ -24,6 +25,10 @@ export function useChannelIcon(inbox) {
 
   const channelIcon = computed(() => {
     const inboxDetails = inbox.value || inbox;
+    const displayIcon = getInboxDisplayIcon(inboxDetails);
+
+    if (displayIcon) return displayIcon;
+
     const type = inboxDetails.channel_type;
     let icon = channelTypeIconMap[type];
 

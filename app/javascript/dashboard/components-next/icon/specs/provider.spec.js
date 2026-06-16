@@ -7,6 +7,12 @@ describe('useChannelIcon', () => {
     expect(icon).toBe('i-woot-api');
   });
 
+  it('returns WhatsApp icon for Grupo Telecom API inboxes', () => {
+    const inbox = { name: 'grupotelecom', channel_type: 'Channel::Api' };
+    const { value: icon } = useChannelIcon(inbox);
+    expect(icon).toBe('i-woot-whatsapp');
+  });
+
   it('returns correct icon for Facebook channel', () => {
     const inbox = { channel_type: 'Channel::FacebookPage' };
     const { value: icon } = useChannelIcon(inbox);
