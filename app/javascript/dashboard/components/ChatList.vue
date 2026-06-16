@@ -48,6 +48,11 @@ import {
 import { matchesFilters } from '../store/modules/conversations/helpers/filterHelpers';
 import { CONVERSATION_EVENTS } from '../helper/AnalyticsHelper/events';
 import ConversationApi from 'dashboard/api/inbox/conversation';
+import {
+  buildConversationFilterQuery,
+  normalizeAssigneeView,
+  normalizeConversationStatus,
+} from 'dashboard/helper/conversationFilterQueryHelper';
 
 const props = defineProps({
   conversationInbox: { type: [String, Number], default: 0 },
@@ -68,15 +73,18 @@ const store = useStore();
 
 const resolveAttributesModalRef = ref(null);
 
-const normalizeAssigneeView = view => {
-  const normalizedView = String(view || '');
-  return ['me', 'unassigned', 'bot'].includes(normalizedView)
-    ? normalizedView
-    : wootConstants.ASSIGNEE_TYPE.ME;
-};
-
-const activeAssigneeTab = ref(normalizeAssigneeView(route.query.view));
-const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
+const initialStatus =
+  normalizeConversationStatus(route.query.status) ||
+  wootConstants.STATUS_TYPE.OPEN;
+const activeAssigneeTab = ref(
+  normalizeAssigneeView(
+    route.query.view,
+    initialStatus === wootConstants.STATUS_TYPE.RESOLVED
+      ? wootConstants.ASSIGNEE_TYPE.ALL
+      : wootConstants.ASSIGNEE_TYPE.ME
+  )
+);
+const activeStatus = ref(initialStatus);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const showAdvancedFilters = ref(false);
 // chatsOnView is to store the chats that are currently visible on the screen,
@@ -247,6 +255,9 @@ const activeAssigneeTabCount = computed(() => {
   if (activeAssigneeTab.value === 'bot') {
     return botChatsCount.value;
   }
+  if (activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ALL) {
+    return conversationStats.value.allCount || 0;
+  }
   return conversationStats.value.mineCount || 0;
 });
 
@@ -400,7 +411,19 @@ const uniqueInboxes = computed(() => {
 function setFiltersFromUISettings() {
   const { conversations_filter_by: filterBy = {} } = uiSettings.value;
   const { status, order_by: orderBy } = filterBy;
-  activeStatus.value = status || wootConstants.STATUS_TYPE.OPEN;
+  const nextStatus =
+    normalizeConversationStatus(route.query.status) ||
+    normalizeConversationStatus(status) ||
+    wootConstants.STATUS_TYPE.OPEN;
+  activeStatus.value = nextStatus;
+  if (nextStatus === wootConstants.STATUS_TYPE.RESOLVED && !route.query.view) {
+    activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ALL;
+  } else if (
+    nextStatus !== wootConstants.STATUS_TYPE.RESOLVED &&
+    activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ALL
+  ) {
+    activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ME;
+  }
   activeSortBy.value = Object.values(wootConstants.SORT_BY_TYPE).includes(
     orderBy
   )
@@ -419,6 +442,7 @@ const isViewingResolved = computed(
 function toggleResolvedView() {
   if (isViewingResolved.value) {
     activeStatus.value = wootConstants.STATUS_TYPE.OPEN;
+    activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ME;
   } else {
     activeStatus.value = wootConstants.STATUS_TYPE.RESOLVED;
     // When entering resolved view, reset to 'all' so we don't filter by assignee
@@ -426,6 +450,8 @@ function toggleResolvedView() {
   }
   // Function declarations are hoisted; keeping handlers near their UI state
   // makes this large component easier to scan.
+  // eslint-disable-next-line no-use-before-define
+  redirectToConversationList(activeAssigneeTab.value, activeStatus.value);
   // eslint-disable-next-line no-use-before-define
   resetAndFetchData();
 }
@@ -657,7 +683,7 @@ function updateAssigneeTab(selectedTab) {
   activeAssigneeTab.value = selectedTab;
   resetAndFetchData();
   // eslint-disable-next-line no-use-before-define
-  redirectToConversationList(selectedTab);
+  redirectToConversationList(selectedTab, activeStatus.value);
   // eslint-disable-next-line no-use-before-define
   fetchConversationStats();
 }
@@ -665,8 +691,17 @@ function updateAssigneeTab(selectedTab) {
 function onBasicFilterChange(value, type) {
   if (type === 'status') {
     activeStatus.value = value;
+    if (value === wootConstants.STATUS_TYPE.RESOLVED) {
+      activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ALL;
+    } else if (activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ALL) {
+      activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ME;
+    }
   } else {
     activeSortBy.value = value;
+  }
+  if (type === 'status') {
+    // eslint-disable-next-line no-use-before-define
+    redirectToConversationList(activeAssigneeTab.value, activeStatus.value);
   }
   resetAndFetchData();
 }
@@ -689,7 +724,10 @@ function openLastItemAfterDeleteInFolder() {
   }
 }
 
-function redirectToConversationList(assigneeView = route.query.view) {
+function redirectToConversationList(
+  assigneeView = route.query.view,
+  status = route.query.status
+) {
   const {
     params: { accountId, inbox_id: inboxId, label, teamId },
     name,
@@ -714,7 +752,7 @@ function redirectToConversationList(assigneeView = route.query.view) {
 
   router.push({
     path,
-    query: assigneeView ? { view: assigneeView } : undefined,
+    query: buildConversationFilterQuery({ view: assigneeView, status }),
   });
 }
 
@@ -963,12 +1001,23 @@ watch(
 );
 
 watch(
-  () => route.query.view,
-  view => {
-    const nextView = normalizeAssigneeView(view);
-    if (activeAssigneeTab.value === nextView) return;
+  () => [route.query.view, route.query.status],
+  ([view, status]) => {
+    const nextStatus =
+      normalizeConversationStatus(status) || wootConstants.STATUS_TYPE.OPEN;
+    const nextView = normalizeAssigneeView(
+      view,
+      nextStatus === wootConstants.STATUS_TYPE.RESOLVED
+        ? wootConstants.ASSIGNEE_TYPE.ALL
+        : wootConstants.ASSIGNEE_TYPE.ME
+    );
+    const didViewChange = activeAssigneeTab.value !== nextView;
+    const didStatusChange = activeStatus.value !== nextStatus;
+
+    if (!didViewChange && !didStatusChange) return;
 
     activeAssigneeTab.value = nextView;
+    activeStatus.value = nextStatus;
     resetBulkActions();
     emitter.emit('clearSearchInput');
     resetAndFetchData();

@@ -10,6 +10,7 @@ import Avatar from 'next/avatar/Avatar.vue';
 import SLACardLabel from './components/SLACardLabel.vue';
 import wootConstants from 'dashboard/constants/globals';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
+import { buildConversationFilterQuery } from 'dashboard/helper/conversationFilterQueryHelper';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useInbox } from 'dashboard/composables/useInbox';
 import { useI18n } from 'vue-i18n';
@@ -57,10 +58,12 @@ const backButtonUrl = computed(() => {
     customViewId,
   });
 
-  if (!route.query.view) return listUrl;
+  const query = buildConversationFilterQuery({
+    view: route.query.view,
+    status: route.query.status,
+  });
 
-  const query = new URLSearchParams({ view: String(route.query.view) });
-  return `${listUrl}?${query.toString()}`;
+  return query ? `${listUrl}?${new URLSearchParams(query)}` : listUrl;
 });
 
 const isHMACVerified = computed(() => {

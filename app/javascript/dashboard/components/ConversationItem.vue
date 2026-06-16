@@ -3,6 +3,7 @@ import { computed, ref, watch, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
+import { buildConversationFilterQuery } from 'dashboard/helper/conversationFilterQueryHelper';
 import ConversationCard from './widgets/conversation/ConversationCard.vue';
 import ConversationCardExpanded from 'dashboard/components-next/Conversation/ConversationCard/ConversationCardExpanded.vue';
 import ContextMenu from 'dashboard/components/ui/ContextMenu.vue';
@@ -91,7 +92,10 @@ const conversationPath = computed(() =>
       conversationType: props.conversationType,
       foldersId: props.foldersId,
     }),
-    route.query.view ? { view: route.query.view } : undefined
+    buildConversationFilterQuery({
+      view: route.query.view,
+      status: route.query.status,
+    })
   )
 );
 

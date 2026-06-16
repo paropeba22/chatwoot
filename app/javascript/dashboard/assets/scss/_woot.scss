@@ -52,7 +52,7 @@ body {
 }
 
 ::selection {
-  background: rgba(var(--blue-9), 0.28);
+  background: rgba(var(--blue-9), 0.46);
   color: rgb(var(--slate-12));
 }
 
@@ -190,6 +190,11 @@ body {
         rgba(var(--gt-cyan), 0.08),
         transparent 28rem
       );
+
+    ::selection {
+      background: rgb(var(--blue-11));
+      color: rgb(var(--solid-1));
+    }
 
     &::before {
       position: fixed;
