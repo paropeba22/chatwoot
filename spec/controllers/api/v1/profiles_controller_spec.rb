@@ -15,7 +15,7 @@ RSpec.describe 'Profile API', type: :request do
     context 'when it is an authenticated user' do
       let(:agent) { create(:user, account: account, custom_attributes: { test: 'test' }, role: :agent) }
 
-      it 'returns current user information' do
+      it 'does not include the access token in current user information' do
         get '/api/v1/profile',
             headers: agent.create_new_auth_token,
             as: :json
@@ -25,9 +25,23 @@ RSpec.describe 'Profile API', type: :request do
         json_response = response.parsed_body
         expect(json_response['id']).to eq(agent.id)
         expect(json_response['email']).to eq(agent.email)
-        expect(json_response['access_token']).to eq(agent.access_token.token)
+        expect(json_response).not_to have_key('access_token')
         expect(json_response['custom_attributes']['test']).to eq('test')
         expect(json_response['message_signature']).to be_nil
+      end
+
+      context 'when the user is an administrator' do
+        let(:admin) { create(:user, account: account, role: :administrator) }
+
+        it 'includes the access token in current user information' do
+          get '/api/v1/profile',
+              headers: admin.create_new_auth_token,
+              as: :json
+
+          expect(response).to have_http_status(:success)
+          json_response = response.parsed_body
+          expect(json_response['access_token']).to eq(admin.access_token.token)
+        end
       end
     end
   end
@@ -322,21 +336,37 @@ RSpec.describe 'Profile API', type: :request do
       end
     end
 
-    context 'when it is an authenticated user' do
+    context 'when it is an authenticated agent' do
       let(:agent) { create(:user, account: account, role: :agent) }
 
-      it 'regenerates the access token' do
+      it 'does not regenerate the access token' do
         old_token = agent.access_token.token
 
         post '/api/v1/profile/reset_access_token',
              headers: agent.create_new_auth_token,
              as: :json
 
-        expect(response).to have_http_status(:success)
+        expect(response).to have_http_status(:unauthorized)
         agent.reload
-        expect(agent.access_token.token).not_to eq(old_token)
+        expect(agent.access_token.token).to eq(old_token)
+      end
+    end
+
+    context 'when it is an authenticated administrator' do
+      let(:admin) { create(:user, account: account, role: :administrator) }
+
+      it 'regenerates the access token' do
+        old_token = admin.access_token.token
+
+        post '/api/v1/profile/reset_access_token',
+             headers: admin.create_new_auth_token,
+             as: :json
+
+        expect(response).to have_http_status(:success)
+        admin.reload
+        expect(admin.access_token.token).not_to eq(old_token)
         json_response = response.parsed_body
-        expect(json_response['access_token']).to eq(agent.access_token.token)
+        expect(json_response['access_token']).to eq(admin.access_token.token)
       end
     end
   end

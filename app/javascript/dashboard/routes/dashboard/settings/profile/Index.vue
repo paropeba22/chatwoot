@@ -98,8 +98,12 @@ export default {
     ...mapGetters({
       currentUser: 'getCurrentUser',
       currentUserId: 'getCurrentUserID',
+      currentRole: 'getCurrentRole',
       globalConfig: 'globalConfig/get',
     }),
+    canManageAccessToken() {
+      return this.currentRole === 'administrator';
+    },
     isMfaEnabled() {
       return parseBoolean(window.chatwootConfig?.isMfaEnabled);
     },
@@ -327,6 +331,7 @@ export default {
       </SectionLayout>
     </Policy>
     <SectionLayout
+      v-if="canManageAccessToken"
       with-border
       :title="$t('PROFILE_SETTINGS.FORM.ACCESS_TOKEN.TITLE')"
       :description="

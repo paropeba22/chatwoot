@@ -77,10 +77,10 @@ export default {
         `/api/v1/accounts/${this.accountId}/conversations/${this.currentChat.id}/direct_uploads`,
         {
           directUploadWillCreateBlobWithXHR: xhr => {
-            xhr.setRequestHeader(
-              'api_access_token',
-              this.currentUser.access_token
-            );
+            const accessToken = this.currentUser.access_token;
+            if (accessToken) {
+              xhr.setRequestHeader('api_access_token', accessToken);
+            }
           },
         }
       );

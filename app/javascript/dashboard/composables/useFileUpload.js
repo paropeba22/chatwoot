@@ -78,10 +78,10 @@ export const useFileUpload = ({ inbox, attachFile, isPrivateNote = false }) => {
       `/api/v1/accounts/${accountId.value}/conversations/${currentChat.value.id}/direct_uploads`,
       {
         directUploadWillCreateBlobWithXHR: xhr => {
-          xhr.setRequestHeader(
-            'api_access_token',
-            currentUser.value.access_token
-          );
+          const accessToken = currentUser.value.access_token;
+          if (accessToken) {
+            xhr.setRequestHeader('api_access_token', accessToken);
+          }
         },
       }
     );

@@ -39,6 +39,8 @@ class Api::V1::ProfilesController < Api::BaseController
   end
 
   def reset_access_token
+    render_unauthorized('You are not authorized to reset access token') and return unless @user.active_account_user&.administrator?
+
     @user.access_token.regenerate_token
     @user.reload
   end

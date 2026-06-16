@@ -12,7 +12,7 @@ json.data do
   json.inviter_id resource.active_account_user&.inviter_id
   json.confirmed resource.confirmed?
   json.avatar_url resource.avatar_url
-  json.access_token resource.access_token.token
+  json.access_token resource.access_token.token if resource.active_account_user&.administrator?
   json.accounts do
     json.array! resource.account_users do |account_user|
       json.id account_user.account_id

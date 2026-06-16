@@ -1,4 +1,4 @@
-json.access_token resource.access_token.token
+json.access_token resource.access_token.token if resource.active_account_user&.administrator?
 json.account_id resource.active_account_user&.account_id
 json.available_name resource.available_name
 json.avatar_url resource.avatar_url
