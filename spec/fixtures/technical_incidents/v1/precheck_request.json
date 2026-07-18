@@ -1,0 +1,17 @@
+{
+  "conversation_display_id": 101,
+  "source_message_id": "message-anonymous-001",
+  "mode": "shadow",
+  "request_id": "request-anonymous-001",
+  "contract_version": "1.0",
+  "classification": {
+    "is_support_issue": true,
+    "problem_type": "total_outage",
+    "service_key": "internet",
+    "symptoms": ["sem internet"],
+    "semantic_confidence": 0.96,
+    "topic_change": false,
+    "needs_clarification": false,
+    "reason_code": "internet_outage"
+  }
+}

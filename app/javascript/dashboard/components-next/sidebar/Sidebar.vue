@@ -61,6 +61,12 @@ const hasAdvancedAssignment = computed(() => {
     FEATURE_FLAGS.ADVANCED_ASSIGNMENT
   );
 });
+const hasTechnicalIncidents = computed(() =>
+  isFeatureEnabledonAccount.value(
+    accountId.value,
+    FEATURE_FLAGS.TECHNICAL_INCIDENTS
+  )
+);
 
 const toggleShortcutModalFn = show => {
   if (show) {
@@ -332,6 +338,22 @@ const menuItems = computed(() => {
         },
       ],
     },
+    ...(hasTechnicalIncidents.value
+      ? [
+          {
+            name: 'Technical Incidents',
+            label: t('TECHNICAL_INCIDENTS.SIDEBAR'),
+            icon: 'i-lucide-siren',
+            to: accountScopedRoute('technical_incidents_index'),
+            activeOn: [
+              'technical_incidents_index',
+              'technical_incidents_new',
+              'technical_incidents_edit',
+              'technical_incidents_show',
+            ],
+          },
+        ]
+      : []),
     // Captain AI removido — IA gerenciada externamente via n8n/Bia
     {
       name: 'Contacts',

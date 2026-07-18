@@ -1,3 +1,5 @@
+require 'digest'
+
 class Rack::Attack
   ### Configure Cache ###
 
@@ -213,6 +215,15 @@ class Rack::Attack
   throttle('/api/v1/accounts/:account_id/contacts/search', limit: ENV.fetch('RATE_LIMIT_CONTACT_SEARCH', '100').to_i, period: 1.minute) do |req|
     match_data = %r{/api/v1/accounts/(?<account_id>\d+)/contacts/search}.match(req.path)
     match_data[:account_id] if match_data.present?
+  end
+
+  throttle('/api/v1/technical_incidents_automation/token',
+           limit: ENV.fetch('RATE_LIMIT_TECHNICAL_INCIDENT_CHECKS', '120').to_i, period: 1.minute) do |req|
+    next unless req.path.start_with?('/api/v1/technical_incident_checks') ||
+                req.path.start_with?('/api/v1/technical_incident_evaluations')
+
+    token = req.get_header('HTTP_API_ACCESS_TOKEN')
+    Digest::SHA256.hexdigest(token) if token.present?
   end
 
   # Throttle by individual user (based on uid)

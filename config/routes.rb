@@ -351,6 +351,18 @@ Rails.application.routes.draw do
           end
           resources :working_hours, only: [:update]
 
+          resources :technical_incidents do
+            collection do
+              get :options
+            end
+            member do
+              post :transition
+              get :history
+              get :conversations
+              get :evaluations
+            end
+          end
+
           resources :portals do
             member do
               patch :archive
@@ -378,6 +390,11 @@ Rails.application.routes.draw do
       end
       # end of account scoped api routes
       # ----------------------------------
+
+      post 'technical_incident_checks/precheck', to: 'technical_incident_checks#precheck'
+      post 'technical_incident_checks/:id/match', to: 'technical_incident_checks#match'
+      post 'technical_incident_checks/:id/commit', to: 'technical_incident_checks#commit'
+      post 'technical_incident_evaluations/:id/feedback', to: 'technical_incident_evaluations#feedback'
 
       namespace :integrations do
         resources :webhooks, only: [:create]

@@ -241,3 +241,6 @@
   display_name: Advanced Assignment
   enabled: false
   premium: true
+- name: technical_incidents
+  display_name: Technical Incidents
+  enabled: false
