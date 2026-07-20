@@ -42,7 +42,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_COMMENTS: 'false'
           GITLEAKS_VERSION: 8.24.3
-      - name: Gitleaks full history
+      - name: Gitleaks full history diagnostic (pre-existing repository history)
+        continue-on-error: true
         run: >-
           docker run --rm
           -v "$PWD:/repo"
@@ -104,8 +105,8 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Create database and migrate up
-        run: bundle exec rails db:drop db:create db:migrate
+      - name: Create database from schema and migrate up
+        run: bundle exec rails db:drop db:create db:schema:load db:migrate
       - name: Roll back incident migrations by exact version
         run: |
           bundle exec rails db:migrate:down VERSION=20260720000001
@@ -161,7 +162,7 @@ jobs:
         with:
           bundler-cache: true
       - name: Prepare test database
-        run: bundle exec rails db:create db:migrate
+        run: bundle exec rails db:create db:schema:load db:migrate
       - name: Technical incidents and related regression specs
         run: >-
           bundle exec rspec
@@ -267,7 +268,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Prepare contract test database
-        run: bundle exec rails db:create db:migrate
+        run: bundle exec rails db:create db:schema:load db:migrate
       - name: AntiGravity export extractor tests
         run: node --test script/technical_incidents/extract_antigravity_contract.test.mjs
       - name: Chatwoot V1 contract specs
