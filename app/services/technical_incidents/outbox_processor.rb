@@ -59,6 +59,9 @@ class TechnicalIncidents::OutboxProcessor
     evaluation = delivery.technical_incident_evaluation
     incident = delivery.technical_incident
     raise TerminalFailure, 'feature_disabled' unless delivery.account.feature_enabled?('technical_incidents')
+    unless TechnicalIncidents::Configuration.automation_mode == 'active'
+      raise TechnicalIncidents::DeliveryAdapters::Base::DeliveryDisabled, 'server_automation_not_active'
+    end
     unless TechnicalIncidents::Configuration.delivery_enabled?
       raise TechnicalIncidents::DeliveryAdapters::Base::DeliveryDisabled, 'delivery_disabled'
     end

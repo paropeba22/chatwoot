@@ -167,6 +167,73 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
       .not_to change { delivery.reload.attributes.slice('outbox_state', 'lock_token', 'attempts') }
   end
 
+  it 'does not claim or mutate a delivery while the outbox switch is off' do
+    adapter = instance_double(TechnicalIncidents::DeliveryAdapters::Base)
+    allow(TechnicalIncidents::DeliveryAdapters).to receive(:for).and_return(adapter)
+    original = delivery.attributes.slice('outbox_state', 'lock_token', 'attempts', 'updated_at')
+
+    with_modified_env TECHNICAL_INCIDENTS_OUTBOX_ENABLED: 'false' do
+      described_class.new(delivery.id).call
+    end
+
+    expect(delivery.reload.attributes.slice(*original.keys)).to eq(original)
+    expect(adapter).not_to have_received(:create_message!)
+  end
+
+  it 'rechecks the account feature and delivery switch before any side effect' do
+    adapter = instance_double(TechnicalIncidents::DeliveryAdapters::Base)
+    allow(TechnicalIncidents::DeliveryAdapters).to receive(:for).and_return(adapter)
+
+    with_modified_env TECHNICAL_INCIDENTS_DELIVERY_ENABLED: 'false' do
+      described_class.new(delivery.id).call
+    end
+    expect(delivery.reload).to have_attributes(
+      outbox_state: 'retry',
+      message_state: 'pending',
+      link_state: 'pending',
+      attempts: 0,
+      last_error_code: 'delivery_disabled'
+    )
+
+    delivery.update!(outbox_state: 'pending', next_retry_at: Time.current)
+    account.disable_features!('technical_incidents')
+    described_class.new(delivery.id).call
+
+    expect(delivery.reload).to have_attributes(
+      outbox_state: 'failed_terminal',
+      message_state: 'pending',
+      link_state: 'pending',
+      last_error_code: 'feature_disabled'
+    )
+    expect(adapter).not_to have_received(:create_message!)
+  end
+
+  %w[disabled shadow].each do |server_mode|
+    it "rechecks #{server_mode} automation mode before any outbox side effect" do
+      adapter = instance_double(TechnicalIncidents::DeliveryAdapters::Base)
+      allow(TechnicalIncidents::DeliveryAdapters).to receive(:for).and_return(adapter)
+
+      with_modified_env TECHNICAL_INCIDENTS_AUTOMATION_MODE: server_mode do
+        described_class.new(delivery.id).call
+      end
+
+      expect(delivery.reload).to have_attributes(
+        outbox_state: 'retry',
+        message_state: 'pending',
+        link_state: 'pending',
+        label_state: 'pending',
+        note_state: 'pending',
+        handoff_state: 'pending',
+        attempts: 0,
+        last_error_code: 'server_automation_not_active'
+      )
+      expect(delivery.message).to be_nil
+      expect(delivery.technical_incident_conversation_link).to be_nil
+      expect(conversation.reload.assignee_agent_bot_id).to eq(agent_bot.id)
+      expect(adapter).not_to have_received(:create_message!)
+    end
+  end
+
   it 'records a retryable label failure and never proceeds to note or handoff' do
     message = create(
       :message,
