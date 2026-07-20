@@ -20,16 +20,25 @@ class TechnicalIncidents::LifecycleService
 
   def transition!(target_status, attributes = {})
     target_status = target_status.to_s
-    raise InvalidTransition, target_status unless TRANSITIONS.fetch(@incident.status, []).include?(target_status)
-    if reopening?(target_status) && attributes.to_h[:expires_at].blank? && attributes.to_h['expires_at'].blank?
-      raise InvalidTransition, 'reopening_requires_new_expiration'
-    end
+    attributes = attributes.to_h.symbolize_keys
 
     @incident.with_lock do
+      @incident.reload
+      validate_actor!
+      raise InvalidTransition, 'feature_disabled' unless @incident.account.feature_enabled?('technical_incidents')
+      expected_lock_version = attributes.delete(:lock_version)
+      if expected_lock_version.present? && expected_lock_version.to_i != @incident.lock_version
+        raise ActiveRecord::StaleObjectError.new(@incident, 'transition')
+      end
+
       previous_status = @incident.status
-      assign_transition_attributes(target_status, attributes.to_h.symbolize_keys)
-      validate_activation! if target_status == 'active'
-      prepare_scheduled! if target_status == 'scheduled'
+      raise InvalidTransition, target_status unless TRANSITIONS.fetch(previous_status, []).include?(target_status)
+      if reopening?(previous_status, target_status) && attributes[:expires_at].blank?
+        raise InvalidTransition, 'reopening_requires_new_expiration'
+      end
+
+      assign_transition_attributes(previous_status, target_status, attributes)
+      TechnicalIncidents::IncidentValidator.new(@incident).validate!
       @incident.save!
       TechnicalIncidents::AuditService.record!(
         incident: @incident,
@@ -45,12 +54,12 @@ class TechnicalIncidents::LifecycleService
 
   private
 
-  def assign_transition_attributes(target_status, attributes)
+  def assign_transition_attributes(previous_status, target_status, attributes)
     @incident.status = target_status
     @incident.updated_by = @actor if @actor.is_a?(User)
 
     if target_status == 'active'
-      is_reopening = %w[resolved expired cancelled].include?(@incident.status_was) || @incident.resolved_at.present?
+      is_reopening = reopening?(previous_status, target_status)
       @incident.starts_at = Time.current if is_reopening
       @incident.starts_at ||= Time.current
       @incident.expires_at = attributes[:expires_at].presence || @incident.expires_at || (@incident.starts_at + 6.hours)
@@ -62,29 +71,21 @@ class TechnicalIncidents::LifecycleService
     elsif target_status == 'resolved'
       @incident.resolved_at = Time.current
       @incident.resolved_by = @actor if @actor.is_a?(User)
+    elsif target_status == 'scheduled'
+      @incident.expires_at = attributes[:expires_at].presence || (@incident.starts_at && @incident.starts_at + 6.hours)
     end
 
     @incident.assign_attributes(attributes.slice(:expires_at, :review_at, :estimated_resolution_at))
   end
 
-  def validate_activation!
-    raise InvalidTransition, 'incident_not_started' if @incident.starts_at.present? && @incident.starts_at > Time.current
-    raise InvalidTransition, 'customer_message_required' if @incident.action != 'handoff_only' && @incident.customer_message.blank?
-    raise InvalidTransition, 'scope_required' if @incident.scope_groups.empty?
+  def validate_actor!
+    return unless @actor.is_a?(User)
+    return if @incident.account.account_users.exists?(user_id: @actor.id)
 
-    TechnicalIncidents::TemplateRenderer.validate!(@incident)
-    @incident.validate!
+    raise InvalidTransition, 'actor_account_mismatch'
   end
 
-  def prepare_scheduled!
-    raise InvalidTransition, 'scheduled_start_required' if @incident.starts_at.blank?
-    raise InvalidTransition, 'scheduled_start_must_be_future' if @incident.starts_at <= Time.current
-
-    @incident.expires_at ||= @incident.starts_at + 6.hours
-    @incident.validate!
-  end
-
-  def reopening?(target_status)
-    target_status == 'active' && %w[resolved expired cancelled].include?(@incident.status)
+  def reopening?(previous_status, target_status)
+    target_status == 'active' && %w[resolved expired cancelled].include?(previous_status)
   end
 end

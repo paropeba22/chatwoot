@@ -35,28 +35,34 @@ class TechnicalIncidents::LifecycleJob < ApplicationJob
   def record_review_alerts
     TechnicalIncident.where(status: %w[active monitoring], archived_at: nil).where('review_at <= ?', Time.current).find_each do |incident|
       next unless incident.account.feature_enabled?('technical_incidents')
-      next if incident.updates.where(action: 'review.due').where('created_at >= ?', incident.review_at).exists?
+      incident.with_lock do
+        incident.reload
+        next if incident.updates.where(action: 'review.due').where('created_at >= ?', incident.review_at).exists?
 
-      TechnicalIncidents::AuditService.record!(
-        incident: incident,
-        action: 'review.due',
-        origin: 'job',
-        changeset: { review_at: incident.review_at, expires_at: incident.expires_at }
-      )
+        TechnicalIncidents::AuditService.record!(
+          incident: incident,
+          action: 'review.due',
+          origin: 'job',
+          changeset: { review_at: incident.review_at, expires_at: incident.expires_at }
+        )
+      end
     end
   end
 
   def record_forgotten_alerts
     TechnicalIncident.where(status: 'active', archived_at: nil).where('updated_at <= ?', 2.hours.ago).find_each do |incident|
       next unless incident.account.feature_enabled?('technical_incidents')
-      next if incident.updates.where(action: 'incident.forgotten').where('created_at >= ?', 2.hours.ago).exists?
+      incident.with_lock do
+        incident.reload
+        next if incident.updates.where(action: 'incident.forgotten').where('created_at >= ?', 2.hours.ago).exists?
 
-      TechnicalIncidents::AuditService.record!(
-        incident: incident,
-        action: 'incident.forgotten',
-        origin: 'job',
-        changeset: { last_updated_at: incident.updated_at, expires_at: incident.expires_at }
-      )
+        TechnicalIncidents::AuditService.record!(
+          incident: incident,
+          action: 'incident.forgotten',
+          origin: 'job',
+          changeset: { last_updated_at: incident.updated_at, expires_at: incident.expires_at }
+        )
+      end
     end
   end
 

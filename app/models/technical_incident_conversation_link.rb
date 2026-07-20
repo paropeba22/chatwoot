@@ -12,5 +12,8 @@ class TechnicalIncidentConversationLink < ApplicationRecord
   def account_consistency
     errors.add(:technical_incident, :invalid) if technical_incident && technical_incident.account_id != account_id
     errors.add(:conversation, :invalid) if conversation && conversation.account_id != account_id
+    if technical_incident_evaluation && technical_incident_evaluation.account_id != account_id
+      errors.add(:technical_incident_evaluation, :invalid)
+    end
   end
 end

@@ -80,9 +80,9 @@ technical_incidents_delivery_status_job:
   queue: scheduled_jobs
 
 technical_incidents_delivery_retry_job:
-  cron: '*/10 * * * *'
-  class: 'TechnicalIncidents::DeliveryRetryJob'
-  queue: high
+  cron: '* * * * *'
+  class: 'TechnicalIncidents::OutboxDispatchJob'
+  queue: scheduled_jobs
 
 technical_incidents_retention_job:
   cron: '15 2 * * *'

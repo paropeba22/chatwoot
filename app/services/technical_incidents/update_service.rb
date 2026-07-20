@@ -7,10 +7,22 @@ class TechnicalIncidents::UpdateService
 
   def call
     @incident.with_lock do
+      @incident.reload
+      raise ActiveRecord::RecordInvalid, @incident unless @incident.account.feature_enabled?('technical_incidents')
+      if @actor.is_a?(User) && !@incident.account.account_users.exists?(user_id: @actor.id)
+        raise ActiveRecord::RecordInvalid, @incident
+      end
+
+      expected_lock_version = @attributes.to_h[:lock_version] || @attributes.to_h['lock_version']
+      if expected_lock_version.present? && expected_lock_version.to_i != @incident.lock_version
+        raise ActiveRecord::StaleObjectError.new(@incident, 'update')
+      end
+
       previous_fingerprint = notification_fingerprint
-      @incident.assign_attributes(@attributes)
+      @incident.assign_attributes(@attributes.to_h.except(:lock_version, 'lock_version'))
       @incident.updated_by = @actor
       @incident.notification_version += 1 if versioned_change?(previous_fingerprint)
+      TechnicalIncidents::IncidentValidator.new(@incident).validate!
       @incident.save!
       TechnicalIncidents::AuditService.record!(
         incident: @incident,

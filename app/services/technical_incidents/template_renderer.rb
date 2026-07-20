@@ -1,17 +1,25 @@
 class TechnicalIncidents::TemplateRenderer
   ALLOWED_VARIABLES = %w[estimated_resolution_at affected_service incident_title].freeze
   VARIABLE_PATTERN = /\{\{\s*([a-z_]+)\s*\}\}/.freeze
+  ANY_OUTPUT_PATTERN = /\{\{.*?\}\}/m.freeze
+  TAG_PATTERN = /\{%.*?%\}/m.freeze
 
   class InvalidTemplate < StandardError; end
 
   def self.validate!(incident)
-    variables = incident.customer_message.to_s.scan(VARIABLE_PATTERN).flatten
+    source = incident.customer_message.to_s
+    raise InvalidTemplate, 'liquid_tags_not_allowed' if source.match?(TAG_PATTERN)
+
+    outputs = source.scan(ANY_OUTPUT_PATTERN)
+    raise InvalidTemplate, 'template_expression_not_allowed' unless outputs.all? { |output| output.match?(/\A#{VARIABLE_PATTERN}\z/) }
+
+    variables = source.scan(VARIABLE_PATTERN).flatten
     unknown = variables - ALLOWED_VARIABLES
-    raise InvalidTemplate, "Unknown variables: #{unknown.join(', ')}" if unknown.any?
+    raise InvalidTemplate, "unknown_variables:#{unknown.join(',')}" if unknown.any?
 
     values = template_values(incident)
     missing = variables.uniq.select { |variable| values[variable].blank? }
-    raise InvalidTemplate, "Missing values: #{missing.join(', ')}" if missing.any?
+    raise InvalidTemplate, "missing_values:#{missing.join(',')}" if missing.any?
   end
 
   def self.render(incident)

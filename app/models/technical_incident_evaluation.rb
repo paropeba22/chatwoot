@@ -38,5 +38,8 @@ class TechnicalIncidentEvaluation < ApplicationRecord
     errors.add(:conversation, :invalid) if conversation && conversation.account_id != account_id
     errors.add(:technical_incident, :invalid) if technical_incident && technical_incident.account_id != account_id
     errors.add(:agent_bot, :invalid) if agent_bot && agent_bot.account_id.present? && agent_bot.account_id != account_id
+    if feedback_by && !account.account_users.exists?(user_id: feedback_by.id)
+      errors.add(:feedback_by, :invalid)
+    end
   end
 end

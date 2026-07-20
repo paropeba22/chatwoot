@@ -12,8 +12,13 @@ class TechnicalIncidents::MatchService
 
   def call
     @evaluation.with_lock do
+      @evaluation.reload
+      return response('fallback', 'server_automation_disabled') if TechnicalIncidents::Configuration.automation_mode == 'disabled'
       return response('stale', 'evaluation_expired') if @evaluation.stale?
       return response('stale', 'feature_disabled') unless @account.feature_enabled?('technical_incidents')
+      return response('stale', 'account_mismatch') unless @evaluation.account_id == @account.id
+      semantic_gate = TechnicalIncidents::SemanticGate.call(@evaluation.classification)
+      return response(semantic_gate.status, semantic_gate.reason_code) unless semantic_gate.allowed
       return response(@evaluation.status, @evaluation.reason_code) if @evaluation.status == 'matched'
       return response('stale', 'evaluation_not_matchable') unless MATCHABLE_STATUSES.include?(@evaluation.status)
 
@@ -53,9 +58,25 @@ class TechnicalIncidents::MatchService
           reason_code: "matched_by_#{winner[:match_source]}"
         )
       end
+      TechnicalIncidents::Instrumentation.record(
+        event: 'match',
+        request_id: @evaluation.request_id,
+        evaluation_id: @evaluation.opaque_id,
+        incident_id: @evaluation.technical_incident_id,
+        conversation_id: @evaluation.conversation_id,
+        status: @evaluation.status,
+        reason_code: @evaluation.reason_code,
+        match_source: @evaluation.match_source
+      )
       response(@evaluation.status, @evaluation.reason_code)
     end
   rescue ArgumentError => e
+    TechnicalIncidents::Instrumentation.record(
+      event: 'match',
+      evaluation_id: @evaluation.opaque_id,
+      status: 'fallback',
+      reason_code: e.message
+    )
     response('fallback', e.message)
   end
 

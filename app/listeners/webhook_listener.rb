@@ -120,6 +120,8 @@ class WebhookListener < BaseListener
   def deliver_api_inbox_webhooks(payload, inbox)
     return unless inbox.channel_type == 'Channel::Api'
     return if inbox.channel.webhook_url.blank?
+    return if payload.dig(:content_attributes, :technical_incident_outbox_managed) ||
+              payload.dig(:content_attributes, 'technical_incident_outbox_managed')
 
     WebhookJob.perform_later(inbox.channel.webhook_url, payload, :api_inbox_webhook,
                              secret: inbox.channel.secret, delivery_id: SecureRandom.uuid)

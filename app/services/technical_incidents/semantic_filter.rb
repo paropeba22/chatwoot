@@ -19,11 +19,14 @@ class TechnicalIncidents::SemanticFilter
       )
       classification['service_key'] = classification['service_key'].to_s
       classification['symptoms'] = Array(classification['symptoms']).first(10).map { |value| TechnicalIncidents::Normalizer.text(value)[0, 100] }
-      classification['semantic_confidence'] = classification['semantic_confidence'].to_f.clamp(0.0, 1.0)
+      classification['semantic_confidence'] = strict_confidence(classification['semantic_confidence'])
+      classification['topic_change'] = classification['topic_change'] if classification['topic_change'].in?([true, false])
+      classification['needs_clarification'] = classification['needs_clarification'] if classification['needs_clarification'].in?([true, false])
     end
   end
 
   def self.compatible?(incident, classification)
+    return false unless TechnicalIncidents::SemanticGate.call(classification).allowed
     return false unless classification['is_support_issue'] == true
     return false unless TechnicalIncident::PROBLEM_TYPES.include?(classification['problem_type'])
     return false unless incident.problem_types.include?(classification['problem_type'])
@@ -39,4 +42,14 @@ class TechnicalIncidents::SemanticFilter
       service_criteria.empty? || service_criteria.any? { |criterion| criterion.values.include?(service_key) }
     end
   end
+
+  def self.strict_confidence(value)
+    return unless value.is_a?(Numeric) || value.to_s.match?(/\A(?:0(?:\.\d+)?|1(?:\.0+)?)\z/)
+
+    Float(value).clamp(0.0, 1.0)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
+  private_class_method :strict_confidence
 end

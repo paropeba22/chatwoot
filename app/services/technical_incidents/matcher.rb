@@ -19,7 +19,11 @@ class TechnicalIncidents::Matcher
     return unless @contract['status'] == 'active'
 
     matches = @incident.scope_groups.filter_map { |group| match_group(group) }
-    matches.max_by { |match| match[:specificity] }
+    match = matches.max_by { |result| result[:specificity] }
+    return unless match
+    return unless TechnicalIncidents::SemanticGate.allowed_match_source?(@classification, match[:match_source])
+
+    match
   end
 
   private

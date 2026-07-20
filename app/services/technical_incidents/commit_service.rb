@@ -7,14 +7,15 @@ class TechnicalIncidents::CommitService
   end
 
   def call
+    return blocked_response('server_automation_not_active') unless TechnicalIncidents::Configuration.automation_mode == 'active'
+    return blocked_response('outbox_disabled') unless TechnicalIncidents::Configuration.outbox_enabled?
+
     delivery = nil
     duplicate_response = nil
     idempotency_key_value = nil
     ActiveRecord::Base.transaction do
-      @account.lock!
       evaluation = @account.technical_incident_evaluations.lock.find_by!(opaque_id: @opaque_id)
-      incident = evaluation.technical_incident&.lock!
-      raise StaleEvaluation, 'feature_disabled' unless @account.feature_enabled?('technical_incidents')
+      incident = @account.technical_incidents.lock.find_by(id: evaluation.technical_incident_id)
       if evaluation.status == 'accepted'
         existing = @account.technical_incident_deliveries.find_by(technical_incident_evaluation: evaluation)
         raise StaleEvaluation, 'accepted_delivery_missing' unless existing
@@ -32,40 +33,26 @@ class TechnicalIncidents::CommitService
       end
 
       delivery = reserve_delivery!(evaluation, incident, idempotency_key_value)
-      link = create_link!(evaluation, incident)
-      delivery.update!(technical_incident_conversation_link: link)
-      message = create_customer_message!(evaluation, incident) unless incident.action == 'handoff_only'
-      if message
-        delivery.update!(message: message, state: 'message_created')
-        delivery.update!(state: 'delivery_queued', delivery_queued_at: Time.current)
-      end
-      if incident.action != 'message_only'
-        apply_handoff!(evaluation.conversation, incident)
-        delivery.update!(state: 'handoff_completed', handoff_completed_at: Time.current)
-      end
       evaluation.update!(status: 'accepted', committed_at: Time.current)
-      TechnicalIncidents::AuditService.record!(
-        incident: incident,
-        action: 'commit.accepted',
-        actor: evaluation.agent_bot,
-        origin: 'automation',
-        request_id: evaluation.request_id,
-        changeset: {
-          conversation_id: evaluation.conversation_id,
-          delivery_id: delivery.id,
-          message_id: message&.id,
-          match_source: evaluation.match_source,
-          contract_reference: contract_reference(evaluation)
-        }
-      )
     end
     return duplicate_response if duplicate_response
 
-    response(delivery, 'accepted', 'commit_completed')
+    TechnicalIncidents::Instrumentation.record(
+      event: 'commit.reserved',
+      request_id: delivery.technical_incident_evaluation.request_id,
+      evaluation_id: delivery.technical_incident_evaluation.opaque_id,
+      incident_id: delivery.technical_incident_id,
+      conversation_id: delivery.conversation_id,
+      delivery_id: delivery.id,
+      outbox_id: delivery.id,
+      status: delivery.outbox_state
+    )
+    enqueue_dispatcher
+    response(delivery, 'accepted', 'outbox_reserved')
   rescue ActiveRecord::RecordNotFound
-    { contract_version: TechnicalIncidents::PrecheckService::CONTRACT_VERSION, status: 'stale', reason_code: 'evaluation_not_found' }
+    blocked_response('evaluation_not_found')
   rescue StaleEvaluation => e
-    { contract_version: TechnicalIncidents::PrecheckService::CONTRACT_VERSION, status: 'stale', reason_code: e.message }
+    blocked_response(e.message)
   rescue ActiveRecord::RecordNotUnique
     existing = @account.technical_incident_deliveries.find_by(idempotency_key: idempotency_key_value)
     response(existing, 'duplicate', 'concurrent_commit')
@@ -75,19 +62,28 @@ class TechnicalIncidents::CommitService
 
   def validate!(evaluation, incident)
     raise StaleEvaluation, 'feature_disabled' unless @account.feature_enabled?('technical_incidents')
+    raise StaleEvaluation, 'server_automation_not_active' unless TechnicalIncidents::Configuration.automation_mode == 'active'
+    raise StaleEvaluation, 'outbox_disabled' unless TechnicalIncidents::Configuration.outbox_enabled?
     raise StaleEvaluation, 'evaluation_not_active_mode' unless evaluation.mode == 'active'
     raise StaleEvaluation, 'evaluation_expired' if evaluation.stale?
     raise StaleEvaluation, 'evaluation_not_matched' unless evaluation.status.in?(%w[general_match matched])
     raise StaleEvaluation, 'incident_unavailable' unless incident&.active_and_current?
+    raise StaleEvaluation, 'account_mismatch' unless evaluation.account_id == @account.id && incident.account_id == @account.id
     raise StaleEvaluation, 'notification_version_changed' unless snapshot_version(evaluation) == incident.notification_version
     raise StaleEvaluation, 'conversation_unavailable' unless evaluation.conversation.account_id == @account.id
     raise StaleEvaluation, 'automation_actor_missing' unless evaluation.agent_bot
-    unless evaluation.agent_bot.bot_config.to_h['technical_incidents_api'] == true
+    unless evaluation.agent_bot.account_id == @account.id && evaluation.agent_bot.bot_config.to_h['technical_incidents_api'] == true
       raise StaleEvaluation, 'automation_actor_invalid'
     end
     raise StaleEvaluation, 'selected_contract_missing' if evaluation.status == 'matched' && evaluation.selected_contract['contract_id'].blank?
     raise StaleEvaluation, 'semantic_compatibility_changed' unless TechnicalIncidents::SemanticFilter.compatible?(incident, evaluation.classification)
 
+    match_source = evaluation.status == 'general_match' ? 'general' : evaluation.match_source
+    unless TechnicalIncidents::SemanticGate.allowed_match_source?(evaluation.classification, match_source)
+      raise StaleEvaluation, 'semantic_gate_rejected'
+    end
+
+    TechnicalIncidents::IncidentValidator.new(incident).validate!
     revalidate_scope!(evaluation, incident)
   end
 
@@ -103,9 +99,7 @@ class TechnicalIncidents::CommitService
       classification: evaluation.classification
     ).call
     raise StaleEvaluation, 'deterministic_match_changed' unless match
-    return if match[:match_source] == evaluation.match_source
-
-    raise StaleEvaluation, 'match_source_changed'
+    raise StaleEvaluation, 'match_source_changed' unless match[:match_source] == evaluation.match_source
   end
 
   def snapshot_version(evaluation)
@@ -135,63 +129,48 @@ class TechnicalIncidents::CommitService
   end
 
   def reserve_delivery!(evaluation, incident, key)
+    message_required = incident.action != 'handoff_only'
+    handoff_required = incident.action != 'message_only'
     @account.technical_incident_deliveries.create!(
       technical_incident: incident,
       technical_incident_evaluation: evaluation,
       conversation: evaluation.conversation,
       idempotency_key: key,
       delivery_kind: delivery_kind(incident),
-      state: 'reserved'
+      state: 'reserved',
+      outbox_state: 'pending',
+      message_state: message_required ? 'pending' : 'not_required',
+      transport_state: message_required ? 'pending' : 'not_required',
+      link_state: 'pending',
+      label_state: handoff_required ? 'pending' : 'not_required',
+      note_state: handoff_required ? 'pending' : 'not_required',
+      handoff_state: handoff_required ? 'pending' : 'not_required',
+      audit_state: 'pending',
+      next_retry_at: Time.current
     )
   end
 
-  def create_link!(evaluation, incident)
-    @account.technical_incident_conversation_links.create_or_find_by!(
-      technical_incident: incident,
-      conversation: evaluation.conversation,
-      technical_incident_evaluation: evaluation,
-      contract_reference: contract_reference(evaluation),
-      notification_version: incident.notification_version
+  def enqueue_dispatcher
+    TechnicalIncidents::OutboxDispatchJob.perform_later
+  rescue StandardError => e
+    TechnicalIncidents::Instrumentation.record(
+      event: 'outbox.enqueue_failed',
+      delivery_id: nil,
+      reason_code: e.class.name
     )
   end
 
-  def create_customer_message!(evaluation, incident)
-    Messages::MessageBuilder.new(
-      evaluation.agent_bot,
-      evaluation.conversation,
-      {
-        content: TechnicalIncidents::TemplateRenderer.render(incident),
-        message_type: 'outgoing',
-        sender_type: 'AgentBot',
-        sender_id: evaluation.agent_bot_id,
-        content_type: 'text',
-        content_attributes: {
-          technical_incident_id: incident.id,
-          technical_incident_version: incident.notification_version,
-          technical_incident_delivery: true
-        }
-      }
-    ).perform
-  end
-
-  def apply_handoff!(conversation, incident)
-    labels = conversation.label_list - ['bot-bia']
-    labels |= ['aguardando-humano', "incidente-tecnico-#{incident.id}"]
-    conversation.update_labels(labels)
-    conversation.update!(assignee_agent_bot_id: nil)
-    conversation.bot_handoff!
-    conversation.messages.create!(
-      account: conversation.account,
-      inbox: conversation.inbox,
-      message_type: :outgoing,
-      private: true,
-      sender: nil,
-      content: "Incidente técnico ##{incident.id} vinculado automaticamente. Correspondência revalidada pelo backend."
+  def blocked_response(reason_code)
+    TechnicalIncidents::Instrumentation.record(
+      event: 'commit.blocked',
+      status: 'stale',
+      reason_code: reason_code
     )
-  end
-
-  def contract_reference(evaluation)
-    evaluation.selected_contract['contract_id'].to_s
+    {
+      contract_version: TechnicalIncidents::PrecheckService::CONTRACT_VERSION,
+      status: 'stale',
+      reason_code: reason_code
+    }
   end
 
   def response(delivery, status, reason_code)
@@ -200,7 +179,7 @@ class TechnicalIncidents::CommitService
       status: status,
       reason_code: reason_code,
       delivery_id: delivery&.id,
-      delivery_state: delivery&.state,
+      delivery_state: delivery&.outbox_state,
       message_id: delivery&.message_id
     }.compact
   end
