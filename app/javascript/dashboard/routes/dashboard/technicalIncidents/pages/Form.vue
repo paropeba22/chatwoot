@@ -361,8 +361,8 @@ onMounted(async () => {
           </div>
           <div
             v-for="(group, groupIndex) in form.scope_groups_attributes"
-            :key="group.id || groupIndex"
             v-show="!group._destroy"
+            :key="group.id || groupIndex"
             class="grid gap-3 rounded-lg border border-n-weak p-4"
           >
             <div class="flex items-center justify-between">
@@ -383,8 +383,8 @@ onMounted(async () => {
             </div>
             <div
               v-for="(criterion, criterionIndex) in group.criteria_attributes"
-              :key="criterion.id || criterionIndex"
               v-show="!criterion._destroy"
+              :key="criterion.id || criterionIndex"
               class="grid gap-3 md:grid-cols-[14rem_1fr_auto]"
             >
               <select
@@ -434,8 +434,9 @@ onMounted(async () => {
           <router-link
             :to="{ name: 'technical_incidents_index' }"
             class="rounded-lg border border-n-strong px-4 py-2 text-sm"
-            >{{ t('TECHNICAL_INCIDENTS.CANCEL') }}</router-link
           >
+            {{ t('TECHNICAL_INCIDENTS.CANCEL') }}
+          </router-link>
           <button
             type="submit"
             :disabled="uiFlags.saving"

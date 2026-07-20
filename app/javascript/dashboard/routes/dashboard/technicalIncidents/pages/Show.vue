@@ -382,4 +382,9 @@ onMounted(refresh);
       </section>
     </div>
   </main>
+  <main v-else class="grid h-full place-items-center bg-n-background p-4">
+    <p class="text-sm text-n-slate-11">
+      {{ t('TECHNICAL_INCIDENTS.LOADING') }}
+    </p>
+  </main>
 </template>
