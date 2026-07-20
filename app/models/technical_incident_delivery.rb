@@ -36,14 +36,22 @@ class TechnicalIncidentDelivery < ApplicationRecord
   private
 
   def account_consistency
-    errors.add(:technical_incident, :invalid) if technical_incident && technical_incident.account_id != account_id
-    errors.add(:conversation, :invalid) if conversation && conversation.account_id != account_id
-    if technical_incident_evaluation && technical_incident_evaluation.account_id != account_id
-      errors.add(:technical_incident_evaluation, :invalid)
-    end
-    if technical_incident_conversation_link && technical_incident_conversation_link.account_id != account_id
-      errors.add(:technical_incident_conversation_link, :invalid)
-    end
-    errors.add(:message, :invalid) if message && (message.account_id != account_id || message.conversation_id != conversation_id)
+    validate_account(:technical_incident)
+    validate_account(:conversation)
+    validate_account(:technical_incident_evaluation)
+    validate_account(:technical_incident_conversation_link)
+    validate_message_account
+  end
+
+  def validate_account(association)
+    record = public_send(association)
+    errors.add(association, :invalid) if record && record.account_id != account_id
+  end
+
+  def validate_message_account
+    return unless message
+    return if message.account_id == account_id && message.conversation_id == conversation_id
+
+    errors.add(:message, :invalid)
   end
 end

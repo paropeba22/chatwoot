@@ -4,17 +4,11 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
   before_action :authorize_action!
 
   def index
-    return render_invalid_filters unless valid_filters?
+    query = TechnicalIncidents::IncidentQuery.new(incident_scope, params)
+    return render_invalid_filters unless query.valid?
 
-    incidents = policy_scope(Current.account.technical_incidents).includes(:created_by, :updated_by, scope_groups: :criteria)
-    incidents = apply_filters(incidents).order(priority: :desc, starts_at: :desc, id: :desc)
-    page = [params.fetch(:page, 1).to_i, 1].max
-    per_page = params.fetch(:per_page, 25).to_i.clamp(1, 100)
-    paginated = incidents.page(page).per(per_page)
-    render json: {
-      payload: paginated.map { |incident| TechnicalIncidentSerializer.new(incident).as_json },
-      meta: { current_page: page, per_page: per_page, total_entries: paginated.total_count }
-    }
+    records = paginate(query.call.order(priority: :desc, starts_at: :desc, id: :desc))
+    render_paginated(records) { |incident| TechnicalIncidentSerializer.new(incident).as_json }
   end
 
   def show
@@ -57,14 +51,13 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
 
   def history
     paginated = paginate(@incident.updates.order(created_at: :desc, id: :desc))
-    payload = paginated_response(paginated) { |update| update_payload(update) }
-    render json: payload
+    render_paginated(paginated) { |update| TechnicalIncidents::UpdatePresenter.new(update).as_json }
   end
 
   def conversations
     links = paginate(@incident.conversation_links.includes(:conversation).order(created_at: :desc, id: :desc))
     can_audit = policy(@incident).history?
-    payload = paginated_response(links) do |link|
+    render_paginated(links) do |link|
       {
         id: link.id,
         conversation_id: link.conversation_id,
@@ -77,18 +70,16 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
         created_at: link.created_at
       }
     end
-    render json: payload
   end
 
   def evaluations
     evaluations = paginate(@incident.evaluations.order(created_at: :desc, id: :desc))
-    payload = paginated_response(evaluations) do |evaluation|
+    render_paginated(evaluations) do |evaluation|
       evaluation.attributes.slice(
         'opaque_id', 'status', 'reason_code', 'match_source', 'operational_confidence',
         'feedback', 'latency_ms', 'created_at'
       )
     end
-    render json: payload
   end
 
   def destroy
@@ -128,6 +119,11 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
 
   def set_incident
     @incident = Current.account.technical_incidents.includes(scope_groups: :criteria).find(params[:id])
+  end
+
+  def incident_scope
+    policy_scope(Current.account.technical_incidents)
+      .includes(:created_by, :updated_by, scope_groups: :criteria)
   end
 
   def authorize_action!
@@ -172,88 +168,10 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
       :starts_at, :expires_at, :review_at, :estimated_resolution_at, :resend_on_next_contact, :lock_version,
       problem_types: [], affected_services: []
     )
-    permitted[:scope_groups_attributes] = sanitize_scope_groups(source[:scope_groups_attributes]) if source.key?(:scope_groups_attributes)
+    if source.key?(:scope_groups_attributes)
+      permitted[:scope_groups_attributes] = TechnicalIncidents::ScopeParamsSanitizer.call(source[:scope_groups_attributes])
+    end
     permitted
-  end
-
-  def sanitize_scope_groups(raw_groups)
-    nested_collection(raw_groups).first(50).map do |raw_group|
-      group = raw_group.to_h.stringify_keys
-      group.slice('id', 'position', '_destroy').merge(
-        'criteria_attributes' => nested_collection(group['criteria_attributes']).first(20).map do |raw_criterion|
-          criterion = raw_criterion.to_h.stringify_keys
-          criterion.slice('id', 'criterion_type', 'operator', '_destroy').merge(
-            'values' => sanitize_scope_values(criterion['values'])
-          )
-        end
-      )
-    end
-  end
-
-  def sanitize_scope_values(raw_values)
-    nested_collection(raw_values).first(200).map do |raw_value|
-      if raw_value.respond_to?(:to_h) && !raw_value.is_a?(String)
-        raw_value.to_h.stringify_keys.slice('city', 'neighborhood', 'street')
-      else
-        raw_value.to_s.first(200)
-      end
-    end
-  end
-
-  def nested_collection(value)
-    return [] if value.nil?
-    return value.values if value.respond_to?(:values) && !value.is_a?(Array)
-
-    Array(value)
-  end
-
-  def apply_filters(scope)
-    scope = scope.where(status: bucket_statuses(params[:bucket])) if params[:bucket].present?
-    scope = scope.where(status: params[:status]) if params[:status].present?
-    scope = scope.where(severity: params[:severity]) if params[:severity].present?
-    scope = scope.where(incident_type: params[:category]) if params[:category].present?
-    scope = scope.where(created_by_id: params[:creator_id]) if params[:creator_id].present?
-    scope = scope.where('affected_services @> ARRAY[?]::text[]', params[:service]) if params[:service].present?
-    if params[:q].present?
-      query = params[:q].to_s.first(200)
-      scope = scope.where('title ILIKE ?', "%#{ActiveRecord::Base.sanitize_sql_like(query)}%")
-    end
-    scope = scope.where('starts_at >= ?', parsed_time(:from)) if params[:from].present?
-    scope = scope.where('starts_at <= ?', parsed_time(:to)) if params[:to].present?
-    if params[:scope_type].present?
-      scope = scope.joins(scope_groups: :criteria)
-                   .where(technical_incident_scope_criteria: { criterion_type: params[:scope_type] })
-                   .distinct
-    end
-    scope
-  end
-
-  def bucket_statuses(bucket)
-    {
-      'active' => %w[active monitoring],
-      'scheduled' => %w[scheduled],
-      'history' => %w[resolved expired cancelled]
-    }.fetch(bucket)
-  end
-
-  def valid_filters?
-    return false if params[:bucket].present? && %w[active scheduled history].exclude?(params[:bucket])
-    return false if params[:status].present? && TechnicalIncident::STATUSES.exclude?(params[:status])
-    return false if params[:severity].present? && TechnicalIncident::SEVERITIES.exclude?(params[:severity])
-    return false if params[:category].present? && TechnicalIncident::INCIDENT_TYPES.exclude?(params[:category])
-    return false if params[:service].present? && TechnicalIncident::SERVICE_KEYS.exclude?(params[:service])
-    return false if params[:scope_type].present? && TechnicalIncidentScopeCriterion::TYPES.exclude?(params[:scope_type])
-
-    parsed_time(:from) if params[:from].present?
-    parsed_time(:to) if params[:to].present?
-    true
-  rescue ArgumentError
-    false
-  end
-
-  def parsed_time(key)
-    @parsed_times ||= {}
-    @parsed_times[key] ||= Time.zone.iso8601(params[key].to_s)
   end
 
   def render_invalid_filters
@@ -266,26 +184,7 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
     scope.page(page).per(per_page)
   end
 
-  def paginated_response(records)
-    {
-      payload: records.map { |record| yield(record) },
-      meta: {
-        current_page: records.current_page,
-        per_page: records.limit_value,
-        total_entries: records.total_count
-      }
-    }
-  end
-
-  def update_payload(update)
-    {
-      id: update.id,
-      action: update.action,
-      origin: update.origin,
-      actor: update.actor && { id: update.actor.id, type: update.actor_type, name: update.actor.try(:name) },
-      changeset: update.changeset,
-      request_id: update.request_id,
-      created_at: update.created_at
-    }
+  def render_paginated(records, &)
+    render json: TechnicalIncidents::PaginatedPresenter.new(records).as_json(&)
   end
 end

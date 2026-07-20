@@ -19,13 +19,14 @@ class TechnicalIncidents::OutboxDispatchJob < ApplicationJob
   private
 
   def recover_stuck_deliveries
-    TechnicalIncidentDelivery.outbox_stuck.in_batches.update_all(
-      outbox_state: 'retry',
-      locked_at: nil,
-      lock_token: nil,
-      next_retry_at: Time.current,
-      last_error_code: 'outbox_lease_expired',
-      updated_at: Time.current
-    )
+    TechnicalIncidentDelivery.outbox_stuck.find_each do |delivery|
+      delivery.update!(
+        outbox_state: 'retry',
+        locked_at: nil,
+        lock_token: nil,
+        next_retry_at: Time.current,
+        last_error_code: 'outbox_lease_expired'
+      )
+    end
   end
 end

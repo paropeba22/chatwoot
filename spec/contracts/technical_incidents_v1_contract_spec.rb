@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Technical Incidents V1 contract' do
+RSpec.describe TechnicalIncidents::PrecheckService, 'V1 contract' do
   let(:fixtures_path) { Rails.root.join('spec/fixtures/technical_incidents/v1') }
 
   def fixture(name)

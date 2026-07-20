@@ -25,14 +25,27 @@ class TechnicalIncidents::IncidentValidator
   def validate_window
     return if @incident.expires_at.blank?
 
-    add_error(:expires_at, :expired) if %w[active monitoring].include?(@incident.status) && @incident.expires_at <= Time.current
-    if @incident.status == 'active' && @incident.starts_at.present? && @incident.starts_at > Time.current
-      add_error(:starts_at, :not_started)
-    end
-    if @incident.status == 'scheduled'
-      add_error(:starts_at, :blank) if @incident.starts_at.blank?
-      add_error(:starts_at, :not_future) if @incident.starts_at.present? && @incident.starts_at <= Time.current
-    end
+    validate_current_window
+    validate_scheduled_window
+    validate_maximum_window
+  end
+
+  def validate_current_window
+    operational = %w[active monitoring].include?(@incident.status)
+    add_error(:expires_at, :expired) if operational && @incident.expires_at <= Time.current
+
+    future_start = @incident.starts_at.present? && @incident.starts_at > Time.current
+    add_error(:starts_at, :not_started) if @incident.status == 'active' && future_start
+  end
+
+  def validate_scheduled_window
+    return unless @incident.status == 'scheduled'
+
+    add_error(:starts_at, :blank) if @incident.starts_at.blank?
+    add_error(:starts_at, :not_future) if @incident.starts_at.present? && @incident.starts_at <= Time.current
+  end
+
+  def validate_maximum_window
     base_time = @incident.starts_at || Time.current
     add_error(:expires_at, :too_far) if @incident.expires_at > base_time + 7.days
   end

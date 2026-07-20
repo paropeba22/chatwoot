@@ -3,6 +3,8 @@ class TechnicalIncidents::RetentionJob < ApplicationJob
 
   def perform
     TechnicalIncidentEvaluation.where('created_at < ?', 180.days.ago).in_batches do |batch|
+      # A single SQL update is intentional: callbacks must not run while purging retained PII at scale.
+      # rubocop:disable Rails/SkipsModelValidations
       batch.update_all(
         classification: {},
         candidate_snapshot: [],
@@ -12,6 +14,7 @@ class TechnicalIncidents::RetentionJob < ApplicationJob
         feedback_note: nil,
         updated_at: Time.current
       )
+      # rubocop:enable Rails/SkipsModelValidations
     end
     TechnicalIncidentUpdate.where('created_at < ?', 5.years.ago).in_batches.delete_all
   end

@@ -1,14 +1,14 @@
 class TechnicalIncidents::AuditService
   SENSITIVE_KEYS = %w[cpf cnpj phone phone_number password senha login mac address full_address].freeze
 
-  def self.record!(incident:, action:, actor: nil, origin:, changeset: {}, request_id: nil)
+  def self.record!(incident:, action:, origin:, **context)
     incident.updates.create!(
       account: incident.account,
-      actor: actor,
+      actor: context[:actor],
       origin: origin,
       action: action,
-      changeset: sanitize(changeset),
-      request_id: request_id
+      changeset: sanitize(context.fetch(:changeset, {})),
+      request_id: context[:request_id]
     )
   end
 

@@ -87,7 +87,9 @@ not required. CI is not approved until an actual run is green.
 
 ### Static result
 
-- `20260717000001` adds one boolean account column and creates new tables.
+- `20260717000001` adds the account feature column and incident table.
+- `20260717000002` adds scope, criteria and immutable update tables.
+- `20260717000003` adds evaluations, conversation links and deliveries.
 - `20260720000001` adds durable outbox dimensions and supporting indexes.
 - Foreign keys cover every authoritative association.
 - Scope group and criteria deletion cascade only with their parent scope.
@@ -105,7 +107,8 @@ not required. CI is not approved until an actual run is green.
 - Existing delivery rows, if any, are marked terminal for manual review rather
   than replayed.
 - Rolling down `20260720000001` removes the new state dimensions. Rolling down
-  `20260717000001` destroys all Central data and is not a production rollback.
+  `20260717000003`, `20260717000002` and `20260717000001` in that order
+  destroys all Central data and is not a production rollback.
 - The legacy-state backfill is not data-reversible. Logical rollback must
   preserve the additive schema.
 
@@ -119,12 +122,16 @@ export POSTGRES_PASSWORD=''
 
 bundle exec rails db:drop db:create db:migrate
 bundle exec rails db:migrate:down VERSION=20260720000001
+bundle exec rails db:migrate:down VERSION=20260717000003
+bundle exec rails db:migrate:down VERSION=20260717000002
 bundle exec rails db:migrate:down VERSION=20260717000001
 bundle exec rails runner \
   'abort if ActiveRecord::Base.connection.data_source_exists?("technical_incidents")'
 bundle exec rails runner \
   'abort if ActiveRecord::Base.connection.column_exists?(:accounts, :technical_incidents_enabled)'
 bundle exec rails db:migrate:up VERSION=20260717000001
+bundle exec rails db:migrate:up VERSION=20260717000002
+bundle exec rails db:migrate:up VERSION=20260717000003
 bundle exec rails db:migrate:up VERSION=20260720000001
 bundle exec rails db:schema:dump
 git diff --check

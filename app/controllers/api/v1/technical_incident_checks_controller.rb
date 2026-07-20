@@ -74,45 +74,22 @@ class Api::V1::TechnicalIncidentChecksController < Api::BaseController
   end
 
   def valid_precheck_shape?
-    allowed = %w[
-      conversation_display_id source_message_id mode request_id idempotency_key contract_version
-      classification semantic_classification controller action format
-    ]
-    return render_invalid_contract('unexpected_precheck_field') if (params.keys - allowed).any?
-
-    classification = params[:classification] || params[:semantic_classification] || {}
-    allowed_classification = TechnicalIncidents::SemanticFilter::ALLOWED_CLASSIFICATION_KEYS
-    return render_invalid_contract('unexpected_classification_field') if (classification.keys - allowed_classification).any?
-
-    true
+    validate_contract_shape(:precheck)
   end
 
   def valid_match_shape?
-    allowed = %w[selected_contract_id selected_contract contracts sanitized_contracts controller action id format]
-    return render_invalid_contract('unexpected_match_field') if (params.keys - allowed).any?
-
-    raw_contracts = Array(params[:contracts] || params[:sanitized_contracts])
-    return render_invalid_contract('too_many_contracts') if raw_contracts.length > 20
-
-    raw_contracts.each do |contract|
-      unknown = contract.keys - TechnicalIncidents::MatchService::ALLOWED_CONTRACT_KEYS
-      return render_invalid_contract('contract_contains_forbidden_fields') if unknown.any?
-
-      location = contract[:location] || contract['location'] || {}
-      allowed_location = %w[state city neighborhood postal_code street number]
-      return render_invalid_contract('contract_contains_forbidden_fields') if (location.keys - allowed_location).any?
-    end
-    selected = params[:selected_contract] || {}
-    return render_invalid_contract('unexpected_selected_contract_field') if (selected.keys - ['contract_id']).any?
-
-    true
+    validate_contract_shape(:match)
   end
 
   def valid_commit_shape?
-    allowed = %w[controller action id format]
-    return render_invalid_contract('unexpected_commit_field') if (params.keys - allowed).any?
+    validate_contract_shape(:commit)
+  end
 
-    true
+  def validate_contract_shape(action)
+    reason_code = TechnicalIncidents::AutomationPayloadValidator.new(params).public_send("validate_#{action}")
+    return true unless reason_code
+
+    render_invalid_contract(reason_code)
   end
 
   def render_invalid_contract(reason_code)

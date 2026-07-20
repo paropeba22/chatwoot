@@ -108,9 +108,7 @@ class TechnicalIncident < ApplicationRecord
   end
 
   def controlled_taxonomy_values
-    unless problem_types.is_a?(Array) && problem_types.all? { |value| PROBLEM_TYPES.include?(value) }
-      errors.add(:problem_types, :inclusion)
-    end
+    errors.add(:problem_types, :inclusion) unless problem_types.is_a?(Array) && problem_types.all? { |value| PROBLEM_TYPES.include?(value) }
     return if affected_services.is_a?(Array) && affected_services.all? { |value| SERVICE_KEYS.include?(value) }
 
     errors.add(:affected_services, :inclusion)

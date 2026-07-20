@@ -6,32 +6,7 @@ class TechnicalIncidents::UpdateService
   end
 
   def call
-    @incident.with_lock do
-      @incident.reload
-      raise ActiveRecord::RecordInvalid, @incident unless @incident.account.feature_enabled?('technical_incidents')
-      if @actor.is_a?(User) && !@incident.account.account_users.exists?(user_id: @actor.id)
-        raise ActiveRecord::RecordInvalid, @incident
-      end
-
-      expected_lock_version = @attributes.to_h[:lock_version] || @attributes.to_h['lock_version']
-      if expected_lock_version.present? && expected_lock_version.to_i != @incident.lock_version
-        raise ActiveRecord::StaleObjectError.new(@incident, 'update')
-      end
-
-      previous_fingerprint = notification_fingerprint
-      @incident.assign_attributes(@attributes.to_h.except(:lock_version, 'lock_version'))
-      @incident.updated_by = @actor
-      @incident.notification_version += 1 if versioned_change?(previous_fingerprint)
-      TechnicalIncidents::IncidentValidator.new(@incident).validate!
-      @incident.save!
-      TechnicalIncidents::AuditService.record!(
-        incident: @incident,
-        action: 'incident.updated',
-        actor: @actor,
-        origin: 'ui',
-        changeset: @incident.previous_changes.except('updated_at', 'lock_version')
-      )
-    end
+    @incident.with_lock { update_locked! }
     @incident
   end
 
@@ -57,18 +32,56 @@ class TechnicalIncidents::UpdateService
   end
 
   def scope_fingerprint
-    groups = @incident.scope_groups.reject(&:marked_for_destruction?)
-                      .sort_by { |group| [group.position, group.id.to_i] }
-    groups.map do |group|
-      criteria = group.criteria.reject(&:marked_for_destruction?)
-                      .sort_by { |criterion| [criterion.criterion_type, criterion.id.to_i] }
-      criteria.map do |criterion|
-        [
-          criterion.criterion_type,
-          criterion.operator,
-          Array(criterion.values).map(&:to_json).sort
-        ]
-      end
+    active_scope_groups.map { |group| criterion_fingerprints(group) }
+  end
+
+  def update_locked!
+    @incident.reload
+    validate_update!
+    previous_fingerprint = notification_fingerprint
+    assign_attributes
+    @incident.notification_version += 1 if versioned_change?(previous_fingerprint)
+    TechnicalIncidents::IncidentValidator.new(@incident).validate!
+    @incident.save!
+    record_audit
+  end
+
+  def validate_update!
+    raise ActiveRecord::RecordInvalid, @incident unless @incident.account.feature_enabled?('technical_incidents')
+    raise ActiveRecord::RecordInvalid, @incident unless actor_in_account?
+
+    expected = @attributes.to_h[:lock_version] || @attributes.to_h['lock_version']
+    raise ActiveRecord::StaleObjectError.new(@incident, 'update') if expected.present? && expected.to_i != @incident.lock_version
+  end
+
+  def actor_in_account?
+    !@actor.is_a?(User) || @incident.account.account_users.exists?(user_id: @actor.id)
+  end
+
+  def assign_attributes
+    @incident.assign_attributes(@attributes.to_h.except(:lock_version, 'lock_version'))
+    @incident.updated_by = @actor
+  end
+
+  def record_audit
+    TechnicalIncidents::AuditService.record!(
+      incident: @incident,
+      action: 'incident.updated',
+      actor: @actor,
+      origin: 'ui',
+      changeset: @incident.previous_changes.except('updated_at', 'lock_version')
+    )
+  end
+
+  def active_scope_groups
+    @incident.scope_groups.reject(&:marked_for_destruction?).sort_by { |group| [group.position, group.id.to_i] }
+  end
+
+  def criterion_fingerprints(group)
+    criteria = group.criteria.reject(&:marked_for_destruction?)
+                    .sort_by { |criterion| [criterion.criterion_type, criterion.id.to_i] }
+    criteria.map do |criterion|
+      [criterion.criterion_type, criterion.operator, Array(criterion.values).map(&:to_json).sort]
     end
   end
 end

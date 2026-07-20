@@ -164,7 +164,7 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
     )
 
     expect { described_class.new(delivery.id).call }
-      .not_to change { delivery.reload.attributes.slice('outbox_state', 'lock_token', 'attempts') }
+      .not_to(change { delivery.reload.attributes.slice('outbox_state', 'lock_token', 'attempts') })
   end
 
   it 'does not claim or mutate a delivery while the outbox switch is off' do
@@ -250,9 +250,10 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
       enqueue_transport!: 'fake'
     )
     allow(TechnicalIncidents::DeliveryAdapters).to receive(:for).and_return(adapter)
-    allow_any_instance_of(Conversation).to receive(:update_labels).and_raise(ActiveRecord::Deadlocked)
+    allow(conversation).to receive(:update_labels).and_raise(ActiveRecord::Deadlocked)
 
-    described_class.new(delivery.id).call
+    delivery.association(:conversation).target = conversation
+    described_class.new(delivery).call
 
     expect(delivery.reload).to have_attributes(
       outbox_state: 'retry',
@@ -278,9 +279,10 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
       enqueue_transport!: 'fake'
     )
     allow(TechnicalIncidents::DeliveryAdapters).to receive(:for).and_return(adapter)
-    allow_any_instance_of(Conversation).to receive(:bot_handoff!).and_raise(ActiveRecord::Deadlocked)
+    allow(conversation).to receive(:bot_handoff!).and_raise(ActiveRecord::Deadlocked)
 
-    described_class.new(delivery.id).call
+    delivery.association(:conversation).target = conversation
+    described_class.new(delivery).call
 
     expect(delivery.reload).to have_attributes(
       outbox_state: 'retry',

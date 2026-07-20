@@ -142,7 +142,7 @@ RSpec.describe TechnicalIncidents::PrecheckService do
           classification: value
         )
       ).call
-      expect(%w[fallback no_candidate]).to include(result[:status])
+      expect(result[:status]).to be_in(%w[fallback no_candidate])
       expect(result[:status]).not_to eq('general_match')
     end
   end

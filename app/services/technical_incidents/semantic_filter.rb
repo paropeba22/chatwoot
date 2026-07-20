@@ -13,34 +13,16 @@ class TechnicalIncidents::SemanticFilter
 
   def self.sanitize(raw)
     raw.to_h.stringify_keys.slice(*ALLOWED_CLASSIFICATION_KEYS).tap do |classification|
-      classification['problem_type'] = PROBLEM_TYPE_ALIASES.fetch(
-        classification['problem_type'].to_s,
-        classification['problem_type'].to_s
-      )
-      classification['service_key'] = classification['service_key'].to_s
-      classification['symptoms'] = Array(classification['symptoms']).first(10).map { |value| TechnicalIncidents::Normalizer.text(value)[0, 100] }
-      classification['semantic_confidence'] = strict_confidence(classification['semantic_confidence'])
-      classification['topic_change'] = classification['topic_change'] if classification['topic_change'].in?([true, false])
-      classification['needs_clarification'] = classification['needs_clarification'] if classification['needs_clarification'].in?([true, false])
+      normalize_taxonomy(classification)
+      normalize_symptoms(classification)
+      normalize_gates(classification)
     end
   end
 
   def self.compatible?(incident, classification)
-    return false unless TechnicalIncidents::SemanticGate.call(classification).allowed
-    return false unless classification['is_support_issue'] == true
-    return false unless TechnicalIncident::PROBLEM_TYPES.include?(classification['problem_type'])
-    return false unless incident.problem_types.include?(classification['problem_type'])
-
-    service_key = classification['service_key']
-    affected_service_compatible = incident.affected_services.empty? ||
-                                  (TechnicalIncident::SERVICE_KEYS.include?(service_key) &&
-                                   incident.affected_services.include?(service_key))
-    return false unless affected_service_compatible
-
-    incident.scope_groups.any? do |group|
-      service_criteria = group.criteria.select(&:service_specific?)
-      service_criteria.empty? || service_criteria.any? { |criterion| criterion.values.include?(service_key) }
-    end
+    valid_problem?(incident, classification) &&
+      compatible_affected_service?(incident, classification['service_key']) &&
+      compatible_scope_service?(incident, classification['service_key'])
   end
 
   def self.strict_confidence(value)
@@ -51,5 +33,47 @@ class TechnicalIncidents::SemanticFilter
     nil
   end
 
-  private_class_method :strict_confidence
+  def self.normalize_taxonomy(classification)
+    problem_type = classification['problem_type'].to_s
+    classification['problem_type'] = PROBLEM_TYPE_ALIASES.fetch(problem_type, problem_type)
+    classification['service_key'] = classification['service_key'].to_s
+  end
+
+  def self.normalize_symptoms(classification)
+    classification['symptoms'] = Array(classification['symptoms']).first(10).map do |value|
+      TechnicalIncidents::Normalizer.text(value)[0, 100]
+    end
+  end
+
+  def self.normalize_gates(classification)
+    classification['semantic_confidence'] = strict_confidence(classification['semantic_confidence'])
+    classification['topic_change'] = strict_boolean(classification['topic_change'])
+    classification['needs_clarification'] = strict_boolean(classification['needs_clarification'])
+  end
+
+  def self.strict_boolean(value)
+    value if value.in?([true, false])
+  end
+
+  def self.valid_problem?(incident, classification)
+    TechnicalIncidents::SemanticGate.call(classification).allowed &&
+      classification['is_support_issue'] == true &&
+      TechnicalIncident::PROBLEM_TYPES.include?(classification['problem_type']) &&
+      incident.problem_types.include?(classification['problem_type'])
+  end
+
+  def self.compatible_affected_service?(incident, service_key)
+    incident.affected_services.empty? ||
+      (TechnicalIncident::SERVICE_KEYS.include?(service_key) && incident.affected_services.include?(service_key))
+  end
+
+  def self.compatible_scope_service?(incident, service_key)
+    incident.scope_groups.any? do |group|
+      criteria = group.criteria.select(&:service_specific?)
+      criteria.empty? || criteria.any? { |criterion| criterion.values.include?(service_key) }
+    end
+  end
+
+  private_class_method :strict_confidence, :normalize_taxonomy, :normalize_symptoms, :normalize_gates, :strict_boolean,
+                       :valid_problem?, :compatible_affected_service?, :compatible_scope_service?
 end

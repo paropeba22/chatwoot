@@ -14,8 +14,9 @@ class TechnicalIncidents::LifecycleJob < ApplicationJob
     TechnicalIncident.where(status: 'scheduled', archived_at: nil).where('starts_at <= ?', Time.current).find_each do |incident|
       next unless incident.account.feature_enabled?('technical_incidents')
 
-      TechnicalIncidents::LifecycleService.new(incident: incident, actor: nil, origin: 'job')
-                                            .transition!('active')
+      TechnicalIncidents::LifecycleService
+        .new(incident: incident, actor: nil, origin: 'job')
+        .transition!('active')
     rescue TechnicalIncidents::LifecycleService::InvalidTransition, ActiveRecord::RecordInvalid => e
       record_job_failure(incident, 'scheduled_activation_failed', e)
     end
@@ -25,8 +26,9 @@ class TechnicalIncidents::LifecycleJob < ApplicationJob
     TechnicalIncident.where(status: 'active', archived_at: nil).where('expires_at <= ?', Time.current).find_each do |incident|
       next unless incident.account.feature_enabled?('technical_incidents')
 
-      TechnicalIncidents::LifecycleService.new(incident: incident, actor: nil, origin: 'job')
-                                            .transition!('expired')
+      TechnicalIncidents::LifecycleService
+        .new(incident: incident, actor: nil, origin: 'job')
+        .transition!('expired')
     rescue TechnicalIncidents::LifecycleService::InvalidTransition, ActiveRecord::RecordInvalid => e
       record_job_failure(incident, 'expiration_failed', e)
     end
@@ -35,9 +37,10 @@ class TechnicalIncidents::LifecycleJob < ApplicationJob
   def record_review_alerts
     TechnicalIncident.where(status: %w[active monitoring], archived_at: nil).where('review_at <= ?', Time.current).find_each do |incident|
       next unless incident.account.feature_enabled?('technical_incidents')
+
       incident.with_lock do
         incident.reload
-        next if incident.updates.where(action: 'review.due').where('created_at >= ?', incident.review_at).exists?
+        next if incident.updates.where(action: 'review.due').exists?(['created_at >= ?', incident.review_at])
 
         TechnicalIncidents::AuditService.record!(
           incident: incident,
@@ -52,9 +55,10 @@ class TechnicalIncidents::LifecycleJob < ApplicationJob
   def record_forgotten_alerts
     TechnicalIncident.where(status: 'active', archived_at: nil).where('updated_at <= ?', 2.hours.ago).find_each do |incident|
       next unless incident.account.feature_enabled?('technical_incidents')
+
       incident.with_lock do
         incident.reload
-        next if incident.updates.where(action: 'incident.forgotten').where('created_at >= ?', 2.hours.ago).exists?
+        next if incident.updates.where(action: 'incident.forgotten').exists?(['created_at >= ?', 2.hours.ago])
 
         TechnicalIncidents::AuditService.record!(
           incident: incident,

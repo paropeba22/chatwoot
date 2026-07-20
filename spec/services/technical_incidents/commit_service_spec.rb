@@ -53,7 +53,7 @@ RSpec.describe TechnicalIncidents::CommitService do
       result = described_class.new(account: account, opaque_id: evaluation.opaque_id).call
       expect(result).to include(status: 'accepted', reason_code: 'outbox_reserved')
     end.to change(TechnicalIncidentDelivery, :count).by(1)
-      .and change { evaluation.reload.status }.from('general_match').to('accepted')
+                                              .and change { evaluation.reload.status }.from('general_match').to('accepted')
 
     delivery = account.technical_incident_deliveries.sole
     expect(delivery).to have_attributes(
@@ -74,7 +74,7 @@ RSpec.describe TechnicalIncidents::CommitService do
     expect(service.call[:status]).to eq('accepted')
 
     expect { expect(service.call[:status]).to eq('duplicate') }
-      .not_to change { [TechnicalIncidentDelivery.count, Message.count, TechnicalIncidentConversationLink.count] }
+      .not_to(change { [TechnicalIncidentDelivery.count, Message.count, TechnicalIncidentConversationLink.count] })
   end
 
   it 'preserves the database outbox reservation when Redis enqueue fails after commit' do
@@ -122,7 +122,7 @@ RSpec.describe TechnicalIncidents::CommitService do
       .to include(status: 'stale', reason_code: 'evaluation_expired')
 
     evaluation.update!(expires_at: 10.minutes.from_now)
-    incident.increment!(:notification_version)
+    incident.update!(notification_version: incident.notification_version + 1)
     expect(described_class.new(account: account, opaque_id: evaluation.opaque_id).call)
       .to include(status: 'stale', reason_code: 'notification_version_changed')
   end

@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Technical incident account isolation' do
+RSpec.describe TechnicalIncident, 'account isolation' do
   let(:account) { create(:account) }
   let(:other_account) { create(:account) }
   let(:incident) { create(:technical_incident, account: account) }

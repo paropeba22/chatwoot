@@ -1,8 +1,8 @@
 class TechnicalIncidents::TemplateRenderer
   ALLOWED_VARIABLES = %w[estimated_resolution_at affected_service incident_title].freeze
-  VARIABLE_PATTERN = /\{\{\s*([a-z_]+)\s*\}\}/.freeze
-  ANY_OUTPUT_PATTERN = /\{\{.*?\}\}/m.freeze
-  TAG_PATTERN = /\{%.*?%\}/m.freeze
+  VARIABLE_PATTERN = /\{\{\s*([a-z_]+)\s*\}\}/
+  ANY_OUTPUT_PATTERN = /\{\{.*?\}\}/m
+  TAG_PATTERN = /\{%.*?%\}/m
 
   class InvalidTemplate < StandardError; end
 

@@ -5,11 +5,7 @@ class TechnicalIncidents::ConflictService
 
   def call
     candidates.filter_map do |other|
-      reasons = []
-      reasons << 'compatible_general_active' if other.general_scope? && semantic_overlap?(other)
-      reasons << 'same_service' if (other.affected_services & @incident.affected_services).any?
-      reasons << 'same_problem_type' if (other.problem_types & @incident.problem_types).any?
-      reasons << 'overlapping_scope' if scope_fingerprints(other).intersect?(scope_fingerprints(@incident))
+      reasons = conflict_reasons(other)
       next if reasons.empty?
 
       { incident_id: other.id, title: other.title, severity: other.severity, reasons: reasons }
@@ -23,8 +19,21 @@ class TechnicalIncidents::ConflictService
   end
 
   def semantic_overlap?(other)
-    (other.problem_types & @incident.problem_types).any? &&
-      (other.affected_services.empty? || @incident.affected_services.empty? || (other.affected_services & @incident.affected_services).any?)
+    other.problem_types.intersect?(@incident.problem_types) && service_overlap?(other)
+  end
+
+  def conflict_reasons(other)
+    [].tap do |reasons|
+      reasons << 'compatible_general_active' if other.general_scope? && semantic_overlap?(other)
+      reasons << 'same_service' if other.affected_services.intersect?(@incident.affected_services)
+      reasons << 'same_problem_type' if other.problem_types.intersect?(@incident.problem_types)
+      reasons << 'overlapping_scope' if scope_fingerprints(other).intersect?(scope_fingerprints(@incident))
+    end
+  end
+
+  def service_overlap?(other)
+    other.affected_services.empty? || @incident.affected_services.empty? ||
+      other.affected_services.intersect?(@incident.affected_services)
   end
 
   def scope_fingerprints(incident)

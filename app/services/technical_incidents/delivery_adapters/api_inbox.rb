@@ -1,23 +1,7 @@
 class TechnicalIncidents::DeliveryAdapters::ApiInbox < TechnicalIncidents::DeliveryAdapters::Base
   def create_message!
     ensure_enabled!
-    existing_message || Messages::MessageBuilder.new(
-      evaluation.agent_bot,
-      conversation,
-      {
-        content: TechnicalIncidents::TemplateRenderer.render(incident),
-        message_type: 'outgoing',
-        sender_type: 'AgentBot',
-        sender_id: evaluation.agent_bot_id,
-        content_type: 'text',
-        content_attributes: {
-          technical_incident_id: incident.id,
-          technical_incident_version: incident.notification_version,
-          technical_incident_delivery_id: @delivery.id,
-          technical_incident_outbox_managed: true
-        }
-      }
-    ).perform
+    existing_message || Messages::MessageBuilder.new(evaluation.agent_bot, conversation, message_attributes).perform
   rescue StandardError
     message = existing_message
     return message if message
@@ -47,6 +31,26 @@ class TechnicalIncidents::DeliveryAdapters::ApiInbox < TechnicalIncidents::Deliv
     return if TechnicalIncidents::Configuration.api_inbox_delivery_enabled?
 
     raise DeliveryDisabled, 'api_inbox_delivery_unverified'
+  end
+
+  def message_attributes
+    {
+      content: TechnicalIncidents::TemplateRenderer.render(incident),
+      message_type: 'outgoing',
+      sender_type: 'AgentBot',
+      sender_id: evaluation.agent_bot_id,
+      content_type: 'text',
+      content_attributes: incident_content_attributes
+    }
+  end
+
+  def incident_content_attributes
+    {
+      technical_incident_id: incident.id,
+      technical_incident_version: incident.notification_version,
+      technical_incident_delivery_id: @delivery.id,
+      technical_incident_outbox_managed: true
+    }
   end
 
   def existing_message

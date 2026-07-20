@@ -29,38 +29,7 @@ class TechnicalIncidentScopeCriterion < ApplicationRecord
   end
 
   def values_shape
-    return errors.add(:values, :invalid) unless values.is_a?(Array)
-    if general?
-      errors.add(:values, :invalid) unless values.empty?
-      return
-    end
-
-    if city_neighborhood?
-      return if values.all? do |value|
-        next false unless value.is_a?(Hash)
-
-        normalized = value.to_h.stringify_keys
-        normalized.keys.sort == %w[city neighborhood] &&
-          normalized['city'].present? && normalized['neighborhood'].present?
-      end
-    elsif city_street?
-      return if values.all? do |value|
-        next false unless value.is_a?(Hash)
-
-        normalized = value.to_h.stringify_keys
-        normalized.keys.sort == %w[city street] &&
-          normalized['city'].present? && normalized['street'].present?
-      end
-    elsif service_specific?
-      return if values.all? { |value| TechnicalIncident::SERVICE_KEYS.include?(value) }
-    elsif postal_code?
-      return if values.all? do |value|
-        value.is_a?(String) && TechnicalIncidents::Normalizer.postal_code(value).length == 8
-      end
-    elsif values.all? { |value| value.is_a?(String) && value.present? && value.length <= 200 }
-      return
-    end
-
-    errors.add(:values, :invalid)
+    validator = TechnicalIncidents::ScopeCriterionValuesValidator.new(criterion_type: criterion_type, values: values)
+    errors.add(:values, :invalid) unless validator.valid?
   end
 end

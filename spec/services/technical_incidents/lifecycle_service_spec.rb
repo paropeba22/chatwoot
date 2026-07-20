@@ -66,7 +66,7 @@ RSpec.describe TechnicalIncidents::LifecycleService do
   it 'does not reactivate monitoring with an expired window' do
     described_class.new(incident: incident, actor: nil).transition!('active')
     described_class.new(incident: incident, actor: nil).transition!('monitoring')
-    incident.update_columns(expires_at: 1.minute.ago)
+    allow(incident).to receive(:expires_at).and_return(1.minute.ago)
 
     expect do
       described_class.new(incident: incident, actor: nil).transition!('active')

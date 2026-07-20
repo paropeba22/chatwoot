@@ -10,32 +10,14 @@ class TechnicalIncidents::SemanticGate
 
   def self.call(classification)
     data = classification.to_h.stringify_keys
-    return denied('fallback', 'classification_invalid') unless valid_shape?(data)
-    return denied('fallback', 'topic_changed') if data['topic_change']
-    return denied('fallback', 'needs_clarification') if data['needs_clarification']
-    return denied('no_candidate', 'not_support_issue') unless data['is_support_issue']
+    denied_result = classification_denial(data)
+    return denied_result if denied_result
 
     confidence = data['semantic_confidence']
     return denied('fallback', 'semantic_confidence_invalid') unless confidence.is_a?(Numeric)
     return denied('fallback', 'semantic_confidence_low') if confidence < TechnicalIncidents::Configuration.medium_confidence
 
-    if confidence < TechnicalIncidents::Configuration.high_confidence
-      return Result.new(
-        allowed: true,
-        status: nil,
-        reason_code: 'semantic_confidence_medium',
-        confidence_level: 'medium',
-        allowed_match_sources: EXACT_MATCH_SOURCES
-      )
-    end
-
-    Result.new(
-      allowed: true,
-      status: nil,
-      reason_code: 'semantic_confidence_high',
-      confidence_level: 'high',
-      allowed_match_sources: EXACT_MATCH_SOURCES + HIGH_CONFIDENCE_MATCH_SOURCES
-    )
+    allowed_result(confidence)
   end
 
   def self.allowed_match_source?(classification, match_source)
@@ -51,9 +33,27 @@ class TechnicalIncidents::SemanticGate
       (data['service_key'].blank? || TechnicalIncident::SERVICE_KEYS.include?(data['service_key']))
   end
 
+  def self.classification_denial(data)
+    return denied('fallback', 'classification_invalid') unless valid_shape?(data)
+    return denied('fallback', 'topic_changed') if data['topic_change']
+    return denied('fallback', 'needs_clarification') if data['needs_clarification']
+    return denied('no_candidate', 'not_support_issue') unless data['is_support_issue']
+  end
+
+  def self.allowed_result(confidence)
+    high = confidence >= TechnicalIncidents::Configuration.high_confidence
+    Result.new(
+      allowed: true,
+      status: nil,
+      reason_code: high ? 'semantic_confidence_high' : 'semantic_confidence_medium',
+      confidence_level: high ? 'high' : 'medium',
+      allowed_match_sources: high ? EXACT_MATCH_SOURCES + HIGH_CONFIDENCE_MATCH_SOURCES : EXACT_MATCH_SOURCES
+    )
+  end
+
   def self.denied(status, reason_code)
     Result.new(allowed: false, status: status, reason_code: reason_code, confidence_level: 'invalid', allowed_match_sources: [])
   end
 
-  private_class_method :denied
+  private_class_method :classification_denial, :allowed_result, :denied
 end

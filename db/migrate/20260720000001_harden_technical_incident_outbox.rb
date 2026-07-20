@@ -1,5 +1,16 @@
 class HardenTechnicalIncidentOutbox < ActiveRecord::Migration[7.0]
   def change
+    add_outbox_columns
+    add_state_constraints
+    add_outbox_indexes
+    add_lifecycle_indexes
+    add_pagination_indexes
+    mark_legacy_deliveries
+  end
+
+  private
+
+  def add_outbox_columns
     change_table :technical_incident_deliveries, bulk: true do |t|
       t.string :outbox_state, null: false, default: 'pending'
       t.string :message_state, null: false, default: 'pending'
@@ -17,7 +28,9 @@ class HardenTechnicalIncidentOutbox < ActiveRecord::Migration[7.0]
       t.datetime :locked_at
       t.datetime :completed_at
     end
+  end
 
+  def add_state_constraints
     add_check_constraint :technical_incident_deliveries,
                          "outbox_state IN ('pending','processing','retry','completed','failed_terminal')",
                          name: 'ti_deliveries_outbox_state_allowlist'
@@ -32,37 +45,47 @@ class HardenTechnicalIncidentOutbox < ActiveRecord::Migration[7.0]
                            "#{dimension}_state IN ('pending','not_required','completed','failed_retryable','failed_terminal')",
                            name: "ti_deliveries_#{dimension}_state_allowlist"
     end
+  end
 
-    add_index :technical_incident_deliveries, [:outbox_state, :next_retry_at, :id],
+  def add_outbox_indexes
+    add_index :technical_incident_deliveries, %i[outbox_state next_retry_at id],
               name: 'idx_ti_deliveries_outbox_ready'
-    add_index :technical_incident_deliveries, [:outbox_state, :locked_at],
+    add_index :technical_incident_deliveries, %i[outbox_state locked_at],
               name: 'idx_ti_deliveries_outbox_watchdog'
-    add_index :technical_incident_deliveries, [:transport_state, :id],
+    add_index :technical_incident_deliveries, %i[transport_state id],
               where: "transport_state = 'queued'",
               name: 'idx_ti_deliveries_transport_status'
-    add_index :technical_incidents, [:status, :starts_at],
+  end
+
+  def add_lifecycle_indexes
+    add_index :technical_incidents, %i[status starts_at],
               where: 'archived_at IS NULL',
               name: 'idx_ti_lifecycle_scheduled'
-    add_index :technical_incidents, [:status, :expires_at],
+    add_index :technical_incidents, %i[status expires_at],
               where: 'archived_at IS NULL',
               name: 'idx_ti_lifecycle_expiration'
-    add_index :technical_incidents, [:status, :review_at],
+    add_index :technical_incidents, %i[status review_at],
               where: 'archived_at IS NULL AND review_at IS NOT NULL',
               name: 'idx_ti_lifecycle_review'
-    add_index :technical_incidents, [:status, :updated_at],
+    add_index :technical_incidents, %i[status updated_at],
               where: "archived_at IS NULL AND status = 'active'",
               name: 'idx_ti_lifecycle_forgotten'
-    add_index :technical_incident_updates, [:technical_incident_id, :created_at, :id],
+  end
+
+  def add_pagination_indexes
+    add_index :technical_incident_updates, %i[technical_incident_id created_at id],
               name: 'idx_ti_updates_incident_page'
-    add_index :technical_incident_evaluations, [:technical_incident_id, :created_at, :id],
+    add_index :technical_incident_evaluations, %i[technical_incident_id created_at id],
               name: 'idx_ti_evaluations_incident_page'
-    add_index :technical_incident_conversation_links, [:technical_incident_id, :created_at, :id],
+    add_index :technical_incident_conversation_links, %i[technical_incident_id created_at id],
               name: 'idx_ti_links_incident_page'
     add_index :technical_incident_evaluations, :created_at, name: 'idx_ti_evaluations_global_retention'
     add_index :technical_incident_updates, :created_at, name: 'idx_ti_updates_global_retention'
     add_index :technical_incidents, :problem_types, using: :gin, name: 'idx_ti_problem_types_gin'
     add_index :technical_incidents, :affected_services, using: :gin, name: 'idx_ti_affected_services_gin'
+  end
 
+  def mark_legacy_deliveries
     reversible do |direction|
       direction.up do
         execute <<~SQL.squish

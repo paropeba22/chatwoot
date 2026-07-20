@@ -196,6 +196,8 @@ an unrelated migration can never be rolled back:
 
 ```sh
 bundle exec rails db:migrate:down VERSION=20260720000001
+bundle exec rails db:migrate:down VERSION=20260717000003
+bundle exec rails db:migrate:down VERSION=20260717000002
 bundle exec rails db:migrate:down VERSION=20260717000001
 ```
 

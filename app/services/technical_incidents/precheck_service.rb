@@ -8,82 +8,15 @@ class TechnicalIncidents::PrecheckService
   end
 
   def call
-    started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    @started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     @effective_mode = TechnicalIncidents::Configuration.effective_mode(@payload['mode'])
     return unavailable_response if @effective_mode == 'disabled'
 
-    classification = TechnicalIncidents::SemanticFilter.sanitize(@payload['classification'] || @payload['semantic_classification'])
-    validate_payload!(classification)
-    semantic_gate = TechnicalIncidents::SemanticGate.call(classification)
-    TechnicalIncidents::Instrumentation.record(
-      event: 'semantic_gate',
-      request_id: request_id,
-      status: semantic_gate.allowed ? semantic_gate.confidence_level : semantic_gate.status,
-      reason_code: semantic_gate.reason_code
-    )
-
-    existing = @account.technical_incident_evaluations.find_by(request_id: request_id)
-    if @payload['source_message_id'].present?
-      existing ||= @account.technical_incident_evaluations.find_by(source_message_id: @payload['source_message_id'])
-    end
-    return response(existing, duplicate: true) if existing
-
-    conversation = @account.conversations.find_by!(display_id: @payload['conversation_display_id'])
-    candidates = semantic_gate.allowed ? compatible_candidates(classification, semantic_gate) : []
-    decision = if semantic_gate.allowed
-                 candidates.empty? ? inactive_decision(classification) : decide(candidates)
-               else
-                 { status: semantic_gate.status, reason_code: semantic_gate.reason_code }
-               end
-    TechnicalIncidents::Instrumentation.record(
-      event: 'candidate_ranking',
-      request_id: request_id,
-      incident_id: decision[:incident]&.id,
-      status: decision[:status],
-      reason_code: decision[:reason_code]
-    )
-    evaluation = @account.technical_incident_evaluations.create!(
-      conversation: conversation,
-      agent_bot: @agent_bot,
-      technical_incident: decision[:incident],
-      request_id: request_id,
-      source_message_id: @payload['source_message_id'],
-      contract_version: CONTRACT_VERSION,
-      mode: @effective_mode,
-      status: decision[:status],
-      reason_code: decision[:reason_code],
-      classification: classification,
-      candidate_snapshot: candidates.map(&:customer_visible_snapshot),
-      operational_confidence: classification['semantic_confidence'],
-      latency_ms: elapsed_ms(started_at),
-      expires_at: 20.minutes.from_now
-    )
-
-    TechnicalIncidents::AuditService.record!(
-      incident: decision[:incident],
-      action: 'evaluation.precheck',
-      actor: @agent_bot,
-      origin: 'automation',
-      request_id: request_id,
-      changeset: { conversation_id: conversation.id, decision: decision[:status], reason_code: decision[:reason_code] }
-    ) if decision[:incident]
-    TechnicalIncidents::Instrumentation.record(
-      event: 'precheck',
-      request_id: request_id,
-      evaluation_id: evaluation.opaque_id,
-      incident_id: decision[:incident]&.id,
-      conversation_id: conversation.id,
-      status: decision[:status],
-      reason_code: decision[:reason_code],
-      duration_ms: evaluation.latency_ms
-    )
-    response(evaluation)
+    perform_precheck
   rescue ActiveRecord::RecordNotFound
     { contract_version: CONTRACT_VERSION, status: 'stale', reason_code: 'conversation_not_found' }
   rescue ActiveRecord::RecordNotUnique
-    duplicate = @account.technical_incident_evaluations.find_by(request_id: request_id)
-    duplicate ||= @account.technical_incident_evaluations.find_by(source_message_id: @payload['source_message_id'])
-    response(duplicate, duplicate: true)
+    response(existing_evaluation, duplicate: true)
   rescue ArgumentError => e
     TechnicalIncidents::Instrumentation.record(event: 'precheck', status: 'fallback', reason_code: e.message)
     { contract_version: CONTRACT_VERSION, status: 'fallback', reason_code: e.message }
@@ -91,71 +24,119 @@ class TechnicalIncidents::PrecheckService
 
   private
 
+  def perform_precheck
+    classification = sanitized_classification
+    validate_payload!(classification)
+    gate = TechnicalIncidents::SemanticGate.call(classification)
+    record_semantic_gate(gate)
+    existing = existing_evaluation
+    return response(existing, duplicate: true) if existing
+
+    conversation = @account.conversations.find_by!(display_id: @payload['conversation_display_id'])
+    outcome = TechnicalIncidents::PrecheckDecision.new(
+      account: @account, classification: classification, semantic_gate: gate
+    ).call
+    record_candidate_ranking(outcome)
+    evaluation = create_evaluation(conversation, classification, outcome)
+    audit_evaluation(conversation, outcome)
+    record_precheck(conversation, evaluation, outcome)
+    response(evaluation)
+  end
+
+  def sanitized_classification
+    raw = @payload['classification'] || @payload['semantic_classification']
+    TechnicalIncidents::SemanticFilter.sanitize(raw)
+  end
+
+  def existing_evaluation
+    existing = @account.technical_incident_evaluations.find_by(request_id: request_id)
+    return existing if existing || @payload['source_message_id'].blank?
+
+    @account.technical_incident_evaluations.find_by(source_message_id: @payload['source_message_id'])
+  end
+
   def request_id
     @payload['request_id'].presence || @payload['idempotency_key'].presence || raise(ArgumentError, 'request_id_required')
   end
 
   def validate_payload!(classification)
     raise ArgumentError, 'feature_disabled' unless @account.feature_enabled?('technical_incidents')
-    unless @agent_bot && @agent_bot.bot_config.to_h['technical_incidents_api'] == true
-      raise ArgumentError, 'automation_actor_invalid'
-    end
+    raise ArgumentError, 'automation_actor_invalid' unless valid_automation_actor?
     raise ArgumentError, 'contract_version_unsupported' unless @payload['contract_version'].to_s == CONTRACT_VERSION
     raise ArgumentError, 'invalid_mode' unless TechnicalIncidentEvaluation::MODES.include?(@payload['mode'])
     raise ArgumentError, 'invalid_classification' unless classification.is_a?(Hash)
   end
 
-  def decide(candidates)
-    general = candidates.select(&:general_scope?).map { |incident| { incident: incident, specificity: 0 } }
-    localized = candidates.reject(&:general_scope?)
-    ranked_general = TechnicalIncidents::CandidateRanker.sort(general)
-
-    # A localized candidate must be resolved against the selected contract before
-    # a broader incident can win. MatchService ranks all candidates afterwards.
-    if localized.any?
-      return { status: 'localized_candidate', reason_code: 'localized_candidates_available', incident: localized.first }
-    end
-
-    if ranked_general.any?
-      return { status: 'ambiguous', reason_code: 'general_candidate_tie' } if TechnicalIncidents::CandidateRanker.ambiguous?(ranked_general)
-
-      return { status: 'general_match', reason_code: 'semantic_general_match', incident: ranked_general.first[:incident] }
-    end
-
-    { status: 'no_candidate', reason_code: 'no_semantic_candidate' }
+  def valid_automation_actor?
+    @agent_bot && @agent_bot.bot_config.to_h['technical_incidents_api'] == true
   end
 
-  def inactive_decision(classification)
-    compatible = semantic_scope(@account.technical_incidents.not_archived.where(status: %w[active monitoring expired]), classification)
-                 .includes(scope_groups: :criteria)
-                 .select { |incident| TechnicalIncidents::SemanticFilter.compatible?(incident, classification) }
-    return { status: 'fallback', reason_code: 'incident_monitoring' } if compatible.any? { |incident| incident.status == 'monitoring' }
-    if compatible.any? { |incident| incident.status == 'expired' || (incident.expires_at.present? && incident.expires_at <= Time.current) }
-      return { status: 'expired', reason_code: 'incident_expired' }
-    end
-
-    { status: 'no_candidate', reason_code: 'no_semantic_candidate' }
+  def create_evaluation(conversation, classification, outcome)
+    @account.technical_incident_evaluations.create!(
+      conversation: conversation,
+      agent_bot: @agent_bot,
+      technical_incident: outcome[:incident],
+      request_id: request_id,
+      source_message_id: @payload['source_message_id'],
+      contract_version: CONTRACT_VERSION,
+      mode: @effective_mode,
+      status: outcome[:status],
+      reason_code: outcome[:reason_code],
+      classification: classification,
+      candidate_snapshot: outcome[:candidates].map(&:customer_visible_snapshot),
+      operational_confidence: classification['semantic_confidence'],
+      latency_ms: elapsed_ms,
+      expires_at: 20.minutes.from_now
+    )
   end
 
-  def compatible_candidates(classification, semantic_gate)
-    candidates = semantic_scope(@account.technical_incidents.intercepting, classification)
-                 .includes(scope_groups: :criteria)
-                 .select { |incident| TechnicalIncidents::SemanticFilter.compatible?(incident, classification) }
-    return candidates if semantic_gate.confidence_level == 'high'
+  def audit_evaluation(conversation, outcome)
+    return unless outcome[:incident]
 
-    candidates.select do |incident|
-      incident.scope_groups.any? do |group|
-        group.criteria.any? { |criterion| semantic_gate.allowed_match_sources.include?(criterion.criterion_type) }
-      end
-    end
+    TechnicalIncidents::AuditService.record!(
+      incident: outcome[:incident],
+      action: 'evaluation.precheck',
+      actor: @agent_bot,
+      origin: 'automation',
+      request_id: request_id,
+      changeset: evaluation_changeset(conversation, outcome)
+    )
   end
 
-  def semantic_scope(scope, classification)
-    scope = scope.where('problem_types @> ARRAY[?]::text[]', classification['problem_type'])
-    service_key = classification['service_key']
-    return scope.where('cardinality(affected_services) = 0') unless TechnicalIncident::SERVICE_KEYS.include?(service_key)
+  def evaluation_changeset(conversation, outcome)
+    { conversation_id: conversation.id, decision: outcome[:status], reason_code: outcome[:reason_code] }
+  end
 
-    scope.where('cardinality(affected_services) = 0 OR affected_services @> ARRAY[?]::text[]', service_key)
+  def record_semantic_gate(gate)
+    TechnicalIncidents::Instrumentation.record(
+      event: 'semantic_gate',
+      request_id: request_id,
+      status: gate.allowed ? gate.confidence_level : gate.status,
+      reason_code: gate.reason_code
+    )
+  end
+
+  def record_candidate_ranking(outcome)
+    TechnicalIncidents::Instrumentation.record(
+      event: 'candidate_ranking',
+      request_id: request_id,
+      incident_id: outcome[:incident]&.id,
+      status: outcome[:status],
+      reason_code: outcome[:reason_code]
+    )
+  end
+
+  def record_precheck(conversation, evaluation, outcome)
+    TechnicalIncidents::Instrumentation.record(
+      event: 'precheck',
+      request_id: request_id,
+      evaluation_id: evaluation.opaque_id,
+      incident_id: outcome[:incident]&.id,
+      conversation_id: conversation.id,
+      status: outcome[:status],
+      reason_code: outcome[:reason_code],
+      duration_ms: evaluation.latency_ms
+    )
   end
 
   def unavailable_response
@@ -181,7 +162,7 @@ class TechnicalIncidents::PrecheckService
     }.compact
   end
 
-  def elapsed_ms(started_at)
-    ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1_000).round
+  def elapsed_ms
+    ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - @started_at) * 1_000).round
   end
 end

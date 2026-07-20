@@ -36,26 +36,27 @@ class TechnicalIncidents::Matcher
   end
 
   def match_criterion(criterion)
-    matched = case criterion.criterion_type
-              when 'general'
-                true
-              when 'service_specific'
-                criterion.values.include?(@classification['service_key'])
-              when 'contract_id'
-                exact?(criterion.values, @contract['contract_id'])
-              when 'pop_id'
-                exact?(criterion.values, @contract['pop_id'])
-              when 'postal_code'
-                criterion.values.map { |value| TechnicalIncidents::Normalizer.postal_code(value) }
-                         .include?(@contract.dig('location', 'postal_code'))
-              when 'city_neighborhood'
-                pair?(criterion.values, 'neighborhood')
-              when 'city_street'
-                pair?(criterion.values, 'street')
-              end
+    matched = criterion_matches?(criterion)
     return unless matched
 
     { match_source: criterion.criterion_type, specificity: SPECIFICITY.fetch(criterion.criterion_type) }
+  end
+
+  def criterion_matches?(criterion)
+    case criterion.criterion_type
+    when 'general' then true
+    when 'service_specific' then criterion.values.include?(@classification['service_key'])
+    when 'contract_id' then exact?(criterion.values, @contract['contract_id'])
+    when 'pop_id' then exact?(criterion.values, @contract['pop_id'])
+    when 'postal_code' then postal_code?(criterion.values)
+    when 'city_neighborhood' then pair?(criterion.values, 'neighborhood')
+    when 'city_street' then pair?(criterion.values, 'street')
+    end
+  end
+
+  def postal_code?(values)
+    normalized = values.map { |value| TechnicalIncidents::Normalizer.postal_code(value) }
+    normalized.include?(@contract.dig('location', 'postal_code'))
   end
 
   def exact?(values, contract_value)
