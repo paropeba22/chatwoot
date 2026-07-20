@@ -14,22 +14,52 @@ connections but not Code node source/parameters. The comparison below is
 therefore based on the previously approved V1 fixtures and must be confirmed
 against a redacted Code export before production.
 
-| Area | Chatwoot V1 | Required adapter confirmation |
-| --- | --- | --- |
-| version | `contract_version: "1.0"` | exact string |
-| precheck path | `/api/v1/technical_incident_checks/precheck` | base URL join and `/api/v1` prefix |
-| match path | `/api/v1/technical_incident_checks/:id/match` | opaque ID alias used |
-| commit path | `/api/v1/technical_incident_checks/:id/commit` | empty body |
-| feedback path | `/api/v1/technical_incident_evaluations/:id/feedback` | feedback field and optional note |
-| identifier aliases | `id`, `check_id`, `evaluation_id`, `commit_token` | chosen alias |
-| no match | `no_candidate` | any internal `no_match` must normalize to `no_candidate` |
-| modes | `shadow`, `active`; server may reduce to disabled/shadow | adapter must accept server fallback |
-| precheck required | conversation display ID, source message ID, mode, request ID, version, classification | exact casing/types |
-| match required | contracts; selection only when multiple | maximum 20 and sanitized fields |
-| commit response | `accepted`, `duplicate`, or `stale` plus reason and delivery metadata | aliases/unknown fields handling |
-| timeouts | server fallback/stale, no customer claim | adapter retry/fallback branch |
+| Area               | Chatwoot V1                                                                           | Required adapter confirmation                            |
+| ------------------ | ------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| version            | `contract_version: "1.0"`                                                             | exact string                                             |
+| precheck path      | `/api/v1/technical_incident_checks/precheck`                                          | base URL join and `/api/v1` prefix                       |
+| match path         | `/api/v1/technical_incident_checks/:id/match`                                         | opaque ID alias used                                     |
+| commit path        | `/api/v1/technical_incident_checks/:id/commit`                                        | empty body                                               |
+| feedback path      | `/api/v1/technical_incident_evaluations/:id/feedback`                                 | feedback field and optional note                         |
+| identifier aliases | `id`, `check_id`, `evaluation_id`, `commit_token`                                     | chosen alias                                             |
+| no match           | `no_candidate`                                                                        | any internal `no_match` must normalize to `no_candidate` |
+| modes              | `shadow`, `active`; server may reduce to disabled/shadow                              | adapter must accept server fallback                      |
+| precheck required  | conversation display ID, source message ID, mode, request ID, version, classification | exact casing/types                                       |
+| match required     | contracts; selection only when multiple                                               | maximum 20 and sanitized fields                          |
+| commit response    | `accepted`, `duplicate`, or `stale` plus reason and delivery metadata                 | aliases/unknown fields handling                          |
+| timeouts           | server fallback/stale, no customer claim                                              | adapter retry/fallback branch                            |
 
 Pending production gate: export the five node Codes redacted, calculate a
 SHA-256 for each, compare every required/optional field and status, then store
 only the hashes and this updated table in Git. Do not store credentials or the
 unredacted workflow export.
+
+## Required n8n export and local extraction
+
+Export the complete current **draft** of workflow `8k30Q8FFwvr3lbtu`,
+version `4b2c8033-1c6f-485f-8770-4ceea73fe0e6`, as workflow JSON. The export
+must contain the `nodes` array and each node's `parameters`. It must not include
+executions, binary data or a credentials backup. Keep the original export
+outside Git.
+
+Run:
+
+```sh
+node script/technical_incidents/extract_antigravity_contract.mjs \
+  /secure/path/antigravity-draft.json \
+  tmp/technical-incidents-contract
+```
+
+The script fails closed if any of the five required nodes is absent. It emits:
+
+- `antigravity-contract-redacted.json`, containing only the five nodes, with
+  credential objects and recognizable literal secrets redacted;
+- `antigravity-contract-comparison.md`, containing SHA-256 hashes and a
+  field-by-field lexical comparison.
+
+Before committing any generated comparison, run Gitleaks against both outputs
+and manually inspect the redacted JSON. Never commit the original export. The
+generated comparison covers paths, methods, version, headers, aliases, payload
+fields, response statuses, `no_match`/`no_candidate`, timeout, retry, duplicate,
+stale, ambiguous and fallback. Presence in the report is not proof of runtime
+behavior; all `NO` rows and the five adapter branches require manual review.

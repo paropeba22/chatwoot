@@ -12,6 +12,7 @@ on:
       - 'spec/services/technical_incidents/**'
       - 'spec/jobs/technical_incidents/**'
       - 'spec/fixtures/technical_incidents/**'
+      - 'script/technical_incidents/**'
       - 'docs/technical_incidents*'
       - '.github/workflows/technical-incidents-readiness.yml'
   workflow_dispatch:
@@ -21,6 +22,7 @@ permissions:
 
 jobs:
   secrets:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,13 +33,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   frontend:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: ESLint
@@ -48,8 +51,11 @@ jobs:
           app/javascript/dashboard/routes/dashboard/technicalIncidents/specs
           app/javascript/dashboard/store/modules/specs/technicalIncidents.spec.js
           --pool=forks --maxWorkers=1 --no-file-parallelism
+      - name: AntiGravity export extractor tests
+        run: node --test script/technical_incidents/extract_antigravity_contract.test.mjs
 
   backend:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -81,23 +87,32 @@ jobs:
       TECHNICAL_INCIDENTS_API_INBOX_DELIVERY_ENABLED: 'false'
     steps:
       - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
+      - name: Set up Ruby and install gems
+        uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: RuboCop
         run: bundle exec rubocop --parallel
-      - name: Migrate up from empty database
+      - name: Create database and migrate up
         run: bundle exec rails db:drop db:create db:migrate
-      - name: Roll back incident migrations
-        run: bundle exec rails db:rollback STEP=2
-      - name: Reapply incident migrations
-        run: bundle exec rails db:migrate
+      - name: Roll back incident migrations by exact version
+        run: |
+          bundle exec rails db:migrate:down VERSION=20260720000001
+          bundle exec rails db:migrate:down VERSION=20260717000001
+          bundle exec rails runner 'abort if ActiveRecord::Base.connection.data_source_exists?("technical_incidents")'
+          bundle exec rails runner 'abort if ActiveRecord::Base.connection.column_exists?(:accounts, :technical_incidents_enabled)'
+      - name: Reapply incident migrations by exact version
+        run: |
+          bundle exec rails db:migrate:up VERSION=20260717000001
+          bundle exec rails db:migrate:up VERSION=20260720000001
+          bundle exec rails runner 'abort unless ActiveRecord::Base.connection.data_source_exists?("technical_incident_deliveries")'
+          bundle exec rails runner 'abort unless TechnicalIncidentDelivery.column_names.include?("outbox_state")'
       - name: Schema artifact
         uses: actions/upload-artifact@v4
         with:
@@ -116,3 +131,14 @@ jobs:
           spec/requests/api/v1/accounts/technical_incidents_spec.rb
           spec/services/technical_incidents
           spec/jobs/technical_incidents
+          spec/listeners/webhook_listener_spec.rb
+          spec/lib/webhooks/trigger_spec.rb
+          spec/jobs/webhook_job_spec.rb
+          spec/jobs/send_reply_job_spec.rb
+          spec/models/message_spec.rb
+          spec/models/conversation_spec.rb
+          spec/models/agent_bot_spec.rb
+          spec/controllers/api/v1/accounts/conversations/messages_controller_spec.rb
+          spec/enterprise/models/custom_role_spec.rb
+      - name: Verify generated schema is committed
+        run: git diff --exit-code -- db/schema.rb
