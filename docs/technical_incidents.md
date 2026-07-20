@@ -176,6 +176,7 @@ cannot be undone.
    ```
 
    For containers, scale Sidekiq to zero after it becomes quiet.
+
 3. Inspect and export:
 
    ```sh
@@ -190,10 +191,12 @@ cannot be undone.
 6. Verify inbox delivery, Evolution, labels, assignment and normal routes.
 
 Physical rollback is destructive and only allowed when no incident was ever
-enabled or after a verified export:
+enabled or after a verified export. Address the migrations by exact version so
+an unrelated migration can never be rolled back:
 
 ```sh
-bundle exec rails db:rollback STEP=2
+bundle exec rails db:migrate:down VERSION=20260720000001
+bundle exec rails db:migrate:down VERSION=20260717000001
 ```
 
 This removes the outbox hardening and then all incident data. It cannot retract
