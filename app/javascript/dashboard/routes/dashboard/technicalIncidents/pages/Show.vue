@@ -47,11 +47,17 @@ const refresh = async () => {
   await store.dispatch('technicalIncidents/show', id);
   [history.value, conversations.value, evaluations.value] = await Promise.all([
     canAudit.value
-      ? TechnicalIncidentsAPI.history(id).then(response => response.data)
+      ? TechnicalIncidentsAPI.history(id).then(
+          response => response.data.payload
+        )
       : Promise.resolve([]),
-    TechnicalIncidentsAPI.conversations(id).then(response => response.data),
+    TechnicalIncidentsAPI.conversations(id).then(
+      response => response.data.payload
+    ),
     canAudit.value
-      ? TechnicalIncidentsAPI.evaluations(id).then(response => response.data)
+      ? TechnicalIncidentsAPI.evaluations(id).then(
+          response => response.data.payload
+        )
       : Promise.resolve([]),
   ]);
   estimatedResolutionAt.value =

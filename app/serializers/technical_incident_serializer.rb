@@ -42,7 +42,9 @@ class TechnicalIncidentSerializer
         matched: @incident.evaluations.where(status: %w[matched accepted]).count,
         conversations: @incident.conversation_links_count,
         deliveries: @incident.deliveries.count,
-        delivered: @incident.deliveries.where(state: 'delivered').count,
+        delivered: @incident.deliveries.where(transport_state: %w[delivered not_required]).count,
+        outbox_pending: @incident.deliveries.where(outbox_state: %w[pending processing retry]).count,
+        outbox_failed: @incident.deliveries.where(outbox_state: 'failed_terminal').count,
         duplicates_prevented: @incident.evaluations.where(status: 'duplicate').count,
         false_positives: @incident.evaluations.where(feedback: 'false_positive').count,
         false_negatives: @incident.evaluations.where(feedback: 'false_negative').count

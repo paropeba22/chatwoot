@@ -1,7 +1,10 @@
 class Api::V1::TechnicalIncidentChecksController < Api::BaseController
+  include TechnicalIncidentAutomationSecurity
+
   before_action :ensure_agent_bot!
   before_action :set_automation_account
-  before_action :ensure_https!
+  before_action :ensure_technical_incident_https!
+  before_action :enforce_technical_incident_account_rate_limit!
 
   def precheck
     return unless valid_precheck_shape?
@@ -40,13 +43,6 @@ class Api::V1::TechnicalIncidentChecksController < Api::BaseController
   def set_automation_account
     Current.account = Current.user.account
     render_unauthorized('Account-scoped AgentBot required') unless Current.account
-  end
-
-  def ensure_https!
-    return unless Rails.env.production?
-    return if request.ssl?
-
-    render json: { error: 'https_required' }, status: :upgrade_required
   end
 
   def precheck_params

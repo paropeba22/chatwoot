@@ -4,6 +4,8 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
   before_action :authorize_action!
 
   def index
+    return render_invalid_filters unless valid_filters?
+
     incidents = policy_scope(Current.account.technical_incidents).includes(:created_by, :updated_by, scope_groups: :criteria)
     incidents = apply_filters(incidents).order(priority: :desc, starts_at: :desc, id: :desc)
     page = [params.fetch(:page, 1).to_i, 1].max
@@ -23,6 +25,7 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
     @incident = Current.account.technical_incidents.new(incident_params)
     @incident.created_by = Current.user
     @incident.updated_by = Current.user
+    TechnicalIncidents::IncidentValidator.new(@incident).validate!
     @incident.save!
     TechnicalIncidents::AuditService.record!(
       incident: @incident, action: 'incident.created', actor: Current.user, origin: 'ui',
@@ -42,38 +45,50 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
     ensure_transition_permission!
     TechnicalIncidents::LifecycleService.new(incident: @incident, actor: Current.user).transition!(
       params.require(:status),
-      params.permit(:expires_at, :review_at, :estimated_resolution_at)
+      params.permit(:expires_at, :review_at, :estimated_resolution_at, :lock_version)
     )
     render json: TechnicalIncidentSerializer.new(@incident.reload, include_details: true)
-  rescue TechnicalIncidents::LifecycleService::InvalidTransition, TechnicalIncidents::TemplateRenderer::InvalidTemplate => e
+  rescue ActiveRecord::StaleObjectError
+    render json: { error: 'record_conflict', current_lock_version: @incident.reload.lock_version }, status: :conflict
+  rescue TechnicalIncidents::LifecycleService::InvalidTransition, TechnicalIncidents::TemplateRenderer::InvalidTemplate,
+         ActiveRecord::RecordInvalid => e
     render json: { error: 'invalid_transition', reason_code: e.message }, status: :unprocessable_entity
   end
 
   def history
-    render json: @incident.updates.order(created_at: :desc).map { |update| update_payload(update) }
+    paginated = paginate(@incident.updates.order(created_at: :desc, id: :desc))
+    payload = paginated_response(paginated) { |update| update_payload(update) }
+    render json: payload
   end
 
   def conversations
-    links = @incident.conversation_links.includes(:conversation).order(created_at: :desc)
-    render json: links.map do |link|
+    links = paginate(@incident.conversation_links.includes(:conversation).order(created_at: :desc, id: :desc))
+    can_audit = policy(@incident).history?
+    payload = paginated_response(links) do |link|
       {
         id: link.id,
         conversation_id: link.conversation_id,
         conversation_display_id: link.conversation.display_id,
-        contract_reference: link.contract_reference,
+        contract_reference: TechnicalIncidents::ContractReferencePresenter.call(
+          link.contract_reference,
+          audit_authorized: can_audit
+        ),
         notification_version: link.notification_version,
         created_at: link.created_at
       }
     end
+    render json: payload
   end
 
   def evaluations
-    render json: @incident.evaluations.order(created_at: :desc).limit(200).map do |evaluation|
+    evaluations = paginate(@incident.evaluations.order(created_at: :desc, id: :desc))
+    payload = paginated_response(evaluations) do |evaluation|
       evaluation.attributes.slice(
         'opaque_id', 'status', 'reason_code', 'match_source', 'operational_confidence',
         'feedback', 'latency_ms', 'created_at'
       )
     end
+    render json: payload
   end
 
   def destroy
@@ -85,7 +100,11 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
       return head :ok
     end
 
-    @incident.update!(archived_at: Time.current, updated_by: Current.user)
+    TechnicalIncidents::UpdateService.new(
+      incident: @incident,
+      attributes: { archived_at: Time.current },
+      actor: Current.user
+    ).call
     TechnicalIncidents::AuditService.record!(
       incident: @incident, action: 'incident.archived', actor: Current.user, origin: 'ui'
     )
@@ -194,10 +213,13 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
     scope = scope.where(severity: params[:severity]) if params[:severity].present?
     scope = scope.where(incident_type: params[:category]) if params[:category].present?
     scope = scope.where(created_by_id: params[:creator_id]) if params[:creator_id].present?
-    scope = scope.where('? = ANY(affected_services)', params[:service]) if params[:service].present?
-    scope = scope.where('title ILIKE ?', "%#{ActiveRecord::Base.sanitize_sql_like(params[:q])}%") if params[:q].present?
-    scope = scope.where('starts_at >= ?', params[:from]) if params[:from].present?
-    scope = scope.where('starts_at <= ?', params[:to]) if params[:to].present?
+    scope = scope.where('affected_services @> ARRAY[?]::text[]', params[:service]) if params[:service].present?
+    if params[:q].present?
+      query = params[:q].to_s.first(200)
+      scope = scope.where('title ILIKE ?', "%#{ActiveRecord::Base.sanitize_sql_like(query)}%")
+    end
+    scope = scope.where('starts_at >= ?', parsed_time(:from)) if params[:from].present?
+    scope = scope.where('starts_at <= ?', parsed_time(:to)) if params[:to].present?
     if params[:scope_type].present?
       scope = scope.joins(scope_groups: :criteria)
                    .where(technical_incident_scope_criteria: { criterion_type: params[:scope_type] })
@@ -211,7 +233,48 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
       'active' => %w[active monitoring],
       'scheduled' => %w[scheduled],
       'history' => %w[resolved expired cancelled]
-    }.fetch(bucket, TechnicalIncident::STATUSES)
+    }.fetch(bucket)
+  end
+
+  def valid_filters?
+    return false if params[:bucket].present? && %w[active scheduled history].exclude?(params[:bucket])
+    return false if params[:status].present? && TechnicalIncident::STATUSES.exclude?(params[:status])
+    return false if params[:severity].present? && TechnicalIncident::SEVERITIES.exclude?(params[:severity])
+    return false if params[:category].present? && TechnicalIncident::INCIDENT_TYPES.exclude?(params[:category])
+    return false if params[:service].present? && TechnicalIncident::SERVICE_KEYS.exclude?(params[:service])
+    return false if params[:scope_type].present? && TechnicalIncidentScopeCriterion::TYPES.exclude?(params[:scope_type])
+
+    parsed_time(:from) if params[:from].present?
+    parsed_time(:to) if params[:to].present?
+    true
+  rescue ArgumentError
+    false
+  end
+
+  def parsed_time(key)
+    @parsed_times ||= {}
+    @parsed_times[key] ||= Time.zone.iso8601(params[key].to_s)
+  end
+
+  def render_invalid_filters
+    render json: { error: 'invalid_filters' }, status: :unprocessable_entity
+  end
+
+  def paginate(scope)
+    page = [params.fetch(:page, 1).to_i, 1].max
+    per_page = params.fetch(:per_page, 25).to_i.clamp(1, 100)
+    scope.page(page).per(per_page)
+  end
+
+  def paginated_response(records)
+    {
+      payload: records.map { |record| yield(record) },
+      meta: {
+        current_page: records.current_page,
+        per_page: records.limit_value,
+        total_entries: records.total_count
+      }
+    }
   end
 
   def update_payload(update)

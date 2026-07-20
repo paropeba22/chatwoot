@@ -94,7 +94,7 @@ const addCriterion = group =>
   });
 const removeGroup = group => {
   if (group.id) {
-    group._destroy = true;
+    Reflect.set(group, '_destroy', true);
     return;
   }
   form.scope_groups_attributes.splice(
@@ -104,7 +104,7 @@ const removeGroup = group => {
 };
 const removeCriterion = (group, criterion) => {
   if (criterion.id) {
-    criterion._destroy = true;
+    Reflect.set(criterion, '_destroy', true);
     return;
   }
   group.criteria_attributes.splice(
@@ -117,13 +117,13 @@ const serialize = () => ({
   scope_groups_attributes: form.scope_groups_attributes.map(group => ({
     id: group.id,
     position: group.position,
-    _destroy: group._destroy,
+    _destroy: Reflect.get(group, '_destroy'),
     criteria_attributes: group.criteria_attributes.map(criterion => ({
       id: criterion.id,
       criterion_type: criterion.criterion_type,
       operator: criterion.operator,
       values: JSON.parse(criterion.values_text || '[]'),
-      _destroy: criterion._destroy,
+      _destroy: Reflect.get(criterion, '_destroy'),
     })),
   })),
 });

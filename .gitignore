@@ -104,3 +104,8 @@ CLAUDE.local.md
 .pnpm-store/*
 local/
 Procfile.worktree
+
+# Local n8n exports may contain embedded credentials. Store only redacted
+# contract metadata under spec/fixtures.
+/workflow_details_*.json
+/*antigravity*.json

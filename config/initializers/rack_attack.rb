@@ -217,13 +217,21 @@ class Rack::Attack
     match_data[:account_id] if match_data.present?
   end
 
-  throttle('/api/v1/technical_incidents_automation/token',
+  throttle('/api/v1/technical_incidents_automation/token_endpoint',
            limit: ENV.fetch('RATE_LIMIT_TECHNICAL_INCIDENT_CHECKS', '120').to_i, period: 1.minute) do |req|
     next unless req.path.start_with?('/api/v1/technical_incident_checks') ||
                 req.path.start_with?('/api/v1/technical_incident_evaluations')
 
     token = req.get_header('HTTP_API_ACCESS_TOKEN')
-    Digest::SHA256.hexdigest(token) if token.present?
+    "#{Digest::SHA256.hexdigest(token)}:#{req.path}" if token.present?
+  end
+
+  throttle('/api/v1/technical_incidents_automation/ip_endpoint',
+           limit: ENV.fetch('RATE_LIMIT_TECHNICAL_INCIDENT_CHECKS_IP', '180').to_i, period: 1.minute) do |req|
+    next unless req.path.start_with?('/api/v1/technical_incident_checks') ||
+                req.path.start_with?('/api/v1/technical_incident_evaluations')
+
+    "#{req.ip}:#{req.path}"
   end
 
   # Throttle by individual user (based on uid)

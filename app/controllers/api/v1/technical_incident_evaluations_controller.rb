@@ -1,5 +1,9 @@
 class Api::V1::TechnicalIncidentEvaluationsController < Api::BaseController
+  include TechnicalIncidentAutomationSecurity
+
   before_action :set_actor_and_account
+  before_action :ensure_technical_incident_https!
+  before_action :enforce_technical_incident_account_rate_limit!
 
   def feedback
     return unless valid_feedback_shape?
