@@ -110,6 +110,7 @@ jobs:
           spec/models/technical_incident_spec.rb
           spec/models/technical_incident_account_isolation_spec.rb
           spec/models/concerns/technical_incidents_featurable_spec.rb
+          spec/initializers/technical_incident_rack_attack_spec.rb
           spec/policies/technical_incident_policy_spec.rb
           spec/requests/api/v1/technical_incident_checks_spec.rb
           spec/requests/api/v1/accounts/technical_incidents_spec.rb
