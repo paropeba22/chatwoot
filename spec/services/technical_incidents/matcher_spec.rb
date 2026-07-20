@@ -20,6 +20,16 @@ RSpec.describe TechnicalIncidents::Matcher do
       }
     }
   end
+  let(:classification) do
+    {
+      is_support_issue: true,
+      problem_type: 'internet_connectivity',
+      service_key: 'internet',
+      semantic_confidence: 0.95,
+      topic_change: false,
+      needs_clarification: false
+    }
+  end
 
   def incident_for(type, values)
     incident = create(:technical_incident, :active, account: account)
@@ -42,7 +52,7 @@ RSpec.describe TechnicalIncidents::Matcher do
     'city_street' => [{ city: 'Recife', street: 'Rua Exemplo' }]
   }.each do |type, values|
     it "matches #{type} deterministically" do
-      match = described_class.new(incident: incident_for(type, values), contract: contract).call
+      match = described_class.new(incident: incident_for(type, values), contract: contract, classification: classification).call
 
       expect(match[:match_source]).to eq(type)
     end
@@ -51,13 +61,19 @@ RSpec.describe TechnicalIncidents::Matcher do
   it 'never substitutes pop_name for the postal city' do
     incident = incident_for('city_neighborhood', [{ city: 'Olinda', neighborhood: 'Boa Viagem' }])
 
-    expect(described_class.new(incident: incident, contract: contract).call).to be_nil
+    expect(described_class.new(incident: incident, contract: contract, classification: classification).call).to be_nil
   end
 
   it 'does not match an inactive contract' do
     incident = incident_for('contract_id', ['CTR-100'])
 
-    expect(described_class.new(incident: incident, contract: contract.merge(status: 'inactive')).call).to be_nil
+    expect(
+      described_class.new(
+        incident: incident,
+        contract: contract.merge(status: 'inactive'),
+        classification: classification
+      ).call
+    ).to be_nil
   end
 
   it 'allows a contract without location to match only exact technical identifiers' do
@@ -65,8 +81,8 @@ RSpec.describe TechnicalIncidents::Matcher do
     postal = incident_for('postal_code', ['50000000'])
     locationless = contract.merge(location: {})
 
-    expect(described_class.new(incident: exact, contract: locationless).call).to be_present
-    expect(described_class.new(incident: postal, contract: locationless).call).to be_nil
+    expect(described_class.new(incident: exact, contract: locationless, classification: classification).call).to be_present
+    expect(described_class.new(incident: postal, contract: locationless, classification: classification).call).to be_nil
   end
 
   it 'matches a service criterion against the semantic service instead of contract display fields' do
@@ -75,15 +91,34 @@ RSpec.describe TechnicalIncidents::Matcher do
     match = described_class.new(
       incident: incident,
       contract: contract,
-      classification: { service_key: 'google' }
+      classification: classification.merge(service_key: 'google')
     ).call
     mismatch = described_class.new(
       incident: incident,
       contract: contract,
-      classification: { service_key: 'youtube' }
+      classification: classification.merge(service_key: 'youtube')
     ).call
 
     expect(match[:match_source]).to eq('service_specific')
     expect(mismatch).to be_nil
+  end
+
+  it 'does not permit address or general matches at medium confidence' do
+    medium = classification.merge(semantic_confidence: 0.75)
+
+    expect(
+      described_class.new(
+        incident: incident_for('postal_code', ['50000000']),
+        contract: contract,
+        classification: medium
+      ).call
+    ).to be_nil
+    expect(
+      described_class.new(
+        incident: incident_for('pop_id', ['POP-10']),
+        contract: contract,
+        classification: medium
+      ).call
+    ).to be_present
   end
 end

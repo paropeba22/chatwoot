@@ -29,37 +29,47 @@ RSpec.describe TechnicalIncidents::CommitService do
         is_support_issue: true,
         problem_type: 'internet_connectivity',
         service_key: 'internet',
-        semantic_confidence: 0.95
+        semantic_confidence: 0.95,
+        topic_change: false,
+        needs_clarification: false
       },
       candidate_snapshot: [incident.customer_visible_snapshot]
     )
   end
 
+  around do |example|
+    with_modified_env(
+      TECHNICAL_INCIDENTS_AUTOMATION_MODE: 'active',
+      TECHNICAL_INCIDENTS_OUTBOX_ENABLED: 'true'
+    ) { example.run }
+  end
+
   before do
-    allow_any_instance_of(described_class).to receive(:create_customer_message!) do
-      create(
-        :message,
-        account: account,
-        inbox: conversation.inbox,
-        conversation: conversation,
-        sender: agent_bot,
-        message_type: :outgoing,
-        content: incident.customer_message
-      )
-    end
+    allow(TechnicalIncidents::OutboxDispatchJob).to receive(:perform_later)
   end
 
-  it 'revalidates and commits once using the backend-owned message and handoff' do
-    result = described_class.new(account: account, opaque_id: evaluation.opaque_id).call
+  it 'atomically reserves the outbox without creating a message, link, label, note, or handoff' do
+    expect do
+      result = described_class.new(account: account, opaque_id: evaluation.opaque_id).call
+      expect(result).to include(status: 'accepted', reason_code: 'outbox_reserved')
+    end.to change(TechnicalIncidentDelivery, :count).by(1)
+      .and change { evaluation.reload.status }.from('general_match').to('accepted')
 
-    expect(result[:status]).to eq('accepted')
-    expect(account.technical_incident_deliveries.count).to eq(1)
-    expect(account.technical_incident_conversation_links.count).to eq(1)
-    expect(conversation.reload.label_list).to include('aguardando-humano', "incidente-tecnico-#{incident.id}")
-    expect(conversation.assignee_agent_bot_id).to be_nil
+    delivery = account.technical_incident_deliveries.sole
+    expect(delivery).to have_attributes(
+      outbox_state: 'pending',
+      message_state: 'pending',
+      transport_state: 'pending',
+      link_state: 'pending',
+      handoff_state: 'pending'
+    )
+    expect(account.technical_incident_conversation_links).to be_empty
+    expect(conversation.reload.messages).to be_empty
+    expect(conversation.label_list).not_to include('aguardando-humano')
+    expect(conversation.assignee_agent_bot_id).to eq(agent_bot.id)
   end
 
-  it 'returns duplicate without creating a second message, link, label or handoff' do
+  it 'returns duplicate without reserving a second outbox row' do
     service = described_class.new(account: account, opaque_id: evaluation.opaque_id)
     expect(service.call[:status]).to eq('accepted')
 
@@ -67,22 +77,43 @@ RSpec.describe TechnicalIncidents::CommitService do
       .not_to change { [TechnicalIncidentDelivery.count, Message.count, TechnicalIncidentConversationLink.count] }
   end
 
-  it 'performs no mutation when the feature is disabled before commit' do
-    account.disable_features!('technical_incidents')
+  it 'preserves the database outbox reservation when Redis enqueue fails after commit' do
+    allow(TechnicalIncidents::OutboxDispatchJob).to receive(:perform_later).and_raise(Redis::BaseError)
 
-    expect do
-      result = described_class.new(account: account, opaque_id: evaluation.opaque_id).call
-      expect(result).to include(status: 'stale', reason_code: 'feature_disabled')
-    end.not_to change { [TechnicalIncidentDelivery.count, Message.count, conversation.reload.label_list] }
+    result = described_class.new(account: account, opaque_id: evaluation.opaque_id).call
+
+    expect(result[:status]).to eq('accepted')
+    expect(account.technical_incident_deliveries.sole.outbox_state).to eq('pending')
+    expect(evaluation.reload.status).to eq('accepted')
   end
 
-  it 'rejects shadow evaluations even if an adapter calls commit by mistake' do
-    evaluation.update!(mode: 'shadow')
+  it 'rolls back evaluation acceptance when reservation fails before commit' do
+    allow(account.technical_incident_deliveries).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
 
     expect do
-      result = described_class.new(account: account, opaque_id: evaluation.opaque_id).call
-      expect(result).to include(status: 'stale', reason_code: 'evaluation_not_active_mode')
-    end.not_to change { [TechnicalIncidentDelivery.count, Message.count, conversation.reload.label_list] }
+      described_class.new(account: account, opaque_id: evaluation.opaque_id).call
+    end.to raise_error(ActiveRecord::RecordInvalid)
+    expect(evaluation.reload.status).to eq('general_match')
+  end
+
+  it 'does not reserve when server automation is disabled or shadow' do
+    %w[disabled shadow].each do |mode|
+      with_modified_env TECHNICAL_INCIDENTS_AUTOMATION_MODE: mode do
+        result = described_class.new(account: account, opaque_id: evaluation.opaque_id).call
+        expect(result).to include(status: 'stale', reason_code: 'server_automation_not_active')
+      end
+    end
+    expect(account.technical_incident_deliveries).to be_empty
+  end
+
+  it 'rejects shadow evaluations and semantic gates at commit time' do
+    evaluation.update!(mode: 'shadow')
+    expect(described_class.new(account: account, opaque_id: evaluation.opaque_id).call)
+      .to include(status: 'stale', reason_code: 'evaluation_not_active_mode')
+
+    evaluation.update!(mode: 'active', classification: evaluation.classification.merge('topic_change' => true))
+    expect(described_class.new(account: account, opaque_id: evaluation.opaque_id).call)
+      .to include(status: 'stale', reason_code: 'semantic_compatibility_changed')
   end
 
   it 'rejects an expired evaluation or changed notification version' do

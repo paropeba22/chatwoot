@@ -57,4 +57,24 @@ RSpec.describe 'Technical Incidents V1 contract' do
       'stale'
     )
   end
+
+  it 'pins the live workflow metadata while requiring a redacted Code verification before production' do
+    source = fixture('antigravity_source')
+
+    expect(source).to include(
+      'workflow_id' => '8k30Q8FFwvr3lbtu',
+      'draft_version_id' => '4b2c8033-1c6f-485f-8770-4ceea73fe0e6',
+      'published_version_id' => '8d433990-e41f-471b-bf32-b8aaed588db7',
+      'canonical_no_match_status' => 'no_candidate',
+      'code_verification' => 'pending_redacted_export'
+    )
+    expect(source.fetch('nodes')).to contain_exactly(
+      'TI_API_Contract_V1',
+      'TI_Precheck_Adapter_V1',
+      'TI_Match_Adapter_V1',
+      'TI_Commit_Adapter_V1',
+      'TI_Feedback_Adapter_V1'
+    )
+    expect(TechnicalIncidentEvaluation::STATUSES).not_to include('no_match')
+  end
 end

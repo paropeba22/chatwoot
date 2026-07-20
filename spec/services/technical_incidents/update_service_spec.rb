@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe TechnicalIncidents::UpdateService do
-  let(:account) { create(:account) }
+  let(:account) { create(:account).tap { |record| record.enable_features!('technical_incidents') } }
   let(:actor) { create(:user, account: account) }
   let(:incident) do
     record = create(:technical_incident, :active, account: account)

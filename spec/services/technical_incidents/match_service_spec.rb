@@ -22,6 +22,14 @@ RSpec.describe TechnicalIncidents::MatchService do
       conversation: conversation,
       technical_incident: incident,
       status: 'localized_candidate',
+      classification: {
+        is_support_issue: true,
+        problem_type: 'internet_connectivity',
+        service_key: 'internet',
+        semantic_confidence: 0.95,
+        topic_change: false,
+        needs_clarification: false
+      },
       candidate_snapshot: [incident.customer_visible_snapshot]
     )
   end
@@ -40,6 +48,12 @@ RSpec.describe TechnicalIncidents::MatchService do
       street: 'Rua Exemplo',
       number: '10'
     }
+  end
+
+  around do |example|
+    with_modified_env TECHNICAL_INCIDENTS_AUTOMATION_MODE: 'shadow' do
+      example.run
+    end
   end
 
   it 'matches a single sanitized contract and persists no forbidden fields' do

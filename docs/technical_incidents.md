@@ -1,177 +1,236 @@
-# Technical Incidents Center
+# Technical Incidents production controls
 
-This document describes the V1 implementation for the customized Chatwoot and
-the read-only integration contract prepared for the AntiGravity workflow.
+This document covers only the hardened V1 implementation. The account feature
+and all server-side automation switches are disabled by default.
 
-## Safety defaults
+## Independent safety gates
 
-- The account feature `technical_incidents` is disabled by default.
-- The AntiGravity draft remains unchanged with
-  `technical_incidents_mode=off`.
-- Disabling the Chatwoot feature hides the menu, denies UI APIs, rejects new
-  automation evaluations and commits, and prevents delivery retries.
-- Existing records, audit updates, links and delivery state remain preserved.
-- A `shadow` evaluation can precheck and match, but the commit service rejects
-  it with `evaluation_not_active_mode`.
-
-The existing `feature_flags` bigint already consumes all 63 safe positive
-bits. To avoid shifting or corrupting any existing flag, this feature is the
-only entry stored in the dedicated `accounts.technical_incidents_enabled`
-boolean. It still uses the standard `feature_enabled?`, `enable_features!`,
-`disable_features!`, `all_features` and frontend feature list APIs.
-
-## Architecture
-
-The UI is account scoped and uses the existing Vue 3 dashboard, Vuex API
-client, route permissions, design tokens and Pundit context. The backend owns
-incident lifecycle, scope validation, ranking, template rendering, audit and
-all side effects.
-
-The normalized V1 flow is:
+Set these only through the environment/secret manager:
 
 ```text
-AntiGravity semantic classification
-  -> POST /api/v1/technical_incident_checks/precheck
-  -> optional POST /api/v1/technical_incident_checks/:opaque_id/match
-  -> active mode only: POST /api/v1/technical_incident_checks/:opaque_id/commit
-  -> Message after_commit -> SendReplyJob -> configured inbox channel
-  -> delivery status reconciliation / retry
-  -> optional POST /api/v1/technical_incident_evaluations/:opaque_id/feedback
+TECHNICAL_INCIDENTS_AUTOMATION_MODE=disabled|shadow|active
+TECHNICAL_INCIDENTS_OUTBOX_ENABLED=false|true
+TECHNICAL_INCIDENTS_DELIVERY_ENABLED=false|true
+TECHNICAL_INCIDENTS_API_INBOX_DELIVERY_ENABLED=false|true
 ```
 
-The commit endpoint accepts no incident, message, scope or status in its body.
-It resolves the opaque evaluation, locks the account, evaluation and incident,
-revalidates the feature, active mode, semantic compatibility, deterministic
-scope, incident window and notification version, then reserves the unique
-delivery.
+All defaults are `disabled`/`false`. The effective mode is the least
+privileged value between the server and the n8n request. `shadow` permits
+precheck and match but never commit. A commit requires server `active`, account
+feature `technical_incidents`, and the outbox switch. Processing an accepted
+commit additionally requires both delivery switches.
 
-The message is created through `Messages::MessageBuilder`. Chatwoot's existing
-`Message` callback queues `SendReplyJob`, so WhatsApp/EvolutionAPI and every
-other configured inbox continue through their existing provider path. Delivery
-is only marked `delivered` after a channel status updates the Message to
-delivered/read. A database insert alone is not delivery confirmation.
+Turning any switch off preserves incidents, evaluations, audit and outbox rows.
+It cannot recall a message already accepted by an external provider.
 
-## V1 automation contract
-
-Authentication uses a dedicated, account-owned AgentBot with
-`bot_config.technical_incidents_api=true` and its access token in the
-`api_access_token` header. That marker restricts this AgentBot token to the four
-incident automation actions; regular AgentBot tokens cannot call them. The
-account is derived from the token and is never accepted from the request.
-Production requests require HTTPS. The token is rate limited by a SHA-256
-digest and is never written to logs or exposed to the frontend.
-
-### Precheck
-
-`POST /api/v1/technical_incident_checks/precheck`
-
-Required V1 fields are represented by
-`spec/fixtures/technical_incidents/v1/precheck_request.json`. The response
-contains `contract_version`, `status`, `reason_code` and an opaque identifier
-under the compatible aliases `id`, `check_id`, `evaluation_id` and
-`commit_token`. The identifier expires after 20 minutes.
-
-Precheck never trusts an incident identifier from automation and never sends a
-message, changes labels or performs handoff.
-
-### Match
-
-`POST /api/v1/technical_incident_checks/:opaque_id/match`
-
-Only the sanitized fields in the V1 fixture are accepted. CPF/CNPJ, names,
-phones, credentials, PPPoE data, MAC, financial links, reference points and
-notes are rejected. `pop_name` is display-only. City, neighborhood and street
-come only from postal location fields.
-
-The deterministic order is contract ID, POP ID, postal code, city plus
-neighborhood, city plus street, service-specific, then general. OR applies
-between groups, AND between different criteria in a group, and OR between
-values of the same criterion. Exact ranking ties return `ambiguous`.
-
-### Commit
-
-`POST /api/v1/technical_incident_checks/:opaque_id/commit`
-
-The body is empty. The unique delivery key is equivalent to:
+## Authoritative flow
 
 ```text
-conversation_id:incident_id:notification_version:delivery_kind
+AntiGravity classification
+  -> HTTPS + dedicated account AgentBot + throttling
+  -> semantic gate (server thresholds)
+  -> SQL candidate prefilter and deterministic rank/match
+  -> opaque evaluation
+  -> commit revalidation under row locks
+  -> transaction reserves one delivery/outbox row and accepts evaluation
+  -> commit
+  -> periodic PostgreSQL dispatcher
+  -> one isolated delivery worker
+  -> link
+  -> literal message
+  -> API Inbox webhook enqueue with deterministic X-Chatwoot-Delivery
+  -> external delivered/read status
+  -> labels
+  -> private note
+  -> bot handoff
+  -> audit
 ```
 
-The database also uniquely protects request IDs and non-null source message
-IDs. A concurrent or repeated commit returns `duplicate`. A new conversation
-or notification version produces a different key.
+No message, webhook, label, note or handoff is executed inside the commit
+transaction. Redis failure cannot discard the operation because the periodic
+dispatcher scans PostgreSQL. Processing uses a lease, watchdog and independent
+states for outbox, message, transport, link, labels, note, handoff and audit.
 
-Within one database transaction the service creates the conversation link,
-literal backend-rendered message, labels, private note, bot handoff state and
-audit update. The outbox delivery state progresses through `reserved`,
-`message_created`, `delivery_queued`, `handoff_completed`, `delivered`,
-`failed_retryable` or `failed_terminal`.
+The only enabled adapter is `Channel::Api`. Managed incident messages bypass
+the generic API Inbox webhook callback and are enqueued once by the durable
+adapter with a deterministic delivery header. Other inboxes fail closed. Email
+and native channel support require a separate, explicitly tested adapter.
 
-### Feedback
+The Grupo Telecom delivery path found in this repository is:
 
-`POST /api/v1/technical_incident_evaluations/:opaque_id/feedback`
+```text
+outgoing Message
+  -> API Inbox message_created webhook
+  -> external AntiGravity/Evolution integration
+  -> external message status callback
+  -> Message delivered/read
+```
 
-Controlled values are `correct_match`, `false_positive`, `false_negative`,
-`wrong_contract`, `wrong_category`, `duplicate_message` and `other`.
+`SendReplyJob` maps `Channel::Api` to email continuity, not to EvolutionAPI.
+Therefore a database Message and a successful Sidekiq enqueue are not proof of
+WhatsApp delivery. `TECHNICAL_INCIDENTS_API_INBOX_DELIVERY_ENABLED` must remain
+false until the real-environment procedure below passes.
 
-## Data and retention
+## Semantic policy
 
-All seven tables carry `account_id`, foreign keys and account consistency
-validations. Incident edits use optimistic locking. Operational commits use
-row locks and unique indexes. Audit updates are immutable in the application.
+Server thresholds default to medium `0.70` and high `0.85`; n8n cannot override
+them. Invalid/low confidence, `topic_change=true`, `needs_clarification=true`,
+unknown problem types and unknown service keys are non-executable. Medium
+confidence permits only exact `contract_id` or `pop_id`. Postal code,
+city/neighborhood, city/street, service-specific and general matches require
+high confidence. Commit and outbox processing revalidate the same policy.
 
-Evaluation payloads are anonymized after 180 days while retaining their
-referential record. Audit updates remain for five years, then are purged by a
-bulk retention job. Full CPF, telephone, credentials and full addresses are
-not accepted into automation audit payloads.
+## V1 API contract
 
-## Lifecycle
+All four endpoints require HTTPS in production and the same dedicated,
+account-owned AgentBot marker (`bot_config.technical_incidents_api=true`).
+Account identity comes from the token. Rack throttles IP+endpoint and
+token-digest+endpoint; the controller adds account+endpoint throttling.
 
-Only `active` incidents intercept. `monitoring` never intercepts. Initial
-activation defaults to six hours and cannot exceed seven days. Scheduled
-incidents need a future start and activate only when due. Reopening requires a
-new future expiration and increments `notification_version`.
+```text
+POST /api/v1/technical_incident_checks/precheck
+POST /api/v1/technical_incident_checks/:opaque_id/match
+POST /api/v1/technical_incident_checks/:opaque_id/commit
+POST /api/v1/technical_incident_evaluations/:opaque_id/feedback
+```
 
-Message, ETA, affected service, problem taxonomy, action, active window or
-scope decision changes invalidate old evaluations by incrementing
-`notification_version`. Internal-note-only changes do not.
+Contract version is `1.0`. Commit body is empty. Canonical no-match status is
+`no_candidate`; `no_match` is not emitted by Chatwoot. The opaque identifier is
+returned as `id`, `check_id`, `evaluation_id` and `commit_token` for V1 adapter
+compatibility. Match accepts at most 20 sanitized contracts.
 
-The lifecycle job activates scheduled records, expires active records, records
-review alerts and records a forgotten-incident alert after two hours without
-an update. Delivery reconciliation and retry jobs are idempotent.
+The live MCP confirms workflow `8k30Q8FFwvr3lbtu`, draft
+`4b2c8033-1c6f-485f-8770-4ceea73fe0e6`, published version
+`8d433990-e41f-471b-bf32-b8aaed588db7`, and the five required contract node
+names. The MCP read API did not expose Code node source. The field-level
+comparison is recorded in `docs/technical_incidents_contract_diff.md`; manual
+Code export/hash confirmation remains a production gate.
 
-## One controlled deployment
+## Template safety
 
-1. Keep AntiGravity `technical_incidents_mode=off`.
-2. Back up PostgreSQL and record the deployed Chatwoot commit.
-3. Deploy this application revision once with `technical_incidents` still
-   disabled for every account.
-4. Run `bundle exec rails db:migrate`.
-5. Restart web and Sidekiq processes so routes, models and cron entries load.
-6. Verify health, Sidekiq queues, migration version and that the incident menu
-   and APIs remain unavailable while the flag is off.
-7. Create a dedicated account-owned AgentBot for AntiGravity in the target
-   environment, set `bot_config.technical_incidents_api=true`, and store its
-   token in the environment secret manager. Do not reuse the Bia AgentBot.
-8. Enable `technical_incidents` only for an internal test account.
-9. Run UI, permission and V1 contract smoke tests without changing
-   AntiGravity.
-10. In a separately authorized change, configure the Chatwoot base URL, V1
-    path, timeout and dedicated token in AntiGravity; switch to `shadow` only
-    after smoke tests. `active` requires another explicit authorization.
+Customer content is plain text. Only these exact outputs are allowed:
 
-## Rollback
+```text
+{{estimated_resolution_at}}
+{{affected_service}}
+{{incident_title}}
+```
 
-The immediate safe rollback is to keep AntiGravity `off` and disable
-`technical_incidents` for all accounts. This stops new evaluations, commits,
-messages, handoffs and retries while preserving evidence.
+Unknown outputs, Liquid tags, filters, loops, includes and nested expressions
+block activation/update. API Inbox is the only delivery adapter; Email and
+other channels fail closed rather than passing content through a Liquid-aware
+builder.
 
-Roll back the application revision and restart web/Sidekiq. Leave the new
-tables in place during an operational rollback; they are additive and inert
-without the code. Only run `bundle exec rails db:rollback STEP=1` in an
-isolated maintenance window when the feature was never enabled or after a
-verified export, because that rollback intentionally removes incident data.
+## Expand/contract deployment
 
-After rollback, verify that the main Chatwoot inbox, EvolutionAPI delivery,
-labels, assignment, scheduled jobs and existing routes operate normally.
+Do not deploy until the dedicated readiness workflow is green and the
+generated `db/schema.rb` from a real Rails migration run has been reviewed and
+committed.
+
+1. Record the application SHA and take a PostgreSQL backup.
+2. Keep AntiGravity `off`, account feature disabled, and all four backend
+   switches disabled/false.
+3. Build an image containing code that tolerates absent outbox columns; deploy
+   migrations before starting this revision's web/Sidekiq processes.
+4. Run in Linux/CI:
+
+   ```sh
+   bundle exec rails db:migrate
+   bundle exec rails runner 'abort unless ActiveRecord::Base.connection.data_source_exists?("technical_incident_deliveries")'
+   bundle exec rails runner 'abort unless TechnicalIncidentDelivery.column_names.include?("outbox_state")'
+   ```
+
+5. Start web with automation disabled. Run health, UI-hidden, HTTPS,
+   unauthorized-token and disabled-mode smoke tests.
+6. Start Sidekiq with outbox disabled and confirm cron loads without NameError.
+7. Enable only the account feature for an internal account; keep server
+   automation disabled.
+8. Enable server `shadow`; verify no deliveries are reserved.
+9. After real contract and Evolution tests, enable outbox/delivery only for the
+   controlled canary window. Server `active` is the final independent switch.
+
+PostgreSQL queries requiring real `EXPLAIN (ANALYZE, BUFFERS)` before canary:
+
+```sql
+SELECT id FROM technical_incidents
+ WHERE status = 'active' AND archived_at IS NULL AND expires_at <= now();
+SELECT id FROM technical_incident_deliveries
+ WHERE outbox_state IN ('pending','retry')
+   AND (next_retry_at IS NULL OR next_retry_at <= now())
+ ORDER BY next_retry_at, id LIMIT 200;
+SELECT id FROM technical_incident_deliveries
+ WHERE outbox_state = 'processing' AND locked_at < now() - interval '5 minutes';
+```
+
+## Queue-safe rollback
+
+Logical rollback is preferred because delivered messages and immutable audit
+cannot be undone.
+
+1. Set server automation to `disabled`; set outbox and both delivery switches
+   false; keep AntiGravity `off`.
+2. Stop cron scheduling and quiet workers:
+
+   ```sh
+   bundle exec sidekiqctl quiet tmp/pids/sidekiq.pid
+   ```
+
+   For containers, scale Sidekiq to zero after it becomes quiet.
+3. Inspect and export:
+
+   ```sh
+   bundle exec rails runner 'puts TechnicalIncidentDelivery.group(:outbox_state).count.to_json'
+   bundle exec rails runner 'puts TechnicalIncidentDelivery.where(outbox_state: "processing").count'
+   ```
+
+4. Wait for active jobs to finish or terminate only after their leases expire.
+   Do not drain pending incident jobs into a revision whose classes are absent.
+5. Deploy the previous application revision. Leave additive tables/columns in
+   place. Restart web and non-incident Sidekiq queues.
+6. Verify inbox delivery, Evolution, labels, assignment and normal routes.
+
+Physical rollback is destructive and only allowed when no incident was ever
+enabled or after a verified export:
+
+```sh
+bundle exec rails db:rollback STEP=2
+```
+
+This removes the outbox hardening and then all incident data. It cannot retract
+external webhooks/messages, notifications or handoffs already completed.
+Audit evidence exported before rollback must be retained. Jobs referring to
+removed classes must be deleted from Redis or drained before code downgrade.
+
+## Required real-environment Evolution test
+
+Use a non-customer API Inbox wired to the same type of Evolution listener:
+
+1. Keep AntiGravity production workflow unchanged; use an isolated receiver.
+2. Enable all backend switches only for the test process/account.
+3. Commit one fixture incident and record delivery ID, message ID and
+   `X-Chatwoot-Delivery`.
+4. Verify exactly one API Inbox webhook, exactly one Evolution send, provider
+   message ID, and Chatwoot delivered/read callback.
+5. Kill Sidekiq after reservation, after enqueue and after provider acceptance;
+   restart and verify no duplicate customer message.
+6. Verify labels, note and handoff occur only after delivered/read.
+7. Repeat with provider timeout, HTTP 500, Redis outage and unsupported inbox.
+8. Disable all switches and retain sanitized evidence.
+
+## Secret mitigation and rotation
+
+No tracked Chatwoot file or tracked workflow export contains a detected
+credential after the local scan. Historical local n8n exports outside this
+repository contain API-key-shaped values and must be moved to encrypted
+storage or securely deleted by the operator.
+
+Manual production rotation remains mandatory:
+
+1. Inventory each affected n8n node by credential type without copying values.
+2. Create replacement credentials in the n8n credential store/secret manager.
+3. Update nodes in a new draft and test each integration.
+4. Publish only with separate authorization and a rollback credential.
+5. Revoke old provider keys after successful verification.
+6. Re-run the secret scanner over Git history, artifacts and backups.
+
+Code mitigation is complete; production rotation is not.

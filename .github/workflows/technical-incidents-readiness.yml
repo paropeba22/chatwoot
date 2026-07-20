@@ -1,0 +1,117 @@
+name: Technical incidents readiness
+
+on:
+  pull_request:
+    paths:
+      - 'app/**/technical_incident*'
+      - 'app/services/technical_incidents/**'
+      - 'app/jobs/technical_incidents/**'
+      - 'app/javascript/dashboard/**/technicalIncidents/**'
+      - 'db/migrate/*technical_incident*'
+      - 'spec/**/technical_incident*'
+      - 'spec/services/technical_incidents/**'
+      - 'spec/jobs/technical_incidents/**'
+      - 'spec/fixtures/technical_incidents/**'
+      - 'docs/technical_incidents*'
+      - '.github/workflows/technical-incidents-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: ESLint
+        run: pnpm run eslint
+      - name: Technical incidents Vitest
+        run: >-
+          pnpm exec vitest run
+          app/javascript/dashboard/routes/dashboard/technicalIncidents/specs
+          app/javascript/dashboard/store/modules/specs/technicalIncidents.spec.js
+          --pool=forks --maxWorkers=1 --no-file-parallelism
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ''
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --mount type=tmpfs,destination=/var/lib/postgresql/data
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      RAILS_ENV: test
+      NODE_ENV: test
+      TECHNICAL_INCIDENTS_AUTOMATION_MODE: disabled
+      TECHNICAL_INCIDENTS_OUTBOX_ENABLED: 'false'
+      TECHNICAL_INCIDENTS_DELIVERY_ENABLED: 'false'
+      TECHNICAL_INCIDENTS_API_INBOX_DELIVERY_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: RuboCop
+        run: bundle exec rubocop --parallel
+      - name: Migrate up from empty database
+        run: bundle exec rails db:drop db:create db:migrate
+      - name: Roll back incident migrations
+        run: bundle exec rails db:rollback STEP=2
+      - name: Reapply incident migrations
+        run: bundle exec rails db:migrate
+      - name: Schema artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: technical-incidents-generated-schema
+          path: db/schema.rb
+      - name: RSpec technical incidents and contracts
+        run: >-
+          bundle exec rspec
+          spec/contracts/technical_incidents_v1_contract_spec.rb
+          spec/models/technical_incident_spec.rb
+          spec/models/technical_incident_account_isolation_spec.rb
+          spec/models/concerns/technical_incidents_featurable_spec.rb
+          spec/policies/technical_incident_policy_spec.rb
+          spec/requests/api/v1/technical_incident_checks_spec.rb
+          spec/requests/api/v1/accounts/technical_incidents_spec.rb
+          spec/services/technical_incidents
+          spec/jobs/technical_incidents

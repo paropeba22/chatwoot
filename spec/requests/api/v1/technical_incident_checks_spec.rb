@@ -38,6 +38,12 @@ RSpec.describe 'Technical incident automation V1', type: :request do
     )
   end
 
+  around do |example|
+    with_modified_env TECHNICAL_INCIDENTS_AUTOMATION_MODE: 'shadow' do
+      example.run
+    end
+  end
+
   it 'accepts the V1 precheck fixture and returns only a backend-generated opaque identifier' do
     post '/api/v1/technical_incident_checks/precheck',
          params: precheck_payload,
@@ -72,6 +78,30 @@ RSpec.describe 'Technical incident automation V1', type: :request do
          headers: { api_access_token: regular_bot.access_token.token },
          as: :json
     expect(response).to have_http_status(:unauthorized)
+  end
+
+  it 'requires HTTPS in production for automation endpoints' do
+    allow(Rails.env).to receive(:production?).and_return(true)
+
+    post '/api/v1/technical_incident_checks/precheck',
+         params: precheck_payload,
+         headers: headers,
+         as: :json
+
+    expect(response).to have_http_status(:upgrade_required)
+    expect(response.parsed_body).to include('error' => 'https_required')
+  end
+
+  it 'throttles an authenticated account and endpoint after token authentication' do
+    allow(Rails.cache).to receive(:increment).and_return(301)
+
+    post '/api/v1/technical_incident_checks/precheck',
+         params: precheck_payload,
+         headers: headers,
+         as: :json
+
+    expect(response).to have_http_status(:too_many_requests)
+    expect(response.parsed_body).to include('error' => 'rate_limit_exceeded')
   end
 
   it 'derives the account from the token and cannot access another account conversation' do

@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe TechnicalIncidents::LifecycleService do
-  let(:account) { create(:account) }
+  let(:account) { create(:account).tap { |record| record.enable_features!('technical_incidents') } }
   let(:incident) do
     record = build(:technical_incident, account: account)
     group = record.scope_groups.build(account: account)
@@ -44,7 +44,7 @@ RSpec.describe TechnicalIncidents::LifecycleService do
 
     expect do
       described_class.new(incident: incident, actor: nil).transition!('active')
-    end.to raise_error(described_class::InvalidTransition, 'incident_not_started')
+    end.to raise_error(ActiveRecord::RecordInvalid)
   end
 
   it 'rejects activation when a template variable has no value' do
@@ -52,6 +52,24 @@ RSpec.describe TechnicalIncidents::LifecycleService do
 
     expect do
       described_class.new(incident: incident, actor: nil).transition!('active')
-    end.to raise_error(TechnicalIncidents::TemplateRenderer::InvalidTemplate)
+    end.to raise_error(ActiveRecord::RecordInvalid)
+  end
+
+  it 'revalidates the transition after acquiring the lock' do
+    first = described_class.new(incident: incident, actor: nil)
+    second = described_class.new(incident: incident, actor: nil)
+
+    first.transition!('active')
+    expect { second.transition!('active') }.to raise_error(described_class::InvalidTransition)
+  end
+
+  it 'does not reactivate monitoring with an expired window' do
+    described_class.new(incident: incident, actor: nil).transition!('active')
+    described_class.new(incident: incident, actor: nil).transition!('monitoring')
+    incident.update_columns(expires_at: 1.minute.ago)
+
+    expect do
+      described_class.new(incident: incident, actor: nil).transition!('active')
+    end.to raise_error(ActiveRecord::RecordInvalid)
   end
 end

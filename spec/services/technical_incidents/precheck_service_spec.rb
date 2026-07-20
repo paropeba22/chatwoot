@@ -17,6 +17,12 @@ RSpec.describe TechnicalIncidents::PrecheckService do
     }
   end
 
+  around do |example|
+    with_modified_env TECHNICAL_INCIDENTS_AUTOMATION_MODE: 'shadow' do
+      example.run
+    end
+  end
+
   def create_incident(status: 'active', scope_type: 'general', values: [])
     incident = create(:technical_incident, account: account, status: status)
     group = create(:technical_incident_scope_group, account: account, technical_incident: incident)
@@ -106,5 +112,38 @@ RSpec.describe TechnicalIncidents::PrecheckService do
 
     expect(result).to include(status: 'fallback', reason_code: 'feature_disabled')
     expect(account.technical_incident_evaluations).to be_empty
+  end
+
+  it 'does not create an evaluation when server automation is disabled' do
+    with_modified_env TECHNICAL_INCIDENTS_AUTOMATION_MODE: 'disabled' do
+      expect do
+        result = described_class.new(account: account, agent_bot: agent_bot, payload: payload).call
+        expect(result).to include(status: 'fallback', reason_code: 'server_automation_disabled')
+      end.not_to change(TechnicalIncidentEvaluation, :count)
+    end
+  end
+
+  it 'rejects adversarial semantic classifications authoritatively' do
+    adversarial = [
+      classification.merge(semantic_confidence: 0),
+      classification.merge(topic_change: true),
+      classification.merge(needs_clarification: true),
+      classification.merge(problem_type: 'invented'),
+      classification.merge(service_key: 'google', problem_type: 'optical_alarm')
+    ]
+
+    adversarial.each_with_index do |value, index|
+      result = described_class.new(
+        account: account,
+        agent_bot: agent_bot,
+        payload: payload(
+          request_id: "adversarial-#{index}",
+          source_message_id: "adversarial-source-#{index}",
+          classification: value
+        )
+      ).call
+      expect(%w[fallback no_candidate]).to include(result[:status])
+      expect(result[:status]).not_to eq('general_match')
+    end
   end
 end
