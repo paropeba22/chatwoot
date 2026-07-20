@@ -61,7 +61,8 @@ class CreateTechnicalIncidentAutomationRecords < ActiveRecord::Migration[7.0]
 
   def add_evaluation_indexes
     add_index :technical_incident_evaluations, :opaque_id, unique: true
-    add_index :technical_incident_evaluations, %i[account_id request_id], unique: true
+    add_index :technical_incident_evaluations, %i[account_id request_id],
+              unique: true, name: 'idx_ti_evaluations_request'
     add_index :technical_incident_evaluations, %i[account_id source_message_id],
               unique: true, where: 'source_message_id IS NOT NULL', name: 'idx_ti_evaluations_source_message'
     add_index :technical_incident_evaluations, %i[account_id created_at], name: 'idx_ti_evaluations_retention'

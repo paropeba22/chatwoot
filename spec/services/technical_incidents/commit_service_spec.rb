@@ -49,11 +49,13 @@ RSpec.describe TechnicalIncidents::CommitService do
   end
 
   it 'atomically reserves the outbox without creating a message, link, label, note, or handoff' do
+    delivery_change = change(TechnicalIncidentDelivery, :count).by(1)
+    evaluation_change = change { evaluation.reload.status }.from('general_match').to('accepted')
+
     expect do
       result = described_class.new(account: account, opaque_id: evaluation.opaque_id).call
       expect(result).to include(status: 'accepted', reason_code: 'outbox_reserved')
-    end.to change(TechnicalIncidentDelivery, :count).by(1)
-    expect(evaluation.reload.status).to eq('accepted')
+    end.to delivery_change.and(evaluation_change)
 
     delivery = account.technical_incident_deliveries.sole
     expect(delivery).to have_attributes(

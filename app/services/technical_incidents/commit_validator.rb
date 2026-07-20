@@ -38,7 +38,7 @@ class TechnicalIncidents::CommitValidator
 
   def validate_accounts!
     account_ids = [@evaluation.account_id, @incident.account_id, @evaluation.conversation.account_id]
-    reject!('account_mismatch') unless account_ids.all? { |account_id| account_id == @account.id }
+    reject!('account_mismatch') unless account_ids.all?(@account.id)
   end
 
   def validate_actor!

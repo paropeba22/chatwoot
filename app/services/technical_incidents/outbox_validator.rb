@@ -21,7 +21,7 @@ class TechnicalIncidents::OutboxValidator
 
   def validate_accounts!
     ids = [incident.account_id, evaluation.account_id, @delivery.conversation.account_id]
-    raise_terminal('account_mismatch') unless ids.all? { |account_id| account_id == @delivery.account_id }
+    raise_terminal('account_mismatch') unless ids.all?(@delivery.account_id)
   end
 
   def validate_evaluation!
