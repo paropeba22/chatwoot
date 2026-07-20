@@ -1,4 +1,6 @@
 class TechnicalIncidentScopeCriterion < ApplicationRecord
+  self.table_name = 'technical_incident_scope_criteria'
+
   TYPES = %w[general service_specific contract_id pop_id postal_code city_neighborhood city_street].freeze
   OPERATORS = %w[in].freeze
 
