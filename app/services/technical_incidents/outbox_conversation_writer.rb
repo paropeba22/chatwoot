@@ -98,8 +98,8 @@ class TechnicalIncidents::OutboxConversationWriter
 
   def existing_note
     @conversation.messages
-             .where(private: true)
-             .find_by("content_attributes ->> 'technical_incident_delivery_id' = ?", @delivery.id.to_s)
+                 .where(private: true)
+                 .find_by("content_attributes ->> 'technical_incident_delivery_id' = ?", @delivery.id.to_s)
   end
 
   def create_note!

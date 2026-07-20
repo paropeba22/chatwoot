@@ -15,7 +15,7 @@ class TechnicalIncidents::AutomationPayloadValidator
     return 'unexpected_precheck_field' if unexpected_keys?(@params, PRECHECK_KEYS)
 
     classification = @params[:classification] || @params[:semantic_classification] || {}
-    return 'unexpected_classification_field' if unexpected_keys?(classification, SemanticFilter::ALLOWED_CLASSIFICATION_KEYS)
+    return 'unexpected_classification_field' if unexpected_keys?(classification, TechnicalIncidents::SemanticFilter::ALLOWED_CLASSIFICATION_KEYS)
   end
 
   def validate_match
@@ -40,7 +40,7 @@ class TechnicalIncidents::AutomationPayloadValidator
   end
 
   def forbidden_contract_fields?(contract)
-    unexpected_keys?(contract, MatchService::ALLOWED_CONTRACT_KEYS) ||
+    unexpected_keys?(contract, TechnicalIncidents::MatchService::ALLOWED_CONTRACT_KEYS) ||
       unexpected_keys?(contract[:location] || contract['location'] || {}, LOCATION_KEYS)
   end
 
