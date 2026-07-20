@@ -1,6 +1,8 @@
 class Api::V1::TechnicalIncidentEvaluationsController < Api::BaseController
   include TechnicalIncidentAutomationSecurity
 
+  wrap_parameters format: []
+
   before_action :set_actor_and_account
   before_action :ensure_technical_incident_https!
   before_action :enforce_technical_incident_account_rate_limit!

@@ -168,7 +168,7 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
   end
 
   it 'does not claim or mutate a delivery while the outbox switch is off' do
-    adapter = instance_double(TechnicalIncidents::DeliveryAdapters::Base)
+    adapter = instance_double(TechnicalIncidents::DeliveryAdapters::Base, create_message!: nil, enqueue_transport!: nil)
     allow(TechnicalIncidents::DeliveryAdapters).to receive(:for).and_return(adapter)
     original = delivery.attributes.slice('outbox_state', 'lock_token', 'attempts', 'updated_at')
 
@@ -181,7 +181,7 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
   end
 
   it 'rechecks the account feature and delivery switch before any side effect' do
-    adapter = instance_double(TechnicalIncidents::DeliveryAdapters::Base)
+    adapter = instance_double(TechnicalIncidents::DeliveryAdapters::Base, create_message!: nil, enqueue_transport!: nil)
     allow(TechnicalIncidents::DeliveryAdapters).to receive(:for).and_return(adapter)
 
     with_modified_env TECHNICAL_INCIDENTS_DELIVERY_ENABLED: 'false' do
@@ -210,14 +210,15 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
 
   %w[disabled shadow].each do |server_mode|
     it "rechecks #{server_mode} automation mode before any outbox side effect" do
-      adapter = instance_double(TechnicalIncidents::DeliveryAdapters::Base)
+      adapter = instance_double(TechnicalIncidents::DeliveryAdapters::Base, create_message!: nil, enqueue_transport!: nil)
       allow(TechnicalIncidents::DeliveryAdapters).to receive(:for).and_return(adapter)
+      reserved_delivery = delivery
 
       with_modified_env TECHNICAL_INCIDENTS_AUTOMATION_MODE: server_mode do
-        described_class.new(delivery.id).call
+        described_class.new(reserved_delivery.id).call
       end
 
-      expect(delivery.reload).to have_attributes(
+      expect(reserved_delivery.reload).to have_attributes(
         outbox_state: 'retry',
         message_state: 'pending',
         link_state: 'pending',
@@ -227,8 +228,8 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
         attempts: 0,
         last_error_code: 'server_automation_not_active'
       )
-      expect(delivery.message).to be_nil
-      expect(delivery.technical_incident_conversation_link).to be_nil
+      expect(reserved_delivery.message).to be_nil
+      expect(reserved_delivery.technical_incident_conversation_link).to be_nil
       expect(conversation.reload.assignee_agent_bot_id).to eq(agent_bot.id)
       expect(adapter).not_to have_received(:create_message!)
     end
@@ -253,7 +254,7 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
     allow(conversation).to receive(:update_labels).and_raise(ActiveRecord::Deadlocked)
 
     delivery.association(:conversation).target = conversation
-    described_class.new(delivery).call
+    described_class.new(delivery, conversation: conversation).call
 
     expect(delivery.reload).to have_attributes(
       outbox_state: 'retry',
@@ -282,7 +283,7 @@ RSpec.describe TechnicalIncidents::OutboxProcessor do
     allow(conversation).to receive(:bot_handoff!).and_raise(ActiveRecord::Deadlocked)
 
     delivery.association(:conversation).target = conversation
-    described_class.new(delivery).call
+    described_class.new(delivery, conversation: conversation).call
 
     expect(delivery.reload).to have_attributes(
       outbox_state: 'retry',

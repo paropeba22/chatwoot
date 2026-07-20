@@ -1,6 +1,14 @@
 module Featurable
   extend ActiveSupport::Concern
 
+  module BulkFeatureSelection
+    def selected_feature_flags=(features)
+      requested = Array(features).map(&:to_s)
+      self.technical_incidents_enabled = requested.delete('feature_technical_incidents').present?
+      super(requested)
+    end
+  end
+
   QUERY_MODE = {
     flag_query_mode: :bit_operator,
     check_for_column: false
@@ -18,6 +26,7 @@ module Featurable
   included do
     include FlagShihTzu
     has_flags FEATURES.merge(column: 'feature_flags').merge(QUERY_MODE)
+    prepend BulkFeatureSelection
 
     before_create :enable_default_features
   end
@@ -56,12 +65,6 @@ module Featurable
     return public_send("#{name}_enabled?") if BOOLEAN_FEATURES.include?(name.to_s)
 
     send("feature_#{name}?")
-  end
-
-  def selected_feature_flags=(features)
-    requested = Array(features).map(&:to_s)
-    self.technical_incidents_enabled = requested.delete('feature_technical_incidents').present?
-    super(requested)
   end
 
   def all_features

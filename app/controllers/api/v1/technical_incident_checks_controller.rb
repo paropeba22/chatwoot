@@ -1,6 +1,8 @@
 class Api::V1::TechnicalIncidentChecksController < Api::BaseController
   include TechnicalIncidentAutomationSecurity
 
+  wrap_parameters format: []
+
   before_action :ensure_agent_bot!
   before_action :set_automation_account
   before_action :ensure_technical_incident_https!

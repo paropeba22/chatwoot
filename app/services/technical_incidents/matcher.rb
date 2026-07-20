@@ -53,7 +53,7 @@ class TechnicalIncidents::Matcher
 
   def criterion_matches?(criterion)
     matcher = CRITERION_MATCHERS[criterion.criterion_type]
-    matcher && public_send(matcher, criterion.values)
+    matcher && __send__(matcher, criterion.values)
   end
 
   def general?(_values)

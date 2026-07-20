@@ -145,8 +145,8 @@ class TechnicalIncidents::MatchService
   def update_evaluation!(decision)
     @evaluation.update!(
       status: decision[:status],
-      selected_contract: decision[:selected],
-      sanitized_contracts: decision[:contracts],
+      selected_contract: decision[:selected] || {},
+      sanitized_contracts: decision[:contracts] || [],
       technical_incident: decision[:incident],
       match_source: decision[:match_source],
       reason_code: decision[:reason_code]

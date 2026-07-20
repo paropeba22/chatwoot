@@ -29,7 +29,7 @@ RSpec.describe 'Technical incident account API', type: :request do
          headers: headers,
          as: :json
 
-    expect(response).to have_http_status(:created)
+    expect(response).to have_http_status(:created), response.body
     incident_id = response.parsed_body.fetch('id')
 
     get "/api/v1/accounts/#{account.id}/technical_incidents", headers: headers, as: :json

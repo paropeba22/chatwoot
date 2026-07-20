@@ -1,12 +1,7 @@
 class TechnicalIncidents::DeliveryAdapters::ApiInbox < TechnicalIncidents::DeliveryAdapters::Base
   def create_message!
     ensure_enabled!
-    existing_message || Messages::MessageBuilder.new(evaluation.agent_bot, conversation, message_attributes).perform
-  rescue StandardError
-    message = existing_message
-    return message if message
-
-    raise
+    create_or_recover_message!
   end
 
   def enqueue_transport!(message)
@@ -25,6 +20,15 @@ class TechnicalIncidents::DeliveryAdapters::ApiInbox < TechnicalIncidents::Deliv
   end
 
   private
+
+  def create_or_recover_message!
+    existing_message || Messages::MessageBuilder.new(evaluation.agent_bot, conversation, message_attributes).perform
+  rescue StandardError
+    message = existing_message
+    return message if message
+
+    raise
+  end
 
   def ensure_enabled!
     raise DeliveryDisabled, 'delivery_disabled' unless TechnicalIncidents::Configuration.delivery_enabled?

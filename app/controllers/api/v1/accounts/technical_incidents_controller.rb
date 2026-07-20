@@ -85,7 +85,7 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
   def destroy
     if @incident.deletable_draft?
       @incident.transaction do
-        @incident.updates.delete_all
+        @incident.updates.delete_all(:delete_all)
         @incident.destroy!
       end
       return head :ok

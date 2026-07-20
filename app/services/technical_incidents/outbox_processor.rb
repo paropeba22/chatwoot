@@ -3,9 +3,11 @@ class TechnicalIncidents::OutboxProcessor
   class TerminalFailure < StandardError; end
   class AwaitingDelivery < StandardError; end
 
-  def initialize(delivery_or_id)
+  def initialize(delivery_or_id, adapter: nil, conversation: nil)
     @delivery = delivery_or_id if delivery_or_id.is_a?(TechnicalIncidentDelivery)
     @delivery_id = delivery_or_id.respond_to?(:id) ? delivery_or_id.id : delivery_or_id
+    @adapter = adapter
+    @conversation = conversation
     @lock_token = SecureRandom.uuid
   end
 
@@ -82,7 +84,9 @@ class TechnicalIncidents::OutboxProcessor
   end
 
   def writer
-    @writer ||= TechnicalIncidents::OutboxConversationWriter.new(delivery: delivery, lease: lease, adapter: adapter)
+    @writer ||= TechnicalIncidents::OutboxConversationWriter.new(
+      delivery: delivery, lease: lease, adapter: adapter, conversation: @conversation
+    )
   end
 
   def transport

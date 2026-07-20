@@ -68,7 +68,7 @@ RSpec.describe TechnicalIncident do
     expect(incident).to be_deletable_draft
     expect do
       incident.transaction do
-        incident.updates.delete_all
+        incident.updates.delete_all(:delete_all)
         incident.destroy!
       end
     end.to change(described_class, :count).by(-1)

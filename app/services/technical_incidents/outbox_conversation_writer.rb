@@ -1,8 +1,9 @@
 class TechnicalIncidents::OutboxConversationWriter
-  def initialize(delivery:, lease:, adapter:)
+  def initialize(delivery:, lease:, adapter:, conversation: nil)
     @delivery = delivery
     @lease = lease
     @adapter = adapter
+    @conversation = conversation || delivery.conversation
   end
 
   def ensure_link!
@@ -25,7 +26,7 @@ class TechnicalIncidents::OutboxConversationWriter
   def ensure_labels!
     return if step_complete?(:label)
 
-    @delivery.conversation.update_labels(required_labels)
+    @conversation.update_labels(required_labels)
     @lease.update!(label_state: 'completed')
   rescue StandardError
     @lease.update!(label_state: 'failed_retryable')
@@ -45,9 +46,8 @@ class TechnicalIncidents::OutboxConversationWriter
   def ensure_handoff!
     return if step_complete?(:handoff)
 
-    conversation = @delivery.conversation
-    conversation.update!(assignee_agent_bot_id: nil) if conversation.assignee_agent_bot_id.present?
-    conversation.bot_handoff!
+    @conversation.update!(assignee_agent_bot_id: nil) if @conversation.assignee_agent_bot_id.present?
+    @conversation.bot_handoff!
     @lease.update!(handoff_state: 'completed', state: 'handoff_completed', handoff_completed_at: Time.current)
   rescue StandardError
     @lease.update!(handoff_state: 'failed_retryable')
@@ -92,24 +92,24 @@ class TechnicalIncidents::OutboxConversationWriter
   end
 
   def required_labels
-    (@delivery.conversation.label_list - ['bot-bia']) |
+    (@conversation.label_list - ['bot-bia']) |
       ['aguardando-humano', "incidente-tecnico-#{@delivery.technical_incident_id}"]
   end
 
   def existing_note
-    @delivery.conversation.messages
+    @conversation.messages
              .where(private: true)
              .find_by("content_attributes ->> 'technical_incident_delivery_id' = ?", @delivery.id.to_s)
   end
 
   def create_note!
-    @delivery.conversation.messages.create!(note_attributes)
+    @conversation.messages.create!(note_attributes)
   end
 
   def note_attributes
     {
       account: @delivery.account,
-      inbox: @delivery.conversation.inbox,
+      inbox: @conversation.inbox,
       message_type: :outgoing,
       private: true,
       sender: nil,

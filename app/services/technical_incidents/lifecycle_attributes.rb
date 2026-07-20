@@ -12,7 +12,7 @@ class TechnicalIncidents::LifecycleAttributes
   def assign!
     @incident.status = @target_status
     @incident.updated_by = @actor if @actor.is_a?(User)
-    public_send("assign_#{@target_status}!") if respond_to?("assign_#{@target_status}!", true)
+    __send__("assign_#{@target_status}!") if respond_to?("assign_#{@target_status}!", true)
     @incident.assign_attributes(@attributes.slice(*CLIENT_TIMES))
   end
 
