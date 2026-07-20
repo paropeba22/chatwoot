@@ -30,14 +30,22 @@ class TechnicalIncidents::OutboxProcessor
 
   def process_delivery
     instrument_step('outbox.validate') { validator.validate! }
+    process_message_delivery
+    process_handoff
+    instrument_step('outbox.complete') { lease.complete! }
+  end
+
+  def process_message_delivery
     instrument_step('link') { writer.ensure_link! }
     instrument_step('message.create') { writer.ensure_message! }
     instrument_step('transport.enqueue') { transport.ensure_delivered! }
+  end
+
+  def process_handoff
     instrument_step('label') { writer.ensure_labels! }
     instrument_step('note') { writer.ensure_note! }
     instrument_step('handoff') { writer.ensure_handoff! }
     instrument_step('audit') { writer.ensure_audit! }
-    instrument_step('outbox.complete') { lease.complete! }
   end
 
   def instrument_step(event, &)

@@ -1,6 +1,7 @@
 class TechnicalIncidents::TemplateRenderer
   ALLOWED_VARIABLES = %w[estimated_resolution_at affected_service incident_title].freeze
   VARIABLE_PATTERN = /\{\{\s*([a-z_]+)\s*\}\}/
+  EXACT_VARIABLE_PATTERN = /\A\{\{\s*[a-z_]+\s*\}\}\z/
   ANY_OUTPUT_PATTERN = /\{\{.*?\}\}/m
   TAG_PATTERN = /\{%.*?%\}/m
 
@@ -11,7 +12,7 @@ class TechnicalIncidents::TemplateRenderer
     raise InvalidTemplate, 'liquid_tags_not_allowed' if source.match?(TAG_PATTERN)
 
     outputs = source.scan(ANY_OUTPUT_PATTERN)
-    raise InvalidTemplate, 'template_expression_not_allowed' unless outputs.all? { |output| output.match?(/\A#{VARIABLE_PATTERN}\z/) }
+    raise InvalidTemplate, 'template_expression_not_allowed' unless outputs.all? { |output| output.match?(EXACT_VARIABLE_PATTERN) }
 
     variables = source.scan(VARIABLE_PATTERN).flatten
     unknown = variables - ALLOWED_VARIABLES

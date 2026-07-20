@@ -8,6 +8,15 @@ class TechnicalIncidents::Matcher
     'service_specific' => 100,
     'general' => 0
   }.freeze
+  CRITERION_MATCHERS = {
+    'general' => :general?,
+    'service_specific' => :service_specific?,
+    'contract_id' => :contract_id?,
+    'pop_id' => :pop_id?,
+    'postal_code' => :postal_code?,
+    'city_neighborhood' => :city_neighborhood?,
+    'city_street' => :city_street?
+  }.freeze
 
   def initialize(incident:, contract:, classification: {})
     @incident = incident
@@ -43,15 +52,32 @@ class TechnicalIncidents::Matcher
   end
 
   def criterion_matches?(criterion)
-    case criterion.criterion_type
-    when 'general' then true
-    when 'service_specific' then criterion.values.include?(@classification['service_key'])
-    when 'contract_id' then exact?(criterion.values, @contract['contract_id'])
-    when 'pop_id' then exact?(criterion.values, @contract['pop_id'])
-    when 'postal_code' then postal_code?(criterion.values)
-    when 'city_neighborhood' then pair?(criterion.values, 'neighborhood')
-    when 'city_street' then pair?(criterion.values, 'street')
-    end
+    matcher = CRITERION_MATCHERS[criterion.criterion_type]
+    matcher && public_send(matcher, criterion.values)
+  end
+
+  def general?(_values)
+    true
+  end
+
+  def service_specific?(values)
+    values.include?(@classification['service_key'])
+  end
+
+  def contract_id?(values)
+    exact?(values, @contract['contract_id'])
+  end
+
+  def pop_id?(values)
+    exact?(values, @contract['pop_id'])
+  end
+
+  def city_neighborhood?(values)
+    pair?(values, 'neighborhood')
+  end
+
+  def city_street?(values)
+    pair?(values, 'street')
   end
 
   def postal_code?(values)

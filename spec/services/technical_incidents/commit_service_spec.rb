@@ -53,7 +53,7 @@ RSpec.describe TechnicalIncidents::CommitService do
       result = described_class.new(account: account, opaque_id: evaluation.opaque_id).call
       expect(result).to include(status: 'accepted', reason_code: 'outbox_reserved')
     end.to change(TechnicalIncidentDelivery, :count).by(1)
-                                              .and change { evaluation.reload.status }.from('general_match').to('accepted')
+    expect(evaluation.reload.status).to eq('accepted')
 
     delivery = account.technical_incident_deliveries.sole
     expect(delivery).to have_attributes(

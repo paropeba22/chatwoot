@@ -14,12 +14,14 @@ class TechnicalIncidents::FeedbackService
   private
 
   def actor_authorized?
-    if @actor.is_a?(AgentBot)
-      return @actor.account_id == @evaluation.account_id && @actor.bot_config.to_h['technical_incidents_api'] == true
-    end
+    return agent_bot_authorized? if @actor.is_a?(AgentBot)
     return @evaluation.account.account_users.exists?(user_id: @actor.id) if @actor.is_a?(User)
 
     false
+  end
+
+  def agent_bot_authorized?
+    @actor.account_id == @evaluation.account_id && @actor.bot_config.to_h['technical_incidents_api'] == true
   end
 
   def persist_feedback

@@ -15,15 +15,13 @@ class TechnicalIncidents::OutboxValidator
 
   def validate_switches!
     raise_terminal('feature_disabled') unless @delivery.account.feature_enabled?('technical_incidents')
-    unless TechnicalIncidents::Configuration.automation_mode == 'active'
-      raise_disabled('server_automation_not_active')
-    end
+    raise_disabled('server_automation_not_active') unless TechnicalIncidents::Configuration.automation_mode == 'active'
     raise_disabled('delivery_disabled') unless TechnicalIncidents::Configuration.delivery_enabled?
   end
 
   def validate_accounts!
     ids = [incident.account_id, evaluation.account_id, @delivery.conversation.account_id]
-    raise_terminal('account_mismatch') unless ids.all?(@delivery.account_id)
+    raise_terminal('account_mismatch') unless ids.all? { |account_id| account_id == @delivery.account_id }
   end
 
   def validate_evaluation!

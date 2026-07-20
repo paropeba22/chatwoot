@@ -27,14 +27,18 @@ class TechnicalIncidents::CommitValidator
     reject!('evaluation_not_active_mode') unless @evaluation.mode == 'active'
     reject!('evaluation_expired') if @evaluation.stale?
     reject!('evaluation_not_matched') unless @evaluation.status.in?(%w[general_match matched])
+    validate_incident_snapshot!
+    reject!('selected_contract_missing') if selected_contract_required?
+  end
+
+  def validate_incident_snapshot!
     reject!('incident_unavailable') unless @incident&.active_and_current?
     reject!('notification_version_changed') unless snapshot_version == @incident.notification_version
-    reject!('selected_contract_missing') if selected_contract_required?
   end
 
   def validate_accounts!
     account_ids = [@evaluation.account_id, @incident.account_id, @evaluation.conversation.account_id]
-    reject!('account_mismatch') unless account_ids.all?(@account.id)
+    reject!('account_mismatch') unless account_ids.all? { |account_id| account_id == @account.id }
   end
 
   def validate_actor!
