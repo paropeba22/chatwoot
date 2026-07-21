@@ -68,3 +68,23 @@ remove_orphan_conversations_job:
   cron: '0 */12 * * *'
   class: 'Internal::RemoveOrphanConversationsJob'
   queue: housekeeping
+
+technical_incidents_lifecycle_job:
+  cron: '*/5 * * * *'
+  class: 'TechnicalIncidents::LifecycleJob'
+  queue: scheduled_jobs
+
+technical_incidents_delivery_status_job:
+  cron: '*/5 * * * *'
+  class: 'TechnicalIncidents::DeliveryStatusJob'
+  queue: scheduled_jobs
+
+technical_incidents_delivery_retry_job:
+  cron: '* * * * *'
+  class: 'TechnicalIncidents::OutboxDispatchJob'
+  queue: scheduled_jobs
+
+technical_incidents_retention_job:
+  cron: '15 2 * * *'
+  class: 'TechnicalIncidents::RetentionJob'
+  queue: purgable

@@ -4,6 +4,10 @@ module AccessTokenAuthHelper
     'api/v1/accounts/conversations/messages' => ['create'],
     'api/v1/accounts/conversations/assignments' => ['create']
   }.freeze
+  TECHNICAL_INCIDENT_BOT_ENDPOINTS = {
+    'api/v1/technical_incident_checks' => %w[precheck match commit],
+    'api/v1/technical_incident_evaluations' => ['feedback']
+  }.freeze
 
   def ensure_access_token
     token = request.headers[:api_access_token] || request.headers[:HTTP_API_ACCESS_TOKEN]
@@ -34,6 +38,10 @@ module AccessTokenAuthHelper
   end
 
   def agent_bot_accessible?
+    if @resource.bot_config.to_h['technical_incidents_api'] == true
+      return TECHNICAL_INCIDENT_BOT_ENDPOINTS.fetch(params[:controller], []).include?(params[:action])
+    end
+
     BOT_ACCESSIBLE_ENDPOINTS.fetch(params[:controller], []).include?(params[:action])
   end
 end

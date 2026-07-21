@@ -1,27 +1,43 @@
 module Featurable
   extend ActiveSupport::Concern
 
+  module BulkFeatureSelection
+    def selected_feature_flags=(features)
+      requested = Array(features).map(&:to_s)
+      self.technical_incidents_enabled = requested.delete('feature_technical_incidents').present?
+      super(requested)
+    end
+  end
+
   QUERY_MODE = {
     flag_query_mode: :bit_operator,
     check_for_column: false
   }.freeze
+  BOOLEAN_FEATURES = %w[technical_incidents].freeze
 
   FEATURE_LIST = YAML.safe_load(Rails.root.join('config/features.yml').read).freeze
 
   FEATURES = FEATURE_LIST.each_with_object({}) do |feature, result|
+    next if BOOLEAN_FEATURES.include?(feature['name'])
+
     result[result.keys.size + 1] = "feature_#{feature['name']}".to_sym
   end
 
   included do
     include FlagShihTzu
     has_flags FEATURES.merge(column: 'feature_flags').merge(QUERY_MODE)
+    prepend BulkFeatureSelection
 
     before_create :enable_default_features
   end
 
   def enable_features(*names)
     names.each do |name|
-      send("feature_#{name}=", true)
+      if BOOLEAN_FEATURES.include?(name.to_s)
+        public_send("#{name}_enabled=", true)
+      else
+        send("feature_#{name}=", true)
+      end
     end
   end
 
@@ -32,7 +48,11 @@ module Featurable
 
   def disable_features(*names)
     names.each do |name|
-      send("feature_#{name}=", false)
+      if BOOLEAN_FEATURES.include?(name.to_s)
+        public_send("#{name}_enabled=", false)
+      else
+        send("feature_#{name}=", false)
+      end
     end
   end
 
@@ -42,6 +62,8 @@ module Featurable
   end
 
   def feature_enabled?(name)
+    return public_send("#{name}_enabled?") if BOOLEAN_FEATURES.include?(name.to_s)
+
     send("feature_#{name}?")
   end
 

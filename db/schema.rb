@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_10_092753) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_20_000001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -73,6 +73,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_10_092753) do
     t.integer "status", default: 0
     t.jsonb "internal_attributes", default: {}, null: false
     t.jsonb "settings", default: {}
+    t.boolean "technical_incidents_enabled", default: false, null: false
     t.index ["status"], name: "index_accounts_on_status"
   end
 
@@ -381,11 +382,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_10_092753) do
     t.integer "sync_status"
     t.datetime "last_synced_at"
     t.datetime "last_sync_attempted_at"
+    t.index ["account_id", "sync_status"], name: "index_captain_documents_on_account_id_and_sync_status"
     t.index ["account_id"], name: "index_captain_documents_on_account_id"
     t.index ["assistant_id", "external_link"], name: "index_captain_documents_on_assistant_id_and_external_link", unique: true
     t.index ["assistant_id"], name: "index_captain_documents_on_assistant_id"
     t.index ["status"], name: "index_captain_documents_on_status"
-    t.index ["account_id", "sync_status"], name: "index_captain_documents_on_account_id_and_sync_status"
   end
 
   create_table "captain_inboxes", force: :cascade do |t|
@@ -1248,6 +1249,214 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_10_092753) do
     t.index ["name", "account_id"], name: "index_teams_on_name_and_account_id", unique: true
   end
 
+  create_table "technical_incident_conversation_links", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "technical_incident_id", null: false
+    t.bigint "conversation_id", null: false
+    t.bigint "technical_incident_evaluation_id"
+    t.string "contract_reference", default: "", null: false
+    t.integer "notification_version", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_technical_incident_conversation_links_on_account_id"
+    t.index ["conversation_id", "technical_incident_id", "notification_version", "contract_reference"], name: "idx_ti_conversation_links_idempotency", unique: true
+    t.index ["conversation_id"], name: "index_technical_incident_conversation_links_on_conversation_id"
+    t.index ["technical_incident_evaluation_id"], name: "idx_ti_conversation_links_evaluation"
+    t.index ["technical_incident_id", "created_at", "id"], name: "idx_ti_links_incident_page"
+    t.index ["technical_incident_id"], name: "idx_ti_conversation_links_incident"
+  end
+
+  create_table "technical_incident_deliveries", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "technical_incident_id", null: false
+    t.bigint "technical_incident_evaluation_id", null: false
+    t.bigint "technical_incident_conversation_link_id"
+    t.bigint "conversation_id", null: false
+    t.bigint "message_id"
+    t.string "idempotency_key", null: false
+    t.string "delivery_kind", default: "initial", null: false
+    t.string "state", default: "reserved", null: false
+    t.integer "attempts", default: 0, null: false
+    t.text "last_error"
+    t.datetime "delivery_queued_at"
+    t.datetime "delivered_at"
+    t.datetime "handoff_completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "outbox_state", default: "pending", null: false
+    t.string "message_state", default: "pending", null: false
+    t.string "transport_state", default: "pending", null: false
+    t.string "link_state", default: "pending", null: false
+    t.string "label_state", default: "pending", null: false
+    t.string "note_state", default: "pending", null: false
+    t.string "handoff_state", default: "pending", null: false
+    t.string "audit_state", default: "pending", null: false
+    t.string "provider"
+    t.string "provider_reference"
+    t.string "lock_token"
+    t.string "last_error_code"
+    t.datetime "next_retry_at"
+    t.datetime "locked_at"
+    t.datetime "completed_at"
+    t.index ["account_id"], name: "index_technical_incident_deliveries_on_account_id"
+    t.index ["conversation_id"], name: "index_technical_incident_deliveries_on_conversation_id"
+    t.index ["idempotency_key"], name: "index_technical_incident_deliveries_on_idempotency_key", unique: true
+    t.index ["message_id"], name: "index_technical_incident_deliveries_on_message_id"
+    t.index ["outbox_state", "locked_at"], name: "idx_ti_deliveries_outbox_watchdog"
+    t.index ["outbox_state", "next_retry_at", "id"], name: "idx_ti_deliveries_outbox_ready"
+    t.index ["state", "updated_at"], name: "idx_ti_deliveries_retry"
+    t.index ["technical_incident_conversation_link_id"], name: "idx_ti_deliveries_link"
+    t.index ["technical_incident_evaluation_id"], name: "idx_ti_deliveries_evaluation"
+    t.index ["technical_incident_id"], name: "idx_ti_deliveries_incident"
+    t.index ["transport_state", "id"], name: "idx_ti_deliveries_transport_status", where: "((transport_state)::text = 'queued'::text)"
+    t.check_constraint "audit_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_audit_state_allowlist"
+    t.check_constraint "delivery_kind::text = ANY (ARRAY['initial'::character varying, 'update'::character varying, 'reopening'::character varying]::text[])", name: "ti_deliveries_kind_allowlist"
+    t.check_constraint "handoff_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_handoff_state_allowlist"
+    t.check_constraint "label_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_label_state_allowlist"
+    t.check_constraint "link_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_link_state_allowlist"
+    t.check_constraint "message_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'created'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_message_state_allowlist"
+    t.check_constraint "note_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_note_state_allowlist"
+    t.check_constraint "outbox_state::text = ANY (ARRAY['pending'::character varying, 'processing'::character varying, 'retry'::character varying, 'completed'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_outbox_state_allowlist"
+    t.check_constraint "state::text = ANY (ARRAY['reserved'::character varying, 'message_created'::character varying, 'delivery_queued'::character varying, 'delivered'::character varying, 'handoff_completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_state_allowlist"
+    t.check_constraint "transport_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'queued'::character varying, 'delivered'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_transport_state_allowlist"
+  end
+
+  create_table "technical_incident_evaluations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "conversation_id", null: false
+    t.bigint "technical_incident_id"
+    t.bigint "agent_bot_id"
+    t.string "opaque_id", null: false
+    t.string "request_id", null: false
+    t.string "source_message_id"
+    t.string "contract_version", default: "1.0", null: false
+    t.string "mode", null: false
+    t.string "status", null: false
+    t.string "reason_code"
+    t.string "match_source"
+    t.decimal "operational_confidence", precision: 5, scale: 4
+    t.integer "latency_ms"
+    t.datetime "expires_at", null: false
+    t.datetime "committed_at"
+    t.jsonb "classification", default: {}, null: false
+    t.jsonb "candidate_snapshot", default: [], null: false
+    t.jsonb "sanitized_contracts", default: [], null: false
+    t.jsonb "selected_contract", default: {}, null: false
+    t.string "feedback"
+    t.text "feedback_note"
+    t.bigint "feedback_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "created_at"], name: "idx_ti_evaluations_retention"
+    t.index ["account_id", "request_id"], name: "idx_ti_evaluations_request", unique: true
+    t.index ["account_id", "source_message_id"], name: "idx_ti_evaluations_source_message", unique: true, where: "(source_message_id IS NOT NULL)"
+    t.index ["account_id"], name: "index_technical_incident_evaluations_on_account_id"
+    t.index ["agent_bot_id"], name: "index_technical_incident_evaluations_on_agent_bot_id"
+    t.index ["conversation_id"], name: "index_technical_incident_evaluations_on_conversation_id"
+    t.index ["created_at"], name: "idx_ti_evaluations_global_retention"
+    t.index ["feedback_by_id"], name: "index_technical_incident_evaluations_on_feedback_by_id"
+    t.index ["opaque_id"], name: "index_technical_incident_evaluations_on_opaque_id", unique: true
+    t.index ["technical_incident_id", "created_at", "id"], name: "idx_ti_evaluations_incident_page"
+    t.index ["technical_incident_id"], name: "idx_ti_evaluations_incident"
+    t.check_constraint "mode::text = ANY (ARRAY['shadow'::character varying, 'active'::character varying]::text[])", name: "ti_evaluations_mode_allowlist"
+    t.check_constraint "status::text = ANY (ARRAY['no_candidate'::character varying, 'general_match'::character varying, 'localized_candidate'::character varying, 'needs_document'::character varying, 'needs_contract_selection'::character varying, 'matched'::character varying, 'ambiguous'::character varying, 'expired'::character varying, 'fallback'::character varying, 'stale'::character varying, 'duplicate'::character varying, 'accepted'::character varying]::text[])", name: "ti_evaluations_status_allowlist"
+  end
+
+  create_table "technical_incident_scope_criteria", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "technical_incident_scope_group_id", null: false
+    t.string "criterion_type", null: false
+    t.string "operator", default: "in", null: false
+    t.jsonb "values", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_technical_incident_scope_criteria_on_account_id"
+    t.index ["technical_incident_scope_group_id", "criterion_type"], name: "idx_ti_scope_criteria_unique_type", unique: true
+    t.index ["technical_incident_scope_group_id"], name: "idx_ti_scope_criteria_group"
+    t.check_constraint "criterion_type::text = ANY (ARRAY['general'::character varying, 'service_specific'::character varying, 'contract_id'::character varying, 'pop_id'::character varying, 'postal_code'::character varying, 'city_neighborhood'::character varying, 'city_street'::character varying]::text[])", name: "ti_scope_criteria_type_allowlist"
+    t.check_constraint "operator::text = 'in'::text", name: "ti_scope_criteria_operator_allowlist"
+  end
+
+  create_table "technical_incident_scope_groups", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "technical_incident_id", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_technical_incident_scope_groups_on_account_id"
+    t.index ["technical_incident_id", "position"], name: "idx_ti_scope_groups_position"
+    t.index ["technical_incident_id"], name: "idx_ti_scope_groups_incident"
+  end
+
+  create_table "technical_incident_updates", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "technical_incident_id", null: false
+    t.string "actor_type"
+    t.bigint "actor_id"
+    t.string "origin", null: false
+    t.string "action", null: false
+    t.jsonb "changeset", default: {}, null: false
+    t.string "request_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "created_at"], name: "idx_ti_updates_retention"
+    t.index ["account_id"], name: "index_technical_incident_updates_on_account_id"
+    t.index ["actor_type", "actor_id"], name: "idx_ti_updates_actor"
+    t.index ["created_at"], name: "idx_ti_updates_global_retention"
+    t.index ["technical_incident_id", "created_at", "id"], name: "idx_ti_updates_incident_page"
+    t.index ["technical_incident_id"], name: "idx_ti_updates_incident"
+  end
+
+  create_table "technical_incidents", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "title", limit: 200, null: false
+    t.string "incident_type", null: false
+    t.string "status", default: "draft", null: false
+    t.string "severity", default: "minor", null: false
+    t.integer "priority", default: 50, null: false
+    t.text "problem_types", default: [], null: false, array: true
+    t.text "affected_services", default: [], null: false, array: true
+    t.text "customer_message"
+    t.text "internal_note"
+    t.string "action", default: "message_and_handoff", null: false
+    t.datetime "starts_at"
+    t.datetime "expires_at"
+    t.datetime "review_at"
+    t.datetime "estimated_resolution_at"
+    t.integer "notification_version", default: 1, null: false
+    t.boolean "resend_on_next_contact", default: false, null: false
+    t.bigint "created_by_id"
+    t.bigint "updated_by_id"
+    t.bigint "resolved_by_id"
+    t.datetime "resolved_at"
+    t.datetime "archived_at"
+    t.integer "lock_version", default: 0, null: false
+    t.integer "conversation_links_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "archived_at"], name: "index_technical_incidents_on_account_id_and_archived_at"
+    t.index ["account_id", "incident_type"], name: "index_technical_incidents_on_account_id_and_incident_type"
+    t.index ["account_id", "status", "starts_at", "expires_at"], name: "idx_technical_incidents_active_window"
+    t.index ["account_id"], name: "index_technical_incidents_on_account_id"
+    t.index ["affected_services"], name: "idx_ti_affected_services_gin", using: :gin
+    t.index ["created_by_id"], name: "index_technical_incidents_on_created_by_id"
+    t.index ["problem_types"], name: "idx_ti_problem_types_gin", using: :gin
+    t.index ["resolved_by_id"], name: "index_technical_incidents_on_resolved_by_id"
+    t.index ["status", "expires_at"], name: "idx_ti_lifecycle_expiration", where: "(archived_at IS NULL)"
+    t.index ["status", "review_at"], name: "idx_ti_lifecycle_review", where: "((archived_at IS NULL) AND (review_at IS NOT NULL))"
+    t.index ["status", "starts_at"], name: "idx_ti_lifecycle_scheduled", where: "(archived_at IS NULL)"
+    t.index ["status", "updated_at"], name: "idx_ti_lifecycle_forgotten", where: "((archived_at IS NULL) AND ((status)::text = 'active'::text))"
+    t.index ["updated_by_id"], name: "index_technical_incidents_on_updated_by_id"
+    t.check_constraint "action::text = ANY (ARRAY['message_and_handoff'::character varying, 'message_only'::character varying, 'handoff_only'::character varying]::text[])", name: "technical_incidents_action_allowlist"
+    t.check_constraint "affected_services <@ ARRAY['internet'::text, 'dns'::text, 'google'::text, 'youtube'::text, 'grupo_telecom_app'::text, 'iptv'::text, 'telephony'::text, 'other'::text]", name: "technical_incidents_services_allowlist"
+    t.check_constraint "incident_type::text = ANY (ARRAY['unplanned_outage'::character varying, 'degradation'::character varying, 'scheduled_maintenance'::character varying, 'external_provider'::character varying, 'company_application'::character varying, 'other'::character varying]::text[])", name: "technical_incidents_type_allowlist"
+    t.check_constraint "notification_version > 0", name: "technical_incidents_notification_version_positive"
+    t.check_constraint "priority >= 0 AND priority <= 100", name: "technical_incidents_priority_range"
+    t.check_constraint "problem_types <@ ARRAY['internet_connectivity'::text, 'physical_fiber'::text, 'optical_alarm'::text, 'dns'::text, 'external_service'::text, 'company_application'::text, 'iptv'::text, 'telephony'::text, 'other'::text, 'unidentified'::text]", name: "technical_incidents_problem_types_allowlist"
+    t.check_constraint "severity::text = ANY (ARRAY['informational'::character varying, 'minor'::character varying, 'major'::character varying, 'critical'::character varying]::text[])", name: "technical_incidents_severity_allowlist"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'scheduled'::character varying, 'active'::character varying, 'monitoring'::character varying, 'resolved'::character varying, 'expired'::character varying, 'cancelled'::character varying]::text[])", name: "technical_incidents_status_allowlist"
+  end
+
   create_table "users", id: :serial, force: :cascade do |t|
     t.string "provider", default: "email", null: false
     t.string "uid", default: "", null: false
@@ -1320,6 +1529,31 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_10_092753) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "inboxes", "portals"
+  add_foreign_key "technical_incident_conversation_links", "accounts"
+  add_foreign_key "technical_incident_conversation_links", "conversations"
+  add_foreign_key "technical_incident_conversation_links", "technical_incident_evaluations"
+  add_foreign_key "technical_incident_conversation_links", "technical_incidents"
+  add_foreign_key "technical_incident_deliveries", "accounts"
+  add_foreign_key "technical_incident_deliveries", "conversations"
+  add_foreign_key "technical_incident_deliveries", "messages"
+  add_foreign_key "technical_incident_deliveries", "technical_incident_conversation_links"
+  add_foreign_key "technical_incident_deliveries", "technical_incident_evaluations"
+  add_foreign_key "technical_incident_deliveries", "technical_incidents"
+  add_foreign_key "technical_incident_evaluations", "accounts"
+  add_foreign_key "technical_incident_evaluations", "agent_bots"
+  add_foreign_key "technical_incident_evaluations", "conversations"
+  add_foreign_key "technical_incident_evaluations", "technical_incidents"
+  add_foreign_key "technical_incident_evaluations", "users", column: "feedback_by_id"
+  add_foreign_key "technical_incident_scope_criteria", "accounts"
+  add_foreign_key "technical_incident_scope_criteria", "technical_incident_scope_groups", on_delete: :cascade
+  add_foreign_key "technical_incident_scope_groups", "accounts"
+  add_foreign_key "technical_incident_scope_groups", "technical_incidents", on_delete: :cascade
+  add_foreign_key "technical_incident_updates", "accounts"
+  add_foreign_key "technical_incident_updates", "technical_incidents"
+  add_foreign_key "technical_incidents", "accounts"
+  add_foreign_key "technical_incidents", "users", column: "created_by_id"
+  add_foreign_key "technical_incidents", "users", column: "resolved_by_id"
+  add_foreign_key "technical_incidents", "users", column: "updated_by_id"
   create_trigger("accounts_after_insert_row_tr", :generated => true, :compatibility => 1).
       on("accounts").
       after(:insert).

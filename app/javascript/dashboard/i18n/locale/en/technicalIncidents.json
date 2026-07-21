@@ -1,0 +1,86 @@
+{
+  "TECHNICAL_INCIDENTS": {
+    "SIDEBAR": "Technical Incidents",
+    "TITLE": "Technical Incidents",
+    "DESCRIPTION": "Register, track, and audit service-affecting incidents.",
+    "NEW": "New incident",
+    "EDIT": "Edit incident",
+    "FILTERS": "Incident filters",
+    "SEARCH": "Search incidents",
+    "ALL_STATUSES": "All statuses",
+    "ALL_SEVERITIES": "All severities",
+    "ALL_CATEGORIES": "All categories",
+    "ALL_SCOPES": "All scopes",
+    "APPLY": "Apply",
+    "LOADING": "Loading incidents…",
+    "EMPTY": "No incidents found.",
+    "PAGINATION": "Incident pages",
+    "PREVIOUS": "Previous",
+    "NEXT": "Next",
+    "SAVE": "Save",
+    "SAVING": "Saving…",
+    "CANCEL": "Cancel",
+    "REMOVE": "Remove",
+    "MESSAGE": "Customer message",
+    "INTERNAL_NOTE": "Internal note",
+    "SCOPES": "Scope",
+    "CONFLICTS": "Potential conflicts",
+    "DETAIL_TABS": "Incident details",
+    "BUCKETS": {
+      "LABEL": "Incident views",
+      "ACTIVE": "Active",
+      "SCHEDULED": "Scheduled",
+      "HISTORY": "History"
+    },
+    "TABLE": {
+      "INCIDENT": "Incident",
+      "STATUS": "Status",
+      "SEVERITY": "Severity",
+      "SCOPE": "Service / scope",
+      "ETA": "Estimated restoration",
+      "CONVERSATIONS": "Conversations"
+    },
+    "FORM": {
+      "TITLE": "Title",
+      "TYPE": "Incident type",
+      "SEVERITY": "Severity",
+      "PRIORITY": "Priority",
+      "ACTION": "Action after match",
+      "PROBLEMS": "Problem types",
+      "SERVICES": "Affected services",
+      "STARTS_AT": "Starts at",
+      "EXPIRES_AT": "Expires at",
+      "REVIEW_AT": "Review at",
+      "ESTIMATED_RESOLUTION_AT": "Estimated restoration",
+      "MESSAGE": "Literal customer message",
+      "PREVIEW": "Literal preview",
+      "INTERNAL_NOTE": "Internal note (never sent)",
+      "SCOPES": "Scope groups",
+      "ADD_GROUP": "Add OR group",
+      "ADD_CRITERION": "Add AND criterion",
+      "GROUP": "Group {number}",
+      "SCOPE_VALUES": "Scope values as JSON",
+      "UNKNOWN_VARIABLE": "The message contains an unsupported template variable.",
+      "CONFLICT": "This incident was changed by another user. Reload before saving."
+    },
+    "ACTIONS": {
+      "ACTIVATE": "Activate",
+      "MONITOR": "Monitoring",
+      "RESOLVE": "Resolve",
+      "CANCEL": "Cancel incident",
+      "REOPEN": "Reopen",
+      "ARCHIVE": "Archive",
+      "UPDATE_SCHEDULE": "Update schedule"
+    },
+    "FEEDBACK": {
+      "SELECT": "Select feedback",
+      "SEND": "Send"
+    },
+    "TABS": {
+      "INFORMATION": "Information",
+      "HISTORY": "History",
+      "CONVERSATIONS": "Conversations",
+      "EVALUATIONS": "Evaluations"
+    }
+  }
+}

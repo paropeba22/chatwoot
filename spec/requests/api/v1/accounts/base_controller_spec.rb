@@ -23,6 +23,19 @@ RSpec.describe 'Api::V1::Accounts::BaseController', type: :request do
     end
   end
 
+  context 'when the AgentBot token is dedicated to technical incidents' do
+    let(:agent_bot) { create(:agent_bot, account: account, bot_config: { technical_incidents_api: true }) }
+
+    it 'does not allow the dedicated token to call the regular conversation API' do
+      post api_v1_account_conversation_assignments_url(account_id: account.id, conversation_id: conversation.display_id),
+           headers: { api_access_token: agent_bot.access_token.token },
+           params: { assignee_id: agent.id },
+           as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
   context 'when agent bot belongs to another account' do
     let(:other_account) { create(:account) }
     let(:external_bot) { create(:agent_bot, account: other_account) }

@@ -1,0 +1,86 @@
+{
+  "TECHNICAL_INCIDENTS": {
+    "SIDEBAR": "Incidentes Técnicos",
+    "TITLE": "Incidentes Técnicos",
+    "DESCRIPTION": "Cadastre, acompanhe e audite ocorrências que afetam os serviços.",
+    "NEW": "Novo incidente",
+    "EDIT": "Editar incidente",
+    "FILTERS": "Filtros de incidentes",
+    "SEARCH": "Buscar incidentes",
+    "ALL_STATUSES": "Todos os status",
+    "ALL_SEVERITIES": "Todas as severidades",
+    "ALL_CATEGORIES": "Todas as categorias",
+    "ALL_SCOPES": "Todas as abrangências",
+    "APPLY": "Aplicar",
+    "LOADING": "Carregando incidentes…",
+    "EMPTY": "Nenhum incidente encontrado.",
+    "PAGINATION": "Páginas de incidentes",
+    "PREVIOUS": "Anterior",
+    "NEXT": "Próxima",
+    "SAVE": "Salvar",
+    "SAVING": "Salvando…",
+    "CANCEL": "Cancelar",
+    "REMOVE": "Remover",
+    "MESSAGE": "Mensagem ao cliente",
+    "INTERNAL_NOTE": "Observação interna",
+    "SCOPES": "Abrangência",
+    "CONFLICTS": "Conflitos potenciais",
+    "DETAIL_TABS": "Detalhes do incidente",
+    "BUCKETS": {
+      "LABEL": "Visões de incidentes",
+      "ACTIVE": "Ativos",
+      "SCHEDULED": "Programados",
+      "HISTORY": "Histórico"
+    },
+    "TABLE": {
+      "INCIDENT": "Incidente",
+      "STATUS": "Status",
+      "SEVERITY": "Severidade",
+      "SCOPE": "Serviço / abrangência",
+      "ETA": "Previsão",
+      "CONVERSATIONS": "Conversas"
+    },
+    "FORM": {
+      "TITLE": "Título",
+      "TYPE": "Tipo de incidente",
+      "SEVERITY": "Severidade",
+      "PRIORITY": "Prioridade",
+      "ACTION": "Ação após correspondência",
+      "PROBLEMS": "Tipos de problema",
+      "SERVICES": "Serviços afetados",
+      "STARTS_AT": "Início",
+      "EXPIRES_AT": "Expiração",
+      "REVIEW_AT": "Revisão",
+      "ESTIMATED_RESOLUTION_AT": "Previsão de normalização",
+      "MESSAGE": "Mensagem literal ao cliente",
+      "PREVIEW": "Prévia literal",
+      "INTERNAL_NOTE": "Observação interna (nunca enviada)",
+      "SCOPES": "Grupos de abrangência",
+      "ADD_GROUP": "Adicionar grupo OU",
+      "ADD_CRITERION": "Adicionar critério E",
+      "GROUP": "Grupo {number}",
+      "SCOPE_VALUES": "Valores do critério em JSON",
+      "UNKNOWN_VARIABLE": "A mensagem contém uma variável de template não permitida.",
+      "CONFLICT": "Outra pessoa alterou este incidente. Recarregue antes de salvar."
+    },
+    "ACTIONS": {
+      "ACTIVATE": "Ativar",
+      "MONITOR": "Monitorar",
+      "RESOLVE": "Resolver",
+      "CANCEL": "Cancelar incidente",
+      "REOPEN": "Reabrir",
+      "ARCHIVE": "Arquivar",
+      "UPDATE_SCHEDULE": "Atualizar datas"
+    },
+    "FEEDBACK": {
+      "SELECT": "Selecionar feedback",
+      "SEND": "Enviar"
+    },
+    "TABS": {
+      "INFORMATION": "Informações",
+      "HISTORY": "Histórico",
+      "CONVERSATIONS": "Conversas",
+      "EVALUATIONS": "Avaliações"
+    }
+  }
+}

@@ -5,6 +5,13 @@ export const AVAILABLE_CUSTOM_ROLE_PERMISSIONS = [
   'contact_manage',
   'report_manage',
   'knowledge_base_manage',
+  'technical_incident_view',
+  'technical_incident_create',
+  'technical_incident_update',
+  'technical_incident_update_eta',
+  'technical_incident_resolve',
+  'technical_incident_archive',
+  'technical_incident_audit',
 ];
 
 export const ROLES = ['agent', 'administrator'];

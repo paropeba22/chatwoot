@@ -1,0 +1,21 @@
+{
+  "selected_contract_id": "CTR-100",
+  "contracts": [
+    {
+      "contract_id": "CTR-100",
+      "status": "active",
+      "pop_id": "POP-10",
+      "pop_name": "Olinda",
+      "service_group": "Internet",
+      "connection_type": "Fibra",
+      "location": {
+        "state": "PE",
+        "city": "Recife",
+        "neighborhood": "Boa Viagem",
+        "postal_code": "50000000",
+        "street": "Rua Exemplo",
+        "number": "10"
+      }
+    }
+  ]
+}

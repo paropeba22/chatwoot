@@ -1,4 +1,12 @@
+require 'digest'
+
 class Rack::Attack
+  def self.technical_incident_endpoint(path)
+    path.to_s
+        .sub(%r{\A/api/v1/technical_incident_checks/[^/]+/(match|commit)\z}, '/api/v1/technical_incident_checks/:id/\1')
+        .sub(%r{\A/api/v1/technical_incident_evaluations/[^/]+/feedback\z}, '/api/v1/technical_incident_evaluations/:id/feedback')
+  end
+
   ### Configure Cache ###
 
   # If you don't want to use Rails.cache (Rack::Attack's default), then
@@ -213,6 +221,22 @@ class Rack::Attack
   throttle('/api/v1/accounts/:account_id/contacts/search', limit: ENV.fetch('RATE_LIMIT_CONTACT_SEARCH', '100').to_i, period: 1.minute) do |req|
     match_data = %r{/api/v1/accounts/(?<account_id>\d+)/contacts/search}.match(req.path)
     match_data[:account_id] if match_data.present?
+  end
+
+  throttle('/api/v1/technical_incidents_automation/token_endpoint',
+           limit: ENV.fetch('RATE_LIMIT_TECHNICAL_INCIDENT_CHECKS', '120').to_i, period: 1.minute) do |req|
+    next unless req.path.start_with?('/api/v1/technical_incident_checks', '/api/v1/technical_incident_evaluations')
+
+    token = req.get_header('HTTP_API_ACCESS_TOKEN')
+    endpoint = Rack::Attack.technical_incident_endpoint(req.path)
+    "#{Digest::SHA256.hexdigest(token)}:#{endpoint}" if token.present?
+  end
+
+  throttle('/api/v1/technical_incidents_automation/ip_endpoint',
+           limit: ENV.fetch('RATE_LIMIT_TECHNICAL_INCIDENT_CHECKS_IP', '180').to_i, period: 1.minute) do |req|
+    next unless req.path.start_with?('/api/v1/technical_incident_checks', '/api/v1/technical_incident_evaluations')
+
+    "#{req.ip}:#{Rack::Attack.technical_incident_endpoint(req.path)}"
   end
 
   # Throttle by individual user (based on uid)
