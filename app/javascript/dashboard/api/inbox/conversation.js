@@ -119,6 +119,14 @@ class ConversationApi extends ApiClient {
     });
   }
 
+  sendToHumanQueue({ conversationId, idempotencyKey, expectedLastMessageId }) {
+    return axios.post(`${this.url}/${conversationId}/automation_transitions`, {
+      action: 'send_to_human_queue',
+      idempotency_key: idempotencyKey,
+      expected_last_message_id: expectedLastMessageId,
+    });
+  }
+
   fetchParticipants(conversationId) {
     return axios.get(`${this.url}/${conversationId}/participants`);
   }

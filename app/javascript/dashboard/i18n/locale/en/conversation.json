@@ -105,6 +105,16 @@
         "DUE": "due"
       }
     },
+    "SEND_TO_HUMAN_QUEUE": {
+      "ACTION": "Send to queue",
+      "CONFIRM_TITLE": "Send conversation to the human queue?",
+      "CONFIRM_DESCRIPTION": "The conversation will leave Bia, remain open, and become available to human agents.",
+      "CONFIRM_ACTION": "Send to queue",
+      "CANCEL": "Cancel",
+      "SUCCESS": "Conversation sent to the human queue.",
+      "ERROR": "The conversation could not be sent to the queue. Please try again.",
+      "CONFLICT": "The conversation changed before the action was completed. The current state has been refreshed."
+    },
     "RESOLVE_DROPDOWN": {
       "MARK_PENDING": "Mark as pending",
       "SNOOZE_UNTIL": "Snooze",
