@@ -799,3 +799,7 @@ A recomendação é iniciar a Fase 1 somente após aprovar as decisões de permi
 - o AntiGravity foi acessado somente para leitura e permaneceu na versão estável;
 - a Central de Incidentes permaneceu desligada;
 - o único artefato versionável produzido é este documento de auditoria.
+
+## 21. Referência da Fase 1
+
+A arquitetura, o contrato, os testes e o procedimento operacional da ação “Enviar para fila” estão documentados em [`chatwoot_send_to_human_queue_phase1.md`](chatwoot_send_to_human_queue_phase1.md). Os achados históricos desta auditoria permanecem preservados; a Fase 1 aplica somente a projeção autoritativa necessária para a fila humana.
