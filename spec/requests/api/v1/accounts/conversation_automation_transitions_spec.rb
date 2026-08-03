@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe 'Conversation automation transitions API', type: :request do
   let(:account) { create(:account).tap { |record| record.enable_features!('conversation_send_to_human_queue') } }
   let(:agent) { create(:user, account: account, role: :agent) }
-  let(:conversation) { create(:conversation, account: account, label_list: ['bot-bia', 'retained']) }
+  let(:conversation) { create(:conversation, account: account, label_list: %w[bot-bia retained]) }
   let(:message) { create(:message, account: account, conversation: conversation, inbox: conversation.inbox) }
   let(:path) { "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}/automation_transitions" }
   let(:params) do

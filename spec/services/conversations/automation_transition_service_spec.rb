@@ -37,7 +37,7 @@ RSpec.describe Conversations::AutomationTransitionService do
       other_assignee = create(:user, account: account)
       conversation.update!(
         assignee: other_assignee,
-        label_list: ['bot-bia', 'priority-customer'],
+        label_list: %w[bot-bia priority-customer],
         custom_attributes: {
           'financeiro_state' => { 'step' => 'awaiting_invoice' },
           'cadastro_state' => { 'step' => 'awaiting_name' },
@@ -107,7 +107,7 @@ RSpec.describe Conversations::AutomationTransitionService do
     end
 
     it 'does not create a public message' do
-      expect { service.call }.not_to change { conversation.messages.where(private: false).count }
+      expect { service.call }.not_to(change { conversation.messages.where(private: false).count })
     end
 
     %i[open pending snoozed resolved].each do |status|
@@ -178,7 +178,7 @@ RSpec.describe Conversations::AutomationTransitionService do
         status: :open,
         assignee: nil,
         assignee_agent_bot: nil,
-        label_list: ['aguardando-humano', 'priority-customer'],
+        label_list: %w[aguardando-humano priority-customer],
         custom_attributes: { 'bia_retorno_humano_pendente' => true }
       )
       result = nil

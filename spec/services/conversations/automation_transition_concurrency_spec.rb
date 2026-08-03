@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Conversation automation transition concurrency', :non_transactional do
+RSpec.describe Conversations::AutomationTransitionService, :non_transactional do
   self.use_transactional_tests = false
 
   it 'lets one concurrent request apply the transition and makes the other idempotent' do
