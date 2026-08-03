@@ -18,6 +18,7 @@ describe('#ConversationAPI', () => {
     expect(conversationAPI).toHaveProperty('unmute');
     expect(conversationAPI).toHaveProperty('meta');
     expect(conversationAPI).toHaveProperty('sendEmailTranscript');
+    expect(conversationAPI).toHaveProperty('sendToHumanQueue');
     expect(conversationAPI).toHaveProperty('filter');
   });
 
@@ -184,6 +185,23 @@ describe('#ConversationAPI', () => {
         '/api/v1/conversations/45/custom_attributes',
         {
           custom_attributes: { order_d: '1001' },
+        }
+      );
+    });
+
+    it('#sendToHumanQueue', () => {
+      conversationAPI.sendToHumanQueue({
+        conversationId: 45,
+        idempotencyKey: 'queue-request-12345678',
+        expectedLastMessageId: 123,
+      });
+
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        '/api/v1/conversations/45/automation_transitions',
+        {
+          action: 'send_to_human_queue',
+          idempotency_key: 'queue-request-12345678',
+          expected_last_message_id: 123,
         }
       );
     });

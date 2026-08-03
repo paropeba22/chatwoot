@@ -3,6 +3,7 @@ import actions, {
   hasMessageFailedWithExternalError,
 } from '../../conversations/actions';
 import types from '../../../mutation-types';
+import ConversationApi from '../../../../api/inbox/conversation';
 const dataToSend = {
   payload: [
     {
@@ -56,6 +57,68 @@ describe('#hasMessageFailedWithExternalError', () => {
 });
 
 describe('#actions', () => {
+  describe('#sendToHumanQueue', () => {
+    const payload = {
+      conversationId: 45,
+      idempotencyKey: 'queue-request-12345678',
+      expectedLastMessageId: 123,
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('updates the store from the authoritative response', async () => {
+      const conversation = {
+        id: 45,
+        status: 'open',
+        labels: ['aguardando-humano'],
+        meta: {},
+      };
+      vi.spyOn(ConversationApi, 'sendToHumanQueue').mockResolvedValue({
+        data: { status: 'accepted', conversation },
+      });
+      const localDispatch = vi.fn().mockResolvedValue();
+
+      const result = await actions.sendToHumanQueue(
+        { dispatch: localDispatch },
+        payload
+      );
+
+      expect(ConversationApi.sendToHumanQueue).toHaveBeenCalledWith(payload);
+      expect(localDispatch).toHaveBeenCalledWith(
+        'updateConversation',
+        conversation
+      );
+      expect(result.status).toBe('accepted');
+    });
+
+    it('applies the authoritative conversation from a conflict and rethrows', async () => {
+      const conversation = {
+        id: 45,
+        status: 'open',
+        labels: ['aguardando-humano'],
+        meta: {},
+      };
+      const error = {
+        response: {
+          status: 409,
+          data: { status: 'conflict', conversation },
+        },
+      };
+      vi.spyOn(ConversationApi, 'sendToHumanQueue').mockRejectedValue(error);
+      const localDispatch = vi.fn().mockResolvedValue();
+
+      await expect(
+        actions.sendToHumanQueue({ dispatch: localDispatch }, payload)
+      ).rejects.toBe(error);
+      expect(localDispatch).toHaveBeenCalledWith(
+        'updateConversation',
+        conversation
+      );
+    });
+  });
+
   describe('#getConversation', () => {
     it('sends correct actions if API is success', async () => {
       axios.get.mockResolvedValue({
