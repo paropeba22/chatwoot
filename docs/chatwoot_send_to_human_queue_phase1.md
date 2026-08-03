@@ -4,7 +4,7 @@
 
 Esta fase implementa apenas a transição manual `send_to_human_queue`. Ela não implementa retorno para a Bia, ações em lote, revisão global das abas/contadores ou automação de inatividade. O AntiGravity não é alterado.
 
-A funcionalidade é protegida pela feature flag de conta `conversation_send_to_human_queue`, criada desativada por padrão. Com a flag desativada, o item não aparece no frontend e o endpoint responde `404 feature_disabled` sem alterar a conversa.
+A funcionalidade é protegida pela feature flag de conta `conversation_send_to_human_queue`, criada desativada por padrão. Como o bitmap legado já ocupa todos os bits seguros do `bigint`, a flag usa a coluna booleana dedicada `accounts.conversation_send_to_human_queue_enabled`, integrada ao `Featurable` pelo mesmo padrão de `technical_incidents`. Com a flag desativada, o item não aparece no frontend e o endpoint responde `404 feature_disabled` sem alterar a conversa.
 
 ## Contrato HTTP
 
@@ -131,7 +131,7 @@ bundle exec rspec \
   spec/policies/conversation_policy_spec.rb \
   spec/enterprise/policies/enterprise/conversation_policy_spec.rb \
   spec/services/conversations/automation_transition_service_spec.rb \
-  spec/services/conversations/automation_transition_concurrency_spec.rb \
+  spec/services/conversations/automation_transition_service_concurrency_spec.rb \
   spec/requests/api/v1/accounts/conversation_automation_transitions_spec.rb
 
 pnpm vitest run \

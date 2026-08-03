@@ -1,5 +1,7 @@
 class CreateConversationAutomationTransitions < ActiveRecord::Migration[7.0]
   def change
+    add_column :accounts, :conversation_send_to_human_queue_enabled, :boolean, default: false, null: false
+
     create_table :conversation_automation_transitions do |table|
       table.integer :account_id, null: false
       table.integer :conversation_id, null: false

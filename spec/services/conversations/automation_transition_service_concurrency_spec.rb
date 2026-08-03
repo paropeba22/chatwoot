@@ -20,7 +20,7 @@ RSpec.describe Conversations::AutomationTransitionService, :non_transactional do
           account_user = thread_actor.account_users.find_by!(account: thread_account)
           Current.user = thread_actor
           barrier.wait
-          result = Conversations::AutomationTransitionService.new(
+          result = described_class.new(
             account: thread_account,
             actor: thread_actor,
             account_user: AccountUser.find(account_user.id),

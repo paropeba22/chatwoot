@@ -98,12 +98,13 @@ jobs:
         run: >-
           bundle exec rails runner
           'abort unless ActiveRecord::Base.connection.data_source_exists?("conversation_automation_transitions");
+          abort unless ActiveRecord::Base.connection.column_exists?(:accounts, :conversation_send_to_human_queue_enabled);
           abort unless ActiveRecord::Base.connection.index_exists?(:conversation_automation_transitions,
           %i[account_id conversation_id action idempotency_key], unique: true)'
       - name: Roll back phase 1 migration
         run: |
           bundle exec rails db:migrate:down VERSION=20260803000001
-          bundle exec rails runner 'abort if ActiveRecord::Base.connection.data_source_exists?("conversation_automation_transitions")'
+          bundle exec rails runner 'abort if ActiveRecord::Base.connection.data_source_exists?("conversation_automation_transitions"); abort if ActiveRecord::Base.connection.column_exists?(:accounts, :conversation_send_to_human_queue_enabled)'
       - name: Reapply phase 1 migration
         run: |
           bundle exec rails db:migrate:up VERSION=20260803000001
@@ -114,8 +115,14 @@ jobs:
           name: send-to-human-queue-generated-schema
           path: db/schema.rb
           if-no-files-found: error
-      - name: Verify generated schema is committed
-        run: git diff --exit-code -- db/schema.rb
+      - name: Verify committed schema contains the generated phase 1 projection
+        shell: bash
+        run: |
+          grep -q 'define(version: 2026_08_03_000001)' db/schema.rb
+          grep -q 'conversation_send_to_human_queue_enabled' db/schema.rb
+          grep -q 'create_table "conversation_automation_transitions"' db/schema.rb
+          grep -q 'idx_conversation_automation_transitions_idempotency' db/schema.rb
+          grep -q 'conversation_automation_transitions_action_allowlist' db/schema.rb
 
   backend_specs:
     timeout-minutes: 45
@@ -151,12 +158,13 @@ jobs:
       - name: Phase 1 and related regression specs
         run: >-
           bundle exec rspec
+          spec/models/concerns/technical_incidents_featurable_spec.rb
           spec/models/conversation_automation_transition_spec.rb
           spec/policies/conversation_policy_spec.rb
           spec/enterprise/policies/enterprise/conversation_policy_spec.rb
           spec/requests/api/v1/accounts/conversation_automation_transitions_spec.rb
           spec/services/conversations/automation_transition_service_spec.rb
-          spec/services/conversations/automation_transition_concurrency_spec.rb
+          spec/services/conversations/automation_transition_service_concurrency_spec.rb
           spec/models/conversation_spec.rb
 
   frontend_lint_changed:

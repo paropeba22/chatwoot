@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_20_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_03_000001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -74,6 +74,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000001) do
     t.jsonb "internal_attributes", default: {}, null: false
     t.jsonb "settings", default: {}
     t.boolean "technical_incidents_enabled", default: false, null: false
+    t.boolean "conversation_send_to_human_queue_enabled", default: false, null: false
     t.index ["status"], name: "index_accounts_on_status"
   end
 
@@ -672,6 +673,30 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000001) do
     t.index ["identifier", "account_id"], name: "uniq_identifier_per_account_contact", unique: true
     t.index ["name", "email", "phone_number", "identifier"], name: "index_contacts_on_name_email_phone_number_identifier", opclass: :gin_trgm_ops, using: :gin
     t.index ["phone_number", "account_id"], name: "index_contacts_on_phone_number_and_account_id"
+  end
+
+  create_table "conversation_automation_transitions", force: :cascade do |t|
+    t.integer "account_id", null: false
+    t.integer "conversation_id", null: false
+    t.integer "actor_id"
+    t.integer "audit_message_id"
+    t.string "action", null: false
+    t.string "status", default: "completed", null: false
+    t.string "reason_code", null: false
+    t.string "idempotency_key", null: false
+    t.integer "expected_last_message_id"
+    t.jsonb "before_state", default: {}, null: false
+    t.jsonb "after_state", default: {}, null: false
+    t.datetime "completed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "conversation_id", "action", "idempotency_key"], name: "idx_conversation_automation_transitions_idempotency", unique: true
+    t.index ["account_id", "conversation_id", "created_at"], name: "idx_conversation_automation_transitions_audit"
+    t.index ["actor_id"], name: "index_conversation_automation_transitions_on_actor_id"
+    t.index ["audit_message_id"], name: "index_conversation_automation_transitions_on_audit_message_id"
+    t.index ["conversation_id"], name: "index_conversation_automation_transitions_on_conversation_id"
+    t.check_constraint "action::text = 'send_to_human_queue'::text", name: "conversation_automation_transitions_action_allowlist"
+    t.check_constraint "status::text = 'completed'::text", name: "conversation_automation_transitions_status_allowlist"
   end
 
   create_table "conversation_participants", force: :cascade do |t|
@@ -1528,6 +1553,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_20_000001) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "conversation_automation_transitions", "accounts", on_delete: :cascade
+  add_foreign_key "conversation_automation_transitions", "conversations", on_delete: :cascade
+  add_foreign_key "conversation_automation_transitions", "messages", column: "audit_message_id", on_delete: :nullify
+  add_foreign_key "conversation_automation_transitions", "users", column: "actor_id", on_delete: :nullify
   add_foreign_key "inboxes", "portals"
   add_foreign_key "technical_incident_conversation_links", "accounts"
   add_foreign_key "technical_incident_conversation_links", "conversations"

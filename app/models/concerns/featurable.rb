@@ -4,7 +4,9 @@ module Featurable
   module BulkFeatureSelection
     def selected_feature_flags=(features)
       requested = Array(features).map(&:to_s)
-      self.technical_incidents_enabled = requested.delete('feature_technical_incidents').present?
+      Featurable::BOOLEAN_FEATURES.each do |feature|
+        public_send("#{feature}_enabled=", requested.delete("feature_#{feature}").present?)
+      end
       super(requested)
     end
   end
@@ -13,7 +15,7 @@ module Featurable
     flag_query_mode: :bit_operator,
     check_for_column: false
   }.freeze
-  BOOLEAN_FEATURES = %w[technical_incidents].freeze
+  BOOLEAN_FEATURES = %w[technical_incidents conversation_send_to_human_queue].freeze
 
   FEATURE_LIST = YAML.safe_load(Rails.root.join('config/features.yml').read).freeze
 
