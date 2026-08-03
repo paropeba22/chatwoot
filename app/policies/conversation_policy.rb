@@ -11,6 +11,10 @@ class ConversationPolicy < ApplicationPolicy
     administrator? || agent_bot? || agent_can_view_conversation?
   end
 
+  def send_to_human_queue?
+    user.is_a?(User) && show?
+  end
+
   private
 
   def agent_can_view_conversation?

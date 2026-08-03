@@ -10,6 +10,13 @@ module Enterprise::ConversationPolicy
     permits_participating?(permissions)
   end
 
+  def send_to_human_queue?
+    return false unless super
+    return true unless custom_role_permissions?
+
+    custom_role_permissions.include?('conversation_send_to_queue')
+  end
+
   private
 
   def manage_all_conversations?(permissions)

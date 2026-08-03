@@ -23,6 +23,7 @@
 # - 'contact_manage': Can manage contacts.
 # - 'report_manage': Can manage reports.
 # - 'knowledge_base_manage': Can manage knowledge base portals.
+# - 'conversation_send_to_queue': Can send accessible conversations to the human queue.
 
 class CustomRole < ApplicationRecord
   belongs_to :account
@@ -42,6 +43,7 @@ class CustomRole < ApplicationRecord
     technical_incident_resolve
     technical_incident_archive
     technical_incident_audit
+    conversation_send_to_queue
   ].freeze
 
   validates :name, presence: true
