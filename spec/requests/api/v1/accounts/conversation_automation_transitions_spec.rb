@@ -64,7 +64,7 @@ RSpec.describe 'Conversation automation transitions API', type: :request do
 
     post path, headers: other_agent.create_new_auth_token, params: params, as: :json
 
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to have_http_status(:unauthorized)
   end
 
   it 'does not find a conversation through another account' do

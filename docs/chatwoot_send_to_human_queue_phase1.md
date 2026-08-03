@@ -42,7 +42,7 @@ Retries da mesma chave retornam `status=duplicate` e `reason_code=idempotency_re
 
 | HTTP | Condição | Comportamento |
 | --- | --- | --- |
-| 403 | usuário sem acesso/permissão | nenhuma alteração |
+| 401 | usuário autenticado sem acesso/permissão, conforme o handler Pundit existente | nenhuma alteração |
 | 404 | conta/conversa inexistente ou feature desligada | nenhuma exposição entre contas |
 | 409 | `expected_last_message_id` desatualizado | devolve a conversa autoritativa atual |
 | 422 | action, chave ou ID inválido; falha de persistência | transação revertida |
