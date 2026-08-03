@@ -3,10 +3,15 @@ require 'rails_helper'
 RSpec.describe Conversations::AutomationTransitionService, :non_transactional do
   self.use_transactional_tests = false
 
+  let(:created_conversation_ids) { [] }
+
+  after { Conversation.where(id: created_conversation_ids).destroy_all }
+
   it 'lets one concurrent request apply the transition and makes the other idempotent' do
     account = create(:account).tap { |record| record.enable_features!('conversation_send_to_human_queue') }
     actors = create_list(:user, 2, account: account, role: :agent)
     conversation = create(:conversation, account: account, label_list: ['bot-bia'])
+    created_conversation_ids << conversation.id
     actors.each { |actor| create(:inbox_member, user: actor, inbox: conversation.inbox) }
     barrier = Concurrent::CyclicBarrier.new(2)
     results = Concurrent::Array.new

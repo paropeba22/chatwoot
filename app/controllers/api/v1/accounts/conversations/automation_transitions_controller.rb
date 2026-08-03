@@ -28,7 +28,8 @@ class Api::V1::Accounts::Conversations::AutomationTransitionsController < Api::V
   end
 
   def transition_params
-    params.permit(:action, :idempotency_key, :expected_last_message_id)
+    ActionController::Parameters.new(request.request_parameters)
+                                .permit(:action, :idempotency_key, :expected_last_message_id)
   end
 
   def ensure_feature_enabled!

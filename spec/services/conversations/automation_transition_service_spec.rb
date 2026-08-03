@@ -163,10 +163,16 @@ RSpec.describe Conversations::AutomationTransitionService do
 
     it 'treats a new request against the final projection as idempotent' do
       service.call
-      attributes[:idempotency_key] = "queue-#{SecureRandom.uuid}"
+      new_service = described_class.new(
+        account: account,
+        actor: actor,
+        account_user: account_user,
+        conversation_display_id: conversation.display_id,
+        attributes: attributes.merge(idempotency_key: "queue-#{SecureRandom.uuid}")
+      )
       result = nil
 
-      expect { result = service.call }
+      expect { result = new_service.call }
         .not_to change(ConversationAutomationTransition, :count)
       expect(result.status).to eq('duplicate')
       expect(result.reason_code).to eq('already_in_human_queue')
