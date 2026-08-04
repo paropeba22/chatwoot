@@ -74,4 +74,44 @@ describe('technicalIncidents store', () => {
       transitioning: false,
     });
   });
+
+  it('exposes loading and a sanitized error instead of converting metadata failures into empty success', async () => {
+    TechnicalIncidentsAPI.options.mockRejectedValue({
+      response: { status: 403, data: { secret: 'must-not-be-exposed' } },
+    });
+
+    await expect(actions.fetchOptions({ commit })).rejects.toBeTruthy();
+
+    expect(commit).toHaveBeenCalledWith('SET_UI_FLAG', {
+      fetchingOptions: true,
+      optionsError: null,
+    });
+    expect(commit).toHaveBeenCalledWith('SET_UI_FLAG', { optionsError: 403 });
+    expect(commit).not.toHaveBeenCalledWith('SET_OPTIONS', []);
+    expect(commit).toHaveBeenLastCalledWith('SET_UI_FLAG', {
+      fetchingOptions: false,
+    });
+  });
+
+  it('commits only the latest metadata response when requests finish out of order', async () => {
+    let resolveFirst;
+    TechnicalIncidentsAPI.options
+      .mockReturnValueOnce(
+        new Promise(resolve => {
+          resolveFirst = resolve;
+        })
+      )
+      .mockResolvedValueOnce({ data: { metadata_version: 2 } });
+
+    const first = actions.fetchOptions({ commit });
+    const second = actions.fetchOptions({ commit });
+    await second;
+    resolveFirst({ data: { metadata_version: 1 } });
+    await first;
+
+    expect(commit).toHaveBeenCalledWith('SET_OPTIONS', { metadata_version: 2 });
+    expect(commit).not.toHaveBeenCalledWith('SET_OPTIONS', {
+      metadata_version: 1,
+    });
+  });
 });

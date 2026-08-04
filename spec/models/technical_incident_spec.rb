@@ -19,12 +19,39 @@ RSpec.describe TechnicalIncident do
     expect(incident.errors).to include(:problem_types, :affected_services)
   end
 
+  it 'requires at least one affected service' do
+    incident = incident_with_scope
+    incident.affected_services = []
+
+    expect(incident).not_to be_valid
+    expect(incident.errors).to include(:affected_services)
+  end
+
   it 'enforces the maximum seven-day window' do
     incident = incident_with_scope
     incident.expires_at = incident.starts_at + 7.days + 1.second
 
     expect(incident).not_to be_valid
     expect(incident.errors).to include(:expires_at)
+  end
+
+  it 'rejects review after expiration and restoration estimates before start' do
+    incident = incident_with_scope
+    incident.review_at = incident.expires_at + 1.minute
+    incident.estimated_resolution_at = incident.starts_at - 1.minute
+
+    expect(incident).not_to be_valid
+    expect(incident.errors).to include(:review_at, :estimated_resolution_at)
+  end
+
+  it 'does not allow the UI validator to persist an incomplete draft scope or message' do
+    incident = build(:technical_incident, account: account, customer_message: '')
+    incident.scope_groups.build(account: account)
+
+    expect do
+      TechnicalIncidents::IncidentValidator.new(incident).validate!
+    end.to raise_error(ActiveRecord::RecordInvalid)
+    expect(incident.errors).to include(:scope_groups, :customer_message)
   end
 
   it 'sanitizes unsafe control characters while preserving plain text' do

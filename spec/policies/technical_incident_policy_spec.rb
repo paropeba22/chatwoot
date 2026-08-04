@@ -16,9 +16,16 @@ RSpec.describe TechnicalIncidentPolicy, type: :policy do
     { user: user, account: account, account_user: account_user }
   end
 
-  permissions :index?, :show?, :options? do
+  permissions :index?, :show? do
     it { expect(policy).to permit(context_for(:technical_incident_view), incident) }
     it { expect(policy).not_to permit(context_for(:technical_incident_create), incident) }
+  end
+
+  permissions :options? do
+    it { expect(policy).to permit(context_for(:technical_incident_view), incident) }
+    it { expect(policy).to permit(context_for(:technical_incident_create), incident) }
+    it { expect(policy).to permit(context_for(:technical_incident_update), incident) }
+    it { expect(policy).not_to permit(context_for(:technical_incident_audit), incident) }
   end
 
   permissions :create? do
