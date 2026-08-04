@@ -68,7 +68,7 @@ RSpec.describe 'Technical incident account API', type: :request do
            params: { technical_incident: invalid_params },
            headers: headers,
            as: :json
-    end.not_to change { [TechnicalIncident.count, Conversation.count, Message.count] }
+    end.not_to(change { [TechnicalIncident.count, Conversation.count, Message.count] })
 
     expect(response).to have_http_status(:unprocessable_entity)
   end

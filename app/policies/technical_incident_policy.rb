@@ -24,7 +24,7 @@ class TechnicalIncidentPolicy < ApplicationPolicy
     return true if account_user&.administrator?
 
     permissions = account_user&.permissions || []
-    (permissions & %w[technical_incident_view technical_incident_create technical_incident_update]).any?
+    permissions.intersect?(%w[technical_incident_view technical_incident_create technical_incident_update])
   end
 
   class Scope < ApplicationPolicy::Scope
