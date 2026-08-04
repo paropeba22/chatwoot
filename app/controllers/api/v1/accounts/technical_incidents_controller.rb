@@ -103,16 +103,7 @@ class Api::V1::Accounts::TechnicalIncidentsController < Api::V1::Accounts::BaseC
   end
 
   def options
-    render json: {
-      incident_types: TechnicalIncident::INCIDENT_TYPES,
-      statuses: TechnicalIncident::STATUSES,
-      severities: TechnicalIncident::SEVERITIES,
-      problem_types: TechnicalIncident::PROBLEM_TYPES,
-      service_keys: TechnicalIncident::SERVICE_KEYS,
-      actions: TechnicalIncident::ACTIONS,
-      scope_types: TechnicalIncidentScopeCriterion::TYPES,
-      template_variables: TechnicalIncidents::TemplateRenderer::ALLOWED_VARIABLES
-    }
+    render json: TechnicalIncidents::FormMetadataPresenter.new.as_json
   end
 
   private

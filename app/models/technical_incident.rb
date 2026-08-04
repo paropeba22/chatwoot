@@ -30,12 +30,14 @@ class TechnicalIncident < ApplicationRecord
   validates :severity, inclusion: { in: SEVERITIES }
   validates :priority, inclusion: { in: 0..100 }
   validates :problem_types, presence: true
+  validates :affected_services, presence: true
   validates :action, inclusion: { in: ACTIONS }
   validates :customer_message, length: { maximum: 4_000 }, allow_blank: true
   validates :internal_note, length: { maximum: 10_000 }, allow_blank: true
   validate :controlled_taxonomy_values
   validate :account_consistency
   validate :valid_duration
+  validate :valid_schedule
 
   scope :not_archived, -> { where(archived_at: nil) }
   scope :intercepting, lambda {
@@ -99,6 +101,13 @@ class TechnicalIncident < ApplicationRecord
     base_time = starts_at || Time.current
     errors.add(:expires_at, :after_start) if expires_at <= base_time
     errors.add(:expires_at, :too_far) if expires_at > base_time + 7.days
+  end
+
+  def valid_schedule
+    errors.add(:review_at, :after_expiration) if review_at.present? && expires_at.present? && review_at > expires_at
+    return if estimated_resolution_at.blank? || starts_at.blank?
+
+    errors.add(:estimated_resolution_at, :before_start) if estimated_resolution_at < starts_at
   end
 
   def account_consistency
