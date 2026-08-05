@@ -7,6 +7,21 @@ RSpec.describe Conversations::AutomationTransitionService, :non_transactional do
 
   after { Account.where(id: created_account_ids).destroy_all }
 
+  def return_to_bia(account:, actor:, conversation:, message:, idempotency_key:)
+    described_class.new(
+      account: account,
+      actor: actor,
+      account_user: actor.account_users.find_by!(account: account),
+      conversation_display_id: conversation.display_id,
+      attributes: {
+        action: 'return_to_bia',
+        idempotency_key: idempotency_key,
+        expected_last_message_id: message.id,
+        expected_assignee_id: nil
+      }
+    ).call
+  end
+
   it 'serializes two return requests and creates exactly one transition and note' do
     account = create(:account).tap { |record| record.enable_features!('conversation_return_to_bia') }
     created_account_ids << account.id
@@ -34,18 +49,13 @@ RSpec.describe Conversations::AutomationTransitionService, :non_transactional do
           thread_account = Account.find(account.id)
           Current.user = thread_actor
           barrier.wait
-          result = described_class.new(
+          result = return_to_bia(
             account: thread_account,
             actor: thread_actor,
-            account_user: thread_actor.account_users.find_by!(account: thread_account),
-            conversation_display_id: conversation.display_id,
-            attributes: {
-              action: 'return_to_bia',
-              idempotency_key: idempotency_key,
-              expected_last_message_id: message.id,
-              expected_assignee_id: nil
-            }
-          ).call
+            conversation: conversation,
+            message: message,
+            idempotency_key: idempotency_key
+          )
           results << result.status
         rescue StandardError => e
           errors << e

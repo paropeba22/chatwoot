@@ -36,14 +36,7 @@ class Conversations::AutomationTransitions::BiaProjection
   end
 
   def final?
-    conversation.open? &&
-      conversation.assignee_id.nil? &&
-      conversation.assignee_agent_bot_id.nil? &&
-      labels.include?(BOT_LABEL) &&
-      labels.exclude?(HUMAN_QUEUE_LABEL) &&
-      session.state == 'active' &&
-      session.generation.positive? &&
-      conversation.custom_attributes['bia_retorno_humano_pendente'] == false
+    conversation.open? && assignment_clear? && labels_projected? && session_active?
   end
 
   def snapshot
@@ -70,6 +63,20 @@ class Conversations::AutomationTransitions::BiaProjection
 
   def projected_labels
     (labels - [HUMAN_QUEUE_LABEL]).union([BOT_LABEL])
+  end
+
+  def assignment_clear?
+    conversation.assignee_id.nil? && conversation.assignee_agent_bot_id.nil?
+  end
+
+  def labels_projected?
+    labels.include?(BOT_LABEL) && labels.exclude?(HUMAN_QUEUE_LABEL)
+  end
+
+  def session_active?
+    session.state == 'active' &&
+      session.generation.positive? &&
+      conversation.custom_attributes['bia_retorno_humano_pendente'] == false
   end
 
   def session

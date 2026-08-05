@@ -53,7 +53,7 @@ RSpec.describe Conversations::AutomationTransitionService do
 
   after { Current.reset }
 
-  it 'projects an eligible human conversation to a fresh Bia session' do
+  it 'projects an eligible human conversation to a fresh Bia session', :aggregate_failures do
     human = create(:user, account: account)
     agent_bot = create(:agent_bot, account: account)
     conversation.update!(assignee_agent_bot: agent_bot)

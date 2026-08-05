@@ -55,6 +55,7 @@ class Conversations::AutomationTransitionService
   def validate_request!
     raise InvalidRequest, 'unsupported_action' unless configuration
     raise InvalidRequest, 'invalid_idempotency_key' unless valid_idempotency_key?
+
     validate_return_expectations!
 
     normalized_expected_last_message_id
@@ -190,7 +191,7 @@ class Conversations::AutomationTransitionService
   end
 
   def projection_for(conversation)
-    @projection_instance ||= projection.new(conversation)
+    @projection_for ||= projection.new(conversation)
   end
 
   def log_failure(reason_code, conversation)

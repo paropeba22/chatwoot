@@ -214,8 +214,8 @@ bundle exec rspec \
   spec/requests/api/v1/accounts/conversation_automation_transitions_spec.rb \
   spec/services/conversations/automation_transition_service_spec.rb \
   spec/services/conversations/automation_transition_service_concurrency_spec.rb \
-  spec/services/conversations/return_to_bia_transition_service_spec.rb \
-  spec/services/conversations/return_to_bia_transition_service_concurrency_spec.rb
+  spec/services/conversations/automation_transition_service_return_to_bia_spec.rb \
+  spec/services/conversations/automation_transition_service_return_to_bia_concurrency_spec.rb
 
 pnpm exec vitest run \
   app/javascript/dashboard/api/specs/inbox/conversation.spec.js \
