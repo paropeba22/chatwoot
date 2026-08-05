@@ -44,12 +44,18 @@ const actions = {
   },
 
   fetchAllConversations: async ({ commit, state, dispatch }) => {
-    commit(types.SET_LIST_LOADING_STATUS);
+    const sequence = (state.listRequestSequence || 0) + 1;
+    commit(types.SET_LIST_LOADING_STATUS, sequence);
     try {
       const params = state.conversationFilters;
       const {
         data: { data },
       } = await ConversationApi.get(params);
+      if (
+        state.listRequestSequence !== undefined &&
+        state.listRequestSequence !== sequence
+      )
+        return;
       buildConversationList(
         { commit, dispatch },
         params,
@@ -57,14 +63,23 @@ const actions = {
         params.assigneeType
       );
     } catch (error) {
-      // Handle error
+      commit(types.SET_LIST_REQUEST_ERROR, sequence);
     }
   },
 
-  fetchFilteredConversations: async ({ commit, dispatch }, params) => {
-    commit(types.SET_LIST_LOADING_STATUS);
+  fetchFilteredConversations: async (
+    { commit, dispatch, state = {} },
+    params
+  ) => {
+    const sequence = (state.listRequestSequence || 0) + 1;
+    commit(types.SET_LIST_LOADING_STATUS, sequence);
     try {
       const { data } = await ConversationApi.filter(params);
+      if (
+        state.listRequestSequence !== undefined &&
+        state.listRequestSequence !== sequence
+      )
+        return;
       buildConversationList(
         { commit, dispatch },
         params,
@@ -72,7 +87,7 @@ const actions = {
         'appliedFilters'
       );
     } catch (error) {
-      // Handle error
+      commit(types.SET_LIST_REQUEST_ERROR, sequence);
     }
   },
 

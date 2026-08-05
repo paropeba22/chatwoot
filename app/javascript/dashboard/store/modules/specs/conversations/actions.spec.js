@@ -568,7 +568,7 @@ describe('#actions', () => {
       await actions.fetchFilteredConversations({ commit }, dataToSend);
       expect(commit).toHaveBeenCalledTimes(2);
       expect(commit.mock.calls).toEqual([
-        ['SET_LIST_LOADING_STATUS'],
+        ['SET_LIST_LOADING_STATUS', 1],
         ['SET_ALL_CONVERSATION', dataReceived.payload],
       ]);
     });

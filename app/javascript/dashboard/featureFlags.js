@@ -48,6 +48,7 @@ export const FEATURE_FLAGS = {
   TECHNICAL_INCIDENTS: 'technical_incidents',
   CONVERSATION_SEND_TO_HUMAN_QUEUE: 'conversation_send_to_human_queue',
   CONVERSATION_RETURN_TO_BIA: 'conversation_return_to_bia',
+  CONVERSATION_OPERATIONAL_BUCKETS: 'conversation_operational_buckets',
 };
 
 export const PREMIUM_FEATURES = [

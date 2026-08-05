@@ -138,6 +138,7 @@ const getters = {
     });
   },
   getChatListLoadingStatus: ({ listLoadingStatus }) => listLoadingStatus,
+  getChatListRequestError: ({ listRequestError }) => listRequestError,
   getAllMessagesLoaded(_state) {
     const [chat] = getSelectedChatConversation(_state);
     return !chat || chat.allMessagesLoaded === undefined

@@ -29,6 +29,8 @@ import {
 } from 'dashboard/composables/useTransformKeys';
 import { useEmitter } from 'dashboard/composables/emitter';
 import { useConversationRequiredAttributes } from 'dashboard/composables/useConversationRequiredAttributes';
+import { usePolicy } from 'dashboard/composables/usePolicy';
+import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { useFilter } from 'shared/composables/useFilter';
 
 import { emitter } from 'shared/helpers/mitt';
@@ -70,6 +72,7 @@ const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const store = useStore();
+const { isFeatureFlagEnabled } = usePolicy();
 
 const resolveAttributesModalRef = ref(null);
 
@@ -98,6 +101,8 @@ const botTabCounts = ref({
   total: 0,
   unassigned: 0,
 });
+const tabStatsError = ref(false);
+let tabStatsRequestSequence = 0;
 const advancedFilterTypes = ref(
   advancedFilterOptions.map(filter => ({
     ...filter,
@@ -112,6 +117,7 @@ const allChatList = useMapGetter('getAllStatusChats');
 const unAssignedChatsList = useMapGetter('getUnAssignedChats');
 const participatingChatsList = useMapGetter('getParticipatingChats');
 const chatListLoading = useMapGetter('getChatListLoadingStatus');
+const chatListRequestError = useMapGetter('getChatListRequestError');
 const activeInbox = useMapGetter('getSelectedInbox');
 const conversationStats = useMapGetter('conversationStats/getStats');
 const appliedFilters = useMapGetter('getAppliedConversationFiltersV2');
@@ -156,6 +162,10 @@ const hasAppliedFilters = computed(() => {
   return appliedFilters.value.length !== 0;
 });
 
+const canonicalBucketsEnabled = computed(() =>
+  isFeatureFlagEnabled(FEATURE_FLAGS.CONVERSATION_OPERATIONAL_BUCKETS)
+);
+
 const activeFolder = computed(() => {
   if (props.foldersId) {
     const activeView = folders.value.filter(
@@ -185,6 +195,9 @@ const currentUserDetails = computed(() => {
 });
 
 const unassignedTabCount = computed(() => {
+  if (canonicalBucketsEnabled.value) {
+    return botTabCounts.value.humanQueue || 0;
+  }
   const rawUnassignedCount = conversationStats.value.unAssignedCount || 0;
   return Math.max(rawUnassignedCount - botTabCounts.value.unassigned, 0);
 });
@@ -195,7 +208,9 @@ const assigneeTabItems = computed(() => [
   {
     key: 'me',
     name: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.me'),
-    count: conversationStats.value.mineCount || 0,
+    count: canonicalBucketsEnabled.value
+      ? botTabCounts.value.mine || 0
+      : conversationStats.value.mineCount || 0,
   },
   {
     key: 'unassigned',
@@ -299,6 +314,13 @@ const conversationFilters = computed(() => {
     labels: filterLabels,
     teamId: props.teamId || undefined,
     conversationType: props.conversationType || undefined,
+    operationalBucket: canonicalBucketsEnabled.value
+      ? {
+          me: 'mine',
+          unassigned: 'human_queue',
+          bot: 'bia',
+        }[activeAssigneeTab.value]
+      : undefined,
   };
 });
 
@@ -340,6 +362,17 @@ const pageTitle = computed(() => {
 });
 
 function filterByAssigneeTab(conversations) {
+  if (canonicalBucketsEnabled.value) {
+    const expectedBucket = {
+      me: 'mine',
+      unassigned: 'human_queue',
+      bot: 'bia',
+    }[activeAssigneeTab.value];
+    return conversations.filter(
+      conversation => conversation.operational_bucket === expectedBucket
+    );
+  }
+
   if (activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ME) {
     return conversations.filter(
       c => c.meta?.assignee?.id === currentUser.value?.id
@@ -363,12 +396,14 @@ const conversationList = computed(() => {
         participatingChatsList.value(filters)
       );
     } else if (activeAssigneeTab.value === 'me') {
-      localConversationList = mineChatsList.value(filters);
+      localConversationList = filterByAssigneeTab(mineChatsList.value(filters));
     } else if (activeAssigneeTab.value === 'unassigned') {
-      localConversationList = unAssignedChatsList.value(filters);
+      localConversationList = filterByAssigneeTab(
+        unAssignedChatsList.value(filters)
+      );
     } else if (activeAssigneeTab.value === 'bot') {
       // Keep tab-scoped filtering to prevent realtime bleed from other tabs.
-      localConversationList = [...allChatList.value(filters)];
+      localConversationList = filterByAssigneeTab(allChatList.value(filters));
     } else {
       localConversationList = [...allChatList.value(filters)];
     }
@@ -909,6 +944,8 @@ async function fetchBotTabCounts(baseFilters = {}) {
     return;
   }
 
+  const requestSequence = ++tabStatsRequestSequence;
+  tabStatsError.value = false;
   try {
     const sharedFilters = {
       inboxId: baseFilters.inboxId,
@@ -917,6 +954,25 @@ async function fetchBotTabCounts(baseFilters = {}) {
       conversationType: baseFilters.conversationType,
       labels: ['bot-bia'],
     };
+
+    if (canonicalBucketsEnabled.value) {
+      const response = await ConversationApi.meta({
+        ...sharedFilters,
+        labels: undefined,
+        assigneeType: wootConstants.ASSIGNEE_TYPE.ALL,
+      });
+      if (requestSequence !== tabStatsRequestSequence) return;
+
+      const buckets = response?.data?.meta?.operational_buckets;
+      if (!buckets) throw new Error('operational_bucket_counts_missing');
+      botTabCounts.value = {
+        total: Number(buckets.bia || 0),
+        unassigned: 0,
+        mine: Number(buckets.mine || 0),
+        humanQueue: Number(buckets.human_queue || 0),
+      };
+      return;
+    }
 
     const [allBotResponse, unassignedBotResponse] = await Promise.all([
       ConversationApi.meta({
@@ -932,9 +988,10 @@ async function fetchBotTabCounts(baseFilters = {}) {
     const total = allBotResponse?.data?.meta?.all_count || 0;
     const unassigned = unassignedBotResponse?.data?.meta?.unassigned_count || 0;
 
+    if (requestSequence !== tabStatsRequestSequence) return;
     botTabCounts.value = { total, unassigned };
   } catch {
-    botTabCounts.value = { total: 0, unassigned: 0 };
+    if (requestSequence === tabStatsRequestSequence) tabStatsError.value = true;
   }
 }
 
@@ -1097,6 +1154,21 @@ watch(conversationFilters, (newVal, oldVal) => {
         class="neo-focus-ring"
         @chat-tab-change="updateAssigneeTab"
       />
+    </div>
+
+    <div
+      v-if="chatListRequestError || tabStatsError"
+      role="alert"
+      class="mx-3 mt-3 flex items-center justify-between gap-3 rounded-xl border border-n-ruby-8/40 bg-n-ruby-2 px-3 py-2 text-sm text-n-ruby-11"
+    >
+      <span>{{ $t('CHAT_LIST.LIST.LOAD_ERROR') }}</span>
+      <button
+        type="button"
+        class="neo-focus-ring rounded-md px-2 py-1 font-medium hover:bg-n-alpha-2"
+        @click="resetAndFetchData"
+      >
+        {{ $t('CHAT_LIST.LIST.RETRY') }}
+      </button>
     </div>
 
     <div
