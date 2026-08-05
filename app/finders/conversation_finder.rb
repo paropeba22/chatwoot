@@ -41,10 +41,10 @@ class ConversationFinder
     set_up
 
     operational_bucket_counts = set_operational_bucket_counts
+    count = conversation_counts
 
     filter_by_operational_bucket || filter_by_assignee_type
 
-    count = conversation_counts
     count[:operational_buckets] = operational_bucket_counts if operational_bucket_counts
 
     { conversations: conversations, count: count }
