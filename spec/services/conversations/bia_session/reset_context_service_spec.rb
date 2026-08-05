@@ -102,9 +102,7 @@ RSpec.describe Conversations::BiaSession::ResetContextService do
   end
 
   it 'rolls back all changes when the operation record fails' do
-    operations = conversation.bia_session_operations
-    allow(conversation).to receive(:bia_session_operations).and_return(operations)
-    allow(operations).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
+    allow(service).to receive(:record_operation!).and_raise(ActiveRecord::RecordInvalid)
     original = conversation.custom_attributes.deep_dup
 
     expect { service.call }.to raise_error(described_class::InvalidRequest)

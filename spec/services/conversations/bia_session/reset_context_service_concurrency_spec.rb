@@ -11,13 +11,13 @@ RSpec.describe Conversations::BiaSession::ResetContextService, :non_transactiona
     Account.where(id: created_account_ids).destroy_all
   end
 
-  def run_concurrent_resets(account:, actors:, conversation:, message:, idempotency_key:, barrier:)
+  def run_concurrent_resets(context)
     results = Concurrent::Array.new
     errors = Concurrent::Array.new
-    threads = actors.map do |actor|
+    threads = context.fetch(:actors).map do |actor|
       Thread.new do
         ActiveRecord::Base.connection_pool.with_connection do
-          reset_in_thread(account, actor, conversation, message, idempotency_key, barrier, results)
+          reset_in_thread(context, actor, results)
         rescue StandardError => e
           errors << e
         ensure
@@ -29,19 +29,19 @@ RSpec.describe Conversations::BiaSession::ResetContextService, :non_transactiona
     [results, errors]
   end
 
-  def reset_in_thread(account, actor, conversation, message, idempotency_key, barrier, results)
-    thread_account = Account.find(account.id)
+  def reset_in_thread(context, actor, results)
+    thread_account = Account.find(context.fetch(:account).id)
     thread_actor = User.find(actor.id)
-    barrier.wait
+    context.fetch(:barrier).wait
     result = described_class.new(
       account: thread_account,
       actor: thread_actor,
       account_user: thread_actor.account_users.find_by!(account: thread_account),
-      conversation_display_id: conversation.display_id,
+      conversation_display_id: context.fetch(:conversation).display_id,
       attributes: {
         expected_generation: 5,
-        source_message_id: message.id,
-        idempotency_key: idempotency_key,
+        source_message_id: context.fetch(:message).id,
+        idempotency_key: context.fetch(:idempotency_key),
         reset_profile: 'bia_session_v1'
       }
     ).call
@@ -71,8 +71,12 @@ RSpec.describe Conversations::BiaSession::ResetContextService, :non_transactiona
     barrier = Concurrent::CyclicBarrier.new(2)
     idempotency_key = "bia-reset-#{SecureRandom.uuid}"
     results, errors = run_concurrent_resets(
-      account: account, actors: actors, conversation: conversation, message: message,
-      idempotency_key: idempotency_key, barrier: barrier
+      account: account,
+      actors: actors,
+      conversation: conversation,
+      message: message,
+      idempotency_key: idempotency_key,
+      barrier: barrier
     )
 
     expect(errors).to be_empty

@@ -9,7 +9,7 @@ class CreateConversationBiaSessionOperations < ActiveRecord::Migration[7.0]
 
   def down
     remove_check_constraint :conversation_automation_transitions,
-                            name: 'conversation_automation_transitions_expected_generation_non_negative'
+                            name: 'automation_transitions_expected_generation_non_negative'
     drop_table :conversation_bia_session_operations
     remove_column :conversation_automation_transitions, :expected_session_generation
   end
@@ -72,6 +72,6 @@ class CreateConversationBiaSessionOperations < ActiveRecord::Migration[7.0]
                          name: 'conversation_bia_session_operations_generation_non_negative'
     add_check_constraint :conversation_automation_transitions,
                          'expected_session_generation IS NULL OR expected_session_generation >= 0',
-                         name: 'conversation_automation_transitions_expected_generation_non_negative'
+                         name: 'automation_transitions_expected_generation_non_negative'
   end
 end
