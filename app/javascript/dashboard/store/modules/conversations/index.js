@@ -288,7 +288,9 @@ export const mutations = {
   },
 
   [types.CLEAR_LIST_LOADING_STATUS](_state, sequence) {
-    if (sequence !== undefined && sequence !== _state.listRequestSequence) return;
+    if (sequence !== undefined && sequence !== _state.listRequestSequence) {
+      return;
+    }
 
     _state.listLoadingStatus = false;
   },

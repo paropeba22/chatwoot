@@ -40,13 +40,11 @@ class ConversationFinder
   def perform
     set_up
 
-    mine_count, unassigned_count, all_count, = set_count_for_all_conversations
-    assigned_count = all_count - unassigned_count
     operational_bucket_counts = set_operational_bucket_counts
 
     filter_by_operational_bucket || filter_by_assignee_type
 
-    count = base_counts(mine_count, assigned_count, unassigned_count, all_count)
+    count = conversation_counts
     count[:operational_buckets] = operational_bucket_counts if operational_bucket_counts
 
     { conversations: conversations, count: count }
@@ -55,11 +53,9 @@ class ConversationFinder
   def perform_meta_only
     set_up
 
-    mine_count, unassigned_count, all_count, = set_count_for_all_conversations
-    assigned_count = all_count - unassigned_count
     operational_bucket_counts = set_operational_bucket_counts
 
-    count = base_counts(mine_count, assigned_count, unassigned_count, all_count)
+    count = conversation_counts
     count[:operational_buckets] = operational_bucket_counts if operational_bucket_counts
 
     { count: count }
@@ -201,10 +197,11 @@ class ConversationFinder
     Conversations::OperationalBucket.counts(@conversations, current_user: current_user)
   end
 
-  def base_counts(mine_count, assigned_count, unassigned_count, all_count)
+  def conversation_counts
+    mine_count, unassigned_count, all_count, = set_count_for_all_conversations
     {
       mine_count: mine_count,
-      assigned_count: assigned_count,
+      assigned_count: all_count - unassigned_count,
       unassigned_count: unassigned_count,
       all_count: all_count
     }

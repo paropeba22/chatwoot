@@ -944,7 +944,8 @@ async function fetchBotTabCounts(baseFilters = {}) {
     return;
   }
 
-  const requestSequence = ++tabStatsRequestSequence;
+  tabStatsRequestSequence += 1;
+  const requestSequence = tabStatsRequestSequence;
   tabStatsError.value = false;
   try {
     const sharedFilters = {

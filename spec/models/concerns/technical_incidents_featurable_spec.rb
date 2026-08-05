@@ -10,7 +10,6 @@ RSpec.describe Featurable do
     expect(described_class::FEATURES.value?(:feature_conversation_operational_buckets)).to be(false)
   end
 
-
   it 'toggles canonical operational buckets outside the legacy bitmap' do
     account = create(:account)
     original_flags = account.feature_flags

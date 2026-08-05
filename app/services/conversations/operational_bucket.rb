@@ -74,7 +74,7 @@ class Conversations::OperationalBucket
 
   def bia?
     conversation.open? && conversation.assignee_id.nil? && conversation.assignee_agent_bot_id.nil? &&
-      labels.include?(BOT_LABEL) && !labels.include?(HUMAN_QUEUE_LABEL) && (!strict_session? || automation_state == 'active')
+      labels.include?(BOT_LABEL) && labels.exclude?(HUMAN_QUEUE_LABEL) && (!strict_session? || automation_state == 'active')
   end
 
   def strict_session?
