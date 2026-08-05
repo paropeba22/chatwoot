@@ -15,13 +15,12 @@ class Conversations::BiaSession::ResetContextService
   class InvalidRequest < Error; end
   class FeatureDisabled < Error; end
 
-  def initialize(account:, actor:, account_user:, conversation_display_id:, attributes:, operation_writer: nil)
+  def initialize(account:, actor:, account_user:, conversation_display_id:, attributes:)
     @account = account
     @actor = actor
     @account_user = account_user
     @conversation_display_id = conversation_display_id
     @attributes = attributes.to_h.with_indifferent_access
-    @operation_writer = operation_writer
   end
 
   def call
@@ -36,7 +35,7 @@ class Conversations::BiaSession::ResetContextService
 
   private
 
-  attr_reader :account, :actor, :account_user, :conversation_display_id, :attributes, :operation_writer
+  attr_reader :account, :actor, :account_user, :conversation_display_id, :attributes
 
   def perform_locked(conversation)
     authorize!(conversation)
@@ -84,7 +83,11 @@ class Conversations::BiaSession::ResetContextService
       attributes_size_after: serialized_size(after_attributes),
       completed_at: Time.current
     }
-    (operation_writer || conversation.bia_session_operations).create!(operation_attributes)
+    operation_repository(conversation).create!(operation_attributes)
+  end
+
+  def operation_repository(conversation)
+    conversation.bia_session_operations
   end
 
   def validate_request!

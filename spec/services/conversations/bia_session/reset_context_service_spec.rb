@@ -7,15 +7,13 @@ RSpec.describe Conversations::BiaSession::ResetContextService do
       actor: actor,
       account_user: account_user,
       conversation_display_id: conversation.display_id,
-      attributes: attributes,
-      operation_writer: operation_writer
+      attributes: attributes
     )
   end
 
   let(:account) { create(:account).tap { |record| record.enable_features!('conversation_return_to_bia') } }
   let(:actor) { create(:user, account: account, role: :administrator) }
   let(:account_user) { actor.account_users.find_by!(account: account) }
-  let(:operation_writer) { nil }
   let(:conversation) do
     create(
       :conversation,
@@ -108,16 +106,18 @@ RSpec.describe Conversations::BiaSession::ResetContextService do
     operation.errors.add(:base, 'controlled persistence failure')
     operation_writer = instance_double(ActiveRecord::Associations::CollectionProxy)
     allow(operation_writer).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(operation))
+    failing_service_class = Class.new(described_class) do
+      define_method(:operation_repository) { |_conversation| operation_writer }
+    end
     original = conversation.custom_attributes.deep_dup
 
     expect do
-      described_class.new(
+      failing_service_class.new(
         account: account,
         actor: actor,
         account_user: account_user,
         conversation_display_id: conversation.display_id,
-        attributes: attributes,
-        operation_writer: operation_writer
+        attributes: attributes
       ).call
     end.to raise_error(described_class::InvalidRequest)
     expect(conversation.reload.custom_attributes).to eq(original)
