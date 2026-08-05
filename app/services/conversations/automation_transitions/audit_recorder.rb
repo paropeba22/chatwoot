@@ -1,8 +1,8 @@
 class Conversations::AutomationTransitions::AuditRecorder
-  def initialize(account:, actor:, action:, attributes:)
+  def initialize(account:, actor:, configuration:, attributes:)
     @account = account
     @actor = actor
-    @action = action
+    @configuration = configuration
     @attributes = attributes
   end
 
@@ -17,6 +17,7 @@ class Conversations::AutomationTransitions::AuditRecorder
       reason_code: 'manual_agent_action',
       idempotency_key: attributes[:idempotency_key],
       expected_last_message_id: attributes[:expected_last_message_id],
+      expected_assignee_id: attributes[:expected_assignee_id],
       before_state: before_state,
       after_state: after_state,
       completed_at: Time.current
@@ -25,14 +26,16 @@ class Conversations::AutomationTransitions::AuditRecorder
 
   private
 
-  attr_reader :account, :actor, :action, :attributes
+  attr_reader :account, :actor, :configuration, :attributes
+
+  delegate :action, :activity_i18n_key, to: :configuration
 
   def create_private_note!(conversation)
     Messages::MessageBuilder.new(
       actor,
       conversation,
       {
-        content: I18n.t('conversations.activity.sent_to_human_queue', user_name: actor.name),
+        content: I18n.t(activity_i18n_key, user_name: actor.name),
         message_type: 'outgoing',
         private: true,
         content_attributes: { automation_transition: action }

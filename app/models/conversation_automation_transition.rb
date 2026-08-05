@@ -1,5 +1,5 @@
 class ConversationAutomationTransition < ApplicationRecord
-  ACTIONS = %w[send_to_human_queue].freeze
+  ACTIONS = %w[send_to_human_queue return_to_bia].freeze
   STATUSES = %w[completed].freeze
 
   belongs_to :account

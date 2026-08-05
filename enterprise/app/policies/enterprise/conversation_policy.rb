@@ -17,6 +17,13 @@ module Enterprise::ConversationPolicy
     custom_role_permissions.include?('conversation_send_to_queue')
   end
 
+  def return_to_bia?
+    return true if super
+    return false unless user.is_a?(User) && show? && custom_role_permissions?
+
+    custom_role_permissions.include?('conversation_return_to_ai')
+  end
+
   private
 
   def manage_all_conversations?(permissions)

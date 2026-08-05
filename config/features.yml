@@ -247,3 +247,6 @@
 - name: conversation_send_to_human_queue
   display_name: Send Conversations to Human Queue
   enabled: false
+- name: conversation_return_to_bia
+  display_name: Return Conversations to Bia
+  enabled: false
