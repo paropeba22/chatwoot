@@ -4,8 +4,12 @@ RSpec.describe Conversations::AutomationTransitionService, :non_transactional do
   self.use_transactional_tests = false
 
   let(:created_account_ids) { [] }
+  let(:created_conversation_ids) { [] }
 
-  after { Account.where(id: created_account_ids).destroy_all }
+  after do
+    Conversation.where(id: created_conversation_ids).destroy_all
+    Account.where(id: created_account_ids).destroy_all
+  end
 
   def return_to_bia(account:, actor:, conversation:, message:, idempotency_key:)
     described_class.new(
@@ -36,6 +40,7 @@ RSpec.describe Conversations::AutomationTransitionService, :non_transactional do
         'bia_session_generation' => 7
       }
     )
+    created_conversation_ids << conversation.id
     message = create(:message, account: account, conversation: conversation, inbox: conversation.inbox)
     barrier = Concurrent::CyclicBarrier.new(2)
     results = Concurrent::Array.new

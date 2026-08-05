@@ -34,7 +34,9 @@ class Conversations::AutomationTransitions::BiaSession
   end
 
   def generation
-    Integer(attributes[GENERATION_KEY] || 0, 10).clamp(0, 2_147_483_646)
+    raw_generation = attributes[GENERATION_KEY] || 0
+    normalized_generation = raw_generation.is_a?(Integer) ? raw_generation : Integer(raw_generation.to_s, 10)
+    normalized_generation.clamp(0, 2_147_483_646)
   rescue ArgumentError, TypeError
     0
   end

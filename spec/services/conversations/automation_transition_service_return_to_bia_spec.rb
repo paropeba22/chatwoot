@@ -154,13 +154,14 @@ RSpec.describe Conversations::AutomationTransitionService do
     end
   end
 
-  it 'rejects a stale message and a changed assignee' do
+  it 'rejects a stale message' do
     attributes[:expected_last_message_id] = latest_customer_message.id - 1
     expect { service.call }.to raise_error(described_class::Conflict) do |error|
       expect(error.reason_code).to eq('stale_last_message')
     end
+  end
 
-    attributes[:expected_last_message_id] = latest_customer_message.id
+  it 'rejects a changed assignee' do
     attributes[:expected_assignee_id] = create(:user, account: account).id
     expect { service.call }.to raise_error(described_class::Conflict) do |error|
       expect(error.reason_code).to eq('stale_assignee')

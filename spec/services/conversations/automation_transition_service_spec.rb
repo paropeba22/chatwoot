@@ -232,7 +232,7 @@ RSpec.describe Conversations::AutomationTransitionService do
     end
 
     it 'rejects unsupported actions' do
-      attributes[:action] = 'return_to_bia'
+      attributes[:action] = 'return_to_robot'
 
       expect { service.call }.to raise_error(described_class::InvalidRequest) do |error|
         expect(error.reason_code).to eq('unsupported_action')
