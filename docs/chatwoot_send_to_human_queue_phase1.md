@@ -72,7 +72,7 @@ Com os filtros atuais, essa projeção pertence a “Em fila”, não pertence a
 
 Os hashes `financeiro_state`, `cadastro_state`, `suporte_state` e `transferencia_state`, além de seleções de contrato/fatura, contexto de mídia, tentativas e `liberacao_ativa`, são preservados para consulta pelo humano. Eles não são reinterpretados nem parcialmente apagados pelo Chatwoot.
 
-A pausa autoritativa nesta fase é composta por `aguardando-humano`, ausência de `bot-bia` e `bia_retorno_humano_pendente=true`. O Guard atual do AntiGravity encerra o fluxo antes de consumir os estados quando `aguardando-humano` está presente. Uma futura ação de retorno para a Bia deverá decidir explicitamente quais estados podem ser retomados; isso pertence à Fase 2.
+A pausa autoritativa é composta por `aguardando-humano`, ausência de `bot-bia`, `bia_retorno_humano_pendente=true`, `bia_automation_state=paused_human` e o incremento de `bia_session_generation`. O Guard atual do AntiGravity encerra o fluxo antes de consumir os estados quando `aguardando-humano` está presente. A Fase 2 amplia essa infraestrutura e está documentada em [`chatwoot_return_to_bia_phase2.md`](chatwoot_return_to_bia_phase2.md).
 
 ## Idempotência, concorrência e auditoria
 
@@ -104,7 +104,7 @@ A mutation existente `UPDATE_CONVERSATION` rejeita payload com `updated_at` infe
 
 As alterações geram eventos Chatwoot normais depois do commit. A nota é privada; não é uma mensagem pública ao cliente. O webhook da transição não tem `message_type=incoming`, portanto não inicia rota financeira/suporte. Para uma mensagem futura do cliente, o Guard do AntiGravity encontra `aguardando-humano` e encerra sem resposta automática.
 
-Risco residual: uma execução do AntiGravity que já tenha ultrapassado o Guard antes do clique não pode ser cancelada pelo Chatwoot nesta fase. O teste conjunto dessa janela estreita e uma futura sessão/epoch versionada pertencem à Fase 5/Fase 2, respectivamente.
+Risco residual: uma execução do AntiGravity que já tenha ultrapassado o Guard antes do clique não pode ser cancelada pelo Chatwoot. A Fase 2 grava uma geração versionada, mas a ativação do retorno permanece bloqueada até o workflow revalidar essa geração no late guard.
 
 ## Feature flag
 
@@ -166,7 +166,7 @@ Não executar `db:rollback` depois de uso operacional sem exportar e aprovar a p
 
 ## Limitações e fases seguintes
 
-- Fase 2: “Devolver para a Bia”, invalidação/retomada de estados e eventual session epoch.
+- Fase 2: “Devolver para a Bia”, session generation e reset explícito de contexto; consulte [`chatwoot_return_to_bia_phase2.md`](chatwoot_return_to_bia_phase2.md).
 - Fase 3: tornar tabs e contadores projeções exclusivas e eliminar races globais.
 - Fase 5: teste conjunto Chatwoot + AntiGravity, incluindo execução já em voo.
 - Automation Rules configuradas em runtime devem ser inventariadas na janela, pois não estão no repositório.
