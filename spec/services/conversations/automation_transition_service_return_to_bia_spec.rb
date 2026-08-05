@@ -36,7 +36,8 @@ RSpec.describe Conversations::AutomationTransitionService do
       action: 'return_to_bia',
       idempotency_key: idempotency_key,
       expected_last_message_id: latest_customer_message.id,
-      expected_assignee_id: conversation.assignee_id
+      expected_assignee_id: conversation.assignee_id,
+      expected_session_generation: 4
     }
   end
   let(:service) do
@@ -124,6 +125,7 @@ RSpec.describe Conversations::AutomationTransitionService do
       custom_attributes: { 'bia_retorno_humano_pendente' => true },
       label_list: ['aguardando-humano']
     )
+    attributes[:expected_session_generation] = 0
 
     service.call
 
@@ -166,6 +168,16 @@ RSpec.describe Conversations::AutomationTransitionService do
     expect { service.call }.to raise_error(described_class::Conflict) do |error|
       expect(error.reason_code).to eq('stale_assignee')
     end
+  end
+
+  it 'rejects a stale session generation before changing the projection' do
+    attributes[:expected_session_generation] = 3
+
+    expect { service.call }.to raise_error(described_class::Conflict) do |error|
+      expect(error.reason_code).to eq('stale_session_generation')
+    end
+    expect(conversation.reload.custom_attributes['bia_session_generation']).to eq(4)
+    expect(conversation.label_list).to include('aguardando-humano')
   end
 
   it 'rejects a regular agent even with inbox access' do
