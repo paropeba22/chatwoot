@@ -28,7 +28,9 @@ const { checkPermissions, isFeatureFlagEnabled } = usePolicy();
 const [showEmailActionsModal, toggleEmailModal] = useToggle(false);
 const [showActionsDropdown, toggleDropdown] = useToggle(false);
 const confirmSendToQueueDialog = ref(null);
+const confirmReturnToBiaDialog = ref(null);
 const isSendingToQueue = ref(false);
+const isReturningToBia = ref(false);
 
 const currentChat = computed(() => store.getters.getSelectedChat);
 const labels = computed(() => currentChat.value?.labels || []);
@@ -43,6 +45,34 @@ const isAlreadyInHumanQueue = computed(() => {
   );
 });
 
+const isAlreadyWithBia = computed(() => {
+  const attributes = currentChat.value?.custom_attributes || {};
+  return (
+    currentChat.value?.status === 'open' &&
+    !currentChat.value?.meta?.assignee &&
+    !currentChat.value?.meta?.assignee_agent_bot &&
+    labels.value.includes('bot-bia') &&
+    !labels.value.includes('aguardando-humano') &&
+    attributes.bia_automation_state === 'active' &&
+    Number(attributes.bia_session_generation || 0) > 0 &&
+    attributes.bia_retorno_humano_pendente === false
+  );
+});
+
+const isHumanManagedConversation = computed(() => {
+  const attributes = currentChat.value?.custom_attributes || {};
+  return (
+    labels.value.includes('aguardando-humano') ||
+    Boolean(currentChat.value?.meta?.assignee) ||
+    attributes.bia_retorno_humano_pendente === true ||
+    attributes.bia_automation_state === 'paused_human'
+  );
+});
+
+const isAutomationTransitioning = computed(
+  () => isSendingToQueue.value || isReturningToBia.value
+);
+
 const canSendToHumanQueue = computed(() => {
   return (
     isFeatureFlagEnabled(FEATURE_FLAGS.CONVERSATION_SEND_TO_HUMAN_QUEUE) &&
@@ -56,6 +86,17 @@ const canSendToHumanQueue = computed(() => {
   );
 });
 
+const canReturnToBia = computed(() => {
+  return (
+    isFeatureFlagEnabled(FEATURE_FLAGS.CONVERSATION_RETURN_TO_BIA) &&
+    checkPermissions(['administrator', 'conversation_return_to_ai']) &&
+    Boolean(currentChat.value?.id) &&
+    currentChat.value?.status === 'open' &&
+    isHumanManagedConversation.value &&
+    !isAlreadyWithBia.value
+  );
+});
+
 const actionMenuItems = computed(() => {
   const items = [];
 
@@ -66,6 +107,16 @@ const actionMenuItems = computed(() => {
       action: 'send_to_human_queue',
       value: 'send_to_human_queue',
       disabled: isSendingToQueue.value,
+    });
+  }
+
+  if (canReturnToBia.value) {
+    items.push({
+      icon: 'i-lucide-bot',
+      label: t('CONVERSATION.RETURN_TO_BIA.ACTION'),
+      action: 'return_to_bia',
+      value: 'return_to_bia',
+      disabled: isReturningToBia.value,
     });
   }
 
@@ -106,7 +157,7 @@ const expectedLastMessageId = () => {
 };
 
 const sendToHumanQueue = async () => {
-  if (isSendingToQueue.value) return;
+  if (isAutomationTransitioning.value) return;
 
   isSendingToQueue.value = true;
   try {
@@ -130,11 +181,39 @@ const sendToHumanQueue = async () => {
   }
 };
 
+const returnToBia = async () => {
+  if (isAutomationTransitioning.value) return;
+
+  isReturningToBia.value = true;
+  try {
+    const confirmed = await confirmReturnToBiaDialog.value.showConfirmation();
+    if (!confirmed) return;
+
+    await store.dispatch('returnToBia', {
+      conversationId: currentChat.value.id,
+      idempotencyKey: `bia-${Date.now()}-${getUuid()}`,
+      expectedLastMessageId: expectedLastMessageId(),
+      expectedAssigneeId: currentChat.value?.meta?.assignee?.id || null,
+    });
+    useAlert(t('CONVERSATION.RETURN_TO_BIA.SUCCESS'));
+  } catch (error) {
+    const message =
+      error.response?.status === 409
+        ? t('CONVERSATION.RETURN_TO_BIA.CONFLICT')
+        : t('CONVERSATION.RETURN_TO_BIA.ERROR');
+    useAlert(message);
+  } finally {
+    isReturningToBia.value = false;
+  }
+};
+
 const handleActionClick = async ({ action }) => {
   toggleDropdown(false);
 
   if (action === 'send_to_human_queue') {
     await sendToHumanQueue();
+  } else if (action === 'return_to_bia') {
+    await returnToBia();
   } else if (action === 'mute') {
     store.dispatch('muteConversation', currentChat.value.id);
     useAlert(t('CONTACT_PANEL.MUTED_SUCCESS'));
@@ -185,8 +264,8 @@ onUnmounted(() => {
         color="slate"
         icon="i-lucide-more-vertical"
         class="rounded-md group-hover:bg-n-alpha-2"
-        :disabled="isSendingToQueue"
-        :is-loading="isSendingToQueue"
+        :disabled="isAutomationTransitioning"
+        :is-loading="isAutomationTransitioning"
         @click="toggleDropdown()"
       />
       <DropdownMenu
@@ -208,6 +287,13 @@ onUnmounted(() => {
       :description="$t('CONVERSATION.SEND_TO_HUMAN_QUEUE.CONFIRM_DESCRIPTION')"
       :confirm-label="$t('CONVERSATION.SEND_TO_HUMAN_QUEUE.CONFIRM_ACTION')"
       :cancel-label="$t('CONVERSATION.SEND_TO_HUMAN_QUEUE.CANCEL')"
+    />
+    <woot-confirm-modal
+      ref="confirmReturnToBiaDialog"
+      :title="$t('CONVERSATION.RETURN_TO_BIA.CONFIRM_TITLE')"
+      :description="$t('CONVERSATION.RETURN_TO_BIA.CONFIRM_DESCRIPTION')"
+      :confirm-label="$t('CONVERSATION.RETURN_TO_BIA.CONFIRM_ACTION')"
+      :cancel-label="$t('CONVERSATION.RETURN_TO_BIA.CANCEL')"
     />
   </div>
 </template>

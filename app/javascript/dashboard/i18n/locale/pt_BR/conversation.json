@@ -114,6 +114,16 @@
       "ERROR": "Não foi possível enviar a conversa para a fila. Tente novamente.",
       "CONFLICT": "A conversa mudou antes da conclusão da ação. O estado atual foi atualizado."
     },
+    "RETURN_TO_BIA": {
+      "ACTION": "Devolver para a Bia",
+      "CONFIRM_TITLE": "Devolver conversa para a Bia?",
+      "CONFIRM_DESCRIPTION": "A conversa sairá da fila ou do atendente e voltará para a Bia. Nenhuma mensagem será enviada agora; a automação aguardará uma nova mensagem pública do cliente.",
+      "CONFIRM_ACTION": "Devolver para a Bia",
+      "CANCEL": "Cancelar",
+      "SUCCESS": "Conversa devolvida para a Bia. A automação aguarda uma nova mensagem do cliente.",
+      "ERROR": "Não foi possível devolver a conversa para a Bia. Tente novamente.",
+      "CONFLICT": "A conversa mudou antes da conclusão da ação. O estado atual foi atualizado."
+    },
     "RESOLVE_DROPDOWN": {
       "MARK_PENDING": "Deixar pendente",
       "SNOOZE_UNTIL": "Adiar",

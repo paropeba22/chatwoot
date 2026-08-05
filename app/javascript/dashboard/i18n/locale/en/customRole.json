@@ -39,7 +39,8 @@
       "CONTACT_MANAGE": "Manage contacts",
       "REPORT_MANAGE": "Manage reports",
       "KNOWLEDGE_BASE_MANAGE": "Manage knowledge base",
-      "CONVERSATION_SEND_TO_QUEUE": "Send accessible conversations to the human queue"
+      "CONVERSATION_SEND_TO_QUEUE": "Send accessible conversations to the human queue",
+      "CONVERSATION_RETURN_TO_AI": "Return accessible conversations to Bia"
     },
     "FORM": {
       "NAME": {

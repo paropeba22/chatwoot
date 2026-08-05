@@ -252,6 +252,19 @@ export const mutations = {
         return;
       }
 
+      const incomingGeneration = Number(
+        conversation.custom_attributes?.bia_session_generation || 0
+      );
+      const selectedGeneration = Number(
+        selectedConversation.custom_attributes?.bia_session_generation || 0
+      );
+      if (
+        conversation.updated_at === selectedConversation.updated_at &&
+        incomingGeneration < selectedGeneration
+      ) {
+        return;
+      }
+
       const { messages, ...updates } = conversation;
       allConversations[index] = { ...selectedConversation, ...updates };
       if (_state.selectedChatId === conversation.id) {

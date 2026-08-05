@@ -115,6 +115,16 @@
       "ERROR": "The conversation could not be sent to the queue. Please try again.",
       "CONFLICT": "The conversation changed before the action was completed. The current state has been refreshed."
     },
+    "RETURN_TO_BIA": {
+      "ACTION": "Return to Bia",
+      "CONFIRM_TITLE": "Return conversation to Bia?",
+      "CONFIRM_DESCRIPTION": "The conversation will leave the human queue or agent and return to Bia. No message will be sent now; automation will wait for a new public customer message.",
+      "CONFIRM_ACTION": "Return to Bia",
+      "CANCEL": "Cancel",
+      "SUCCESS": "Conversation returned to Bia. Automation is waiting for a new customer message.",
+      "ERROR": "The conversation could not be returned to Bia. Please try again.",
+      "CONFLICT": "The conversation changed before the action was completed. The current state has been refreshed."
+    },
     "RESOLVE_DROPDOWN": {
       "MARK_PENDING": "Mark as pending",
       "SNOOZE_UNTIL": "Snooze",

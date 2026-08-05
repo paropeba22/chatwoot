@@ -39,7 +39,8 @@
       "CONTACT_MANAGE": "Gerenciar contatos",
       "REPORT_MANAGE": "Gerenciar relatórios",
       "KNOWLEDGE_BASE_MANAGE": "Gerenciar base de conhecimento",
-      "CONVERSATION_SEND_TO_QUEUE": "Enviar conversas acessíveis para a fila de atendimento humano"
+      "CONVERSATION_SEND_TO_QUEUE": "Enviar conversas acessíveis para a fila de atendimento humano",
+      "CONVERSATION_RETURN_TO_AI": "Devolver conversas acessíveis para a Bia"
     },
     "FORM": {
       "NAME": {
