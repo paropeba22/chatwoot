@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_03_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_04_000001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -75,6 +75,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_03_000001) do
     t.jsonb "settings", default: {}
     t.boolean "technical_incidents_enabled", default: false, null: false
     t.boolean "conversation_send_to_human_queue_enabled", default: false, null: false
+    t.boolean "conversation_return_to_bia_enabled", default: false, null: false
     t.index ["status"], name: "index_accounts_on_status"
   end
 
@@ -690,12 +691,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_03_000001) do
     t.datetime "completed_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "expected_assignee_id"
     t.index ["account_id", "conversation_id", "action", "idempotency_key"], name: "idx_conversation_automation_transitions_idempotency", unique: true
     t.index ["account_id", "conversation_id", "created_at"], name: "idx_conversation_automation_transitions_audit"
     t.index ["actor_id"], name: "index_conversation_automation_transitions_on_actor_id"
     t.index ["audit_message_id"], name: "index_conversation_automation_transitions_on_audit_message_id"
     t.index ["conversation_id"], name: "index_conversation_automation_transitions_on_conversation_id"
-    t.check_constraint "action::text = 'send_to_human_queue'::text", name: "conversation_automation_transitions_action_allowlist"
+    t.check_constraint "action::text = ANY (ARRAY['send_to_human_queue'::character varying, 'return_to_bia'::character varying]::text[])", name: "conversation_automation_transitions_action_allowlist"
     t.check_constraint "status::text = 'completed'::text", name: "conversation_automation_transitions_status_allowlist"
   end
 
@@ -1334,16 +1336,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_03_000001) do
     t.index ["technical_incident_evaluation_id"], name: "idx_ti_deliveries_evaluation"
     t.index ["technical_incident_id"], name: "idx_ti_deliveries_incident"
     t.index ["transport_state", "id"], name: "idx_ti_deliveries_transport_status", where: "((transport_state)::text = 'queued'::text)"
-    t.check_constraint "audit_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_audit_state_allowlist"
-    t.check_constraint "delivery_kind::text = ANY (ARRAY['initial'::character varying, 'update'::character varying, 'reopening'::character varying]::text[])", name: "ti_deliveries_kind_allowlist"
-    t.check_constraint "handoff_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_handoff_state_allowlist"
-    t.check_constraint "label_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_label_state_allowlist"
-    t.check_constraint "link_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_link_state_allowlist"
-    t.check_constraint "message_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'created'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_message_state_allowlist"
-    t.check_constraint "note_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_note_state_allowlist"
-    t.check_constraint "outbox_state::text = ANY (ARRAY['pending'::character varying, 'processing'::character varying, 'retry'::character varying, 'completed'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_outbox_state_allowlist"
-    t.check_constraint "state::text = ANY (ARRAY['reserved'::character varying, 'message_created'::character varying, 'delivery_queued'::character varying, 'delivered'::character varying, 'handoff_completed'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_state_allowlist"
-    t.check_constraint "transport_state::text = ANY (ARRAY['pending'::character varying, 'not_required'::character varying, 'queued'::character varying, 'delivered'::character varying, 'failed_retryable'::character varying, 'failed_terminal'::character varying]::text[])", name: "ti_deliveries_transport_state_allowlist"
+    t.check_constraint "audit_state::text = ANY (ARRAY['pending'::character varying::text, 'not_required'::character varying::text, 'completed'::character varying::text, 'failed_retryable'::character varying::text, 'failed_terminal'::character varying::text])", name: "ti_deliveries_audit_state_allowlist"
+    t.check_constraint "delivery_kind::text = ANY (ARRAY['initial'::character varying::text, 'update'::character varying::text, 'reopening'::character varying::text])", name: "ti_deliveries_kind_allowlist"
+    t.check_constraint "handoff_state::text = ANY (ARRAY['pending'::character varying::text, 'not_required'::character varying::text, 'completed'::character varying::text, 'failed_retryable'::character varying::text, 'failed_terminal'::character varying::text])", name: "ti_deliveries_handoff_state_allowlist"
+    t.check_constraint "label_state::text = ANY (ARRAY['pending'::character varying::text, 'not_required'::character varying::text, 'completed'::character varying::text, 'failed_retryable'::character varying::text, 'failed_terminal'::character varying::text])", name: "ti_deliveries_label_state_allowlist"
+    t.check_constraint "link_state::text = ANY (ARRAY['pending'::character varying::text, 'not_required'::character varying::text, 'completed'::character varying::text, 'failed_retryable'::character varying::text, 'failed_terminal'::character varying::text])", name: "ti_deliveries_link_state_allowlist"
+    t.check_constraint "message_state::text = ANY (ARRAY['pending'::character varying::text, 'not_required'::character varying::text, 'created'::character varying::text, 'failed_retryable'::character varying::text, 'failed_terminal'::character varying::text])", name: "ti_deliveries_message_state_allowlist"
+    t.check_constraint "note_state::text = ANY (ARRAY['pending'::character varying::text, 'not_required'::character varying::text, 'completed'::character varying::text, 'failed_retryable'::character varying::text, 'failed_terminal'::character varying::text])", name: "ti_deliveries_note_state_allowlist"
+    t.check_constraint "outbox_state::text = ANY (ARRAY['pending'::character varying::text, 'processing'::character varying::text, 'retry'::character varying::text, 'completed'::character varying::text, 'failed_terminal'::character varying::text])", name: "ti_deliveries_outbox_state_allowlist"
+    t.check_constraint "state::text = ANY (ARRAY['reserved'::character varying::text, 'message_created'::character varying::text, 'delivery_queued'::character varying::text, 'delivered'::character varying::text, 'handoff_completed'::character varying::text, 'failed_retryable'::character varying::text, 'failed_terminal'::character varying::text])", name: "ti_deliveries_state_allowlist"
+    t.check_constraint "transport_state::text = ANY (ARRAY['pending'::character varying::text, 'not_required'::character varying::text, 'queued'::character varying::text, 'delivered'::character varying::text, 'failed_retryable'::character varying::text, 'failed_terminal'::character varying::text])", name: "ti_deliveries_transport_state_allowlist"
   end
 
   create_table "technical_incident_evaluations", force: :cascade do |t|
@@ -1383,8 +1385,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_03_000001) do
     t.index ["opaque_id"], name: "index_technical_incident_evaluations_on_opaque_id", unique: true
     t.index ["technical_incident_id", "created_at", "id"], name: "idx_ti_evaluations_incident_page"
     t.index ["technical_incident_id"], name: "idx_ti_evaluations_incident"
-    t.check_constraint "mode::text = ANY (ARRAY['shadow'::character varying, 'active'::character varying]::text[])", name: "ti_evaluations_mode_allowlist"
-    t.check_constraint "status::text = ANY (ARRAY['no_candidate'::character varying, 'general_match'::character varying, 'localized_candidate'::character varying, 'needs_document'::character varying, 'needs_contract_selection'::character varying, 'matched'::character varying, 'ambiguous'::character varying, 'expired'::character varying, 'fallback'::character varying, 'stale'::character varying, 'duplicate'::character varying, 'accepted'::character varying]::text[])", name: "ti_evaluations_status_allowlist"
+    t.check_constraint "mode::text = ANY (ARRAY['shadow'::character varying::text, 'active'::character varying::text])", name: "ti_evaluations_mode_allowlist"
+    t.check_constraint "status::text = ANY (ARRAY['no_candidate'::character varying::text, 'general_match'::character varying::text, 'localized_candidate'::character varying::text, 'needs_document'::character varying::text, 'needs_contract_selection'::character varying::text, 'matched'::character varying::text, 'ambiguous'::character varying::text, 'expired'::character varying::text, 'fallback'::character varying::text, 'stale'::character varying::text, 'duplicate'::character varying::text, 'accepted'::character varying::text])", name: "ti_evaluations_status_allowlist"
   end
 
   create_table "technical_incident_scope_criteria", force: :cascade do |t|
@@ -1398,7 +1400,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_03_000001) do
     t.index ["account_id"], name: "index_technical_incident_scope_criteria_on_account_id"
     t.index ["technical_incident_scope_group_id", "criterion_type"], name: "idx_ti_scope_criteria_unique_type", unique: true
     t.index ["technical_incident_scope_group_id"], name: "idx_ti_scope_criteria_group"
-    t.check_constraint "criterion_type::text = ANY (ARRAY['general'::character varying, 'service_specific'::character varying, 'contract_id'::character varying, 'pop_id'::character varying, 'postal_code'::character varying, 'city_neighborhood'::character varying, 'city_street'::character varying]::text[])", name: "ti_scope_criteria_type_allowlist"
+    t.check_constraint "criterion_type::text = ANY (ARRAY['general'::character varying::text, 'service_specific'::character varying::text, 'contract_id'::character varying::text, 'pop_id'::character varying::text, 'postal_code'::character varying::text, 'city_neighborhood'::character varying::text, 'city_street'::character varying::text])", name: "ti_scope_criteria_type_allowlist"
     t.check_constraint "operator::text = 'in'::text", name: "ti_scope_criteria_operator_allowlist"
   end
 
@@ -1472,14 +1474,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_03_000001) do
     t.index ["status", "starts_at"], name: "idx_ti_lifecycle_scheduled", where: "(archived_at IS NULL)"
     t.index ["status", "updated_at"], name: "idx_ti_lifecycle_forgotten", where: "((archived_at IS NULL) AND ((status)::text = 'active'::text))"
     t.index ["updated_by_id"], name: "index_technical_incidents_on_updated_by_id"
-    t.check_constraint "action::text = ANY (ARRAY['message_and_handoff'::character varying, 'message_only'::character varying, 'handoff_only'::character varying]::text[])", name: "technical_incidents_action_allowlist"
+    t.check_constraint "action::text = ANY (ARRAY['message_and_handoff'::character varying::text, 'message_only'::character varying::text, 'handoff_only'::character varying::text])", name: "technical_incidents_action_allowlist"
     t.check_constraint "affected_services <@ ARRAY['internet'::text, 'dns'::text, 'google'::text, 'youtube'::text, 'grupo_telecom_app'::text, 'iptv'::text, 'telephony'::text, 'other'::text]", name: "technical_incidents_services_allowlist"
-    t.check_constraint "incident_type::text = ANY (ARRAY['unplanned_outage'::character varying, 'degradation'::character varying, 'scheduled_maintenance'::character varying, 'external_provider'::character varying, 'company_application'::character varying, 'other'::character varying]::text[])", name: "technical_incidents_type_allowlist"
+    t.check_constraint "incident_type::text = ANY (ARRAY['unplanned_outage'::character varying::text, 'degradation'::character varying::text, 'scheduled_maintenance'::character varying::text, 'external_provider'::character varying::text, 'company_application'::character varying::text, 'other'::character varying::text])", name: "technical_incidents_type_allowlist"
     t.check_constraint "notification_version > 0", name: "technical_incidents_notification_version_positive"
     t.check_constraint "priority >= 0 AND priority <= 100", name: "technical_incidents_priority_range"
     t.check_constraint "problem_types <@ ARRAY['internet_connectivity'::text, 'physical_fiber'::text, 'optical_alarm'::text, 'dns'::text, 'external_service'::text, 'company_application'::text, 'iptv'::text, 'telephony'::text, 'other'::text, 'unidentified'::text]", name: "technical_incidents_problem_types_allowlist"
-    t.check_constraint "severity::text = ANY (ARRAY['informational'::character varying, 'minor'::character varying, 'major'::character varying, 'critical'::character varying]::text[])", name: "technical_incidents_severity_allowlist"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'scheduled'::character varying, 'active'::character varying, 'monitoring'::character varying, 'resolved'::character varying, 'expired'::character varying, 'cancelled'::character varying]::text[])", name: "technical_incidents_status_allowlist"
+    t.check_constraint "severity::text = ANY (ARRAY['informational'::character varying::text, 'minor'::character varying::text, 'major'::character varying::text, 'critical'::character varying::text])", name: "technical_incidents_severity_allowlist"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'scheduled'::character varying::text, 'active'::character varying::text, 'monitoring'::character varying::text, 'resolved'::character varying::text, 'expired'::character varying::text, 'cancelled'::character varying::text])", name: "technical_incidents_status_allowlist"
   end
 
   create_table "users", id: :serial, force: :cascade do |t|
