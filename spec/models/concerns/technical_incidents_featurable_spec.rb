@@ -6,6 +6,17 @@ RSpec.describe Featurable do
     expect(described_class::FEATURES.fetch(63)).to eq(:feature_advanced_assignment)
     expect(described_class::FEATURES.value?(:feature_technical_incidents)).to be(false)
     expect(described_class::FEATURES.value?(:feature_conversation_send_to_human_queue)).to be(false)
+    expect(described_class::FEATURES.value?(:feature_conversation_return_to_bia)).to be(false)
+  end
+
+  it 'persists the return-to-Bia feature outside the legacy bitmap' do
+    account = create(:account)
+
+    account.enable_features!('conversation_return_to_bia')
+    expect(account.reload).to be_feature_enabled('conversation_return_to_bia')
+
+    account.disable_features!('conversation_return_to_bia')
+    expect(account.reload).not_to be_feature_enabled('conversation_return_to_bia')
   end
 
   it 'toggles the queue feature without touching feature_flags' do
@@ -41,11 +52,13 @@ RSpec.describe Featurable do
     account.selected_feature_flags = [
       existing_feature,
       :feature_technical_incidents,
-      :feature_conversation_send_to_human_queue
+      :feature_conversation_send_to_human_queue,
+      :feature_conversation_return_to_bia
     ]
 
     expect(account.public_send("#{existing_feature}?")).to be(true)
     expect(account).to be_feature_enabled('technical_incidents')
     expect(account).to be_feature_enabled('conversation_send_to_human_queue')
+    expect(account).to be_feature_enabled('conversation_return_to_bia')
   end
 end

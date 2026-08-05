@@ -910,6 +910,34 @@ describe('#mutations', () => {
       expect(state.allConversations[0].status).toEqual('resolved');
     });
 
+    it('does not let an equal-timestamp response reduce the Bia generation', () => {
+      const state = {
+        allConversations: [
+          {
+            id: 1,
+            status: 'open',
+            updated_at: 100,
+            labels: ['bot-bia'],
+            custom_attributes: { bia_session_generation: 5 },
+          },
+        ],
+      };
+      const staleResponse = {
+        id: 1,
+        status: 'open',
+        updated_at: 100,
+        labels: ['aguardando-humano'],
+        custom_attributes: { bia_session_generation: 4 },
+      };
+
+      mutations[types.UPDATE_CONVERSATION](state, staleResponse);
+
+      expect(state.allConversations[0].labels).toEqual(['bot-bia']);
+      expect(
+        state.allConversations[0].custom_attributes.bia_session_generation
+      ).toBe(5);
+    });
+
     it('should preserve dataFetched and allMessagesLoaded during update', () => {
       const state = {
         allConversations: [

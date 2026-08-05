@@ -206,6 +206,25 @@ describe('#ConversationAPI', () => {
       );
     });
 
+    it('#returnToBia', () => {
+      conversationAPI.returnToBia({
+        conversationId: 45,
+        idempotencyKey: 'bia-request-12345678',
+        expectedLastMessageId: 123,
+        expectedAssigneeId: 7,
+      });
+
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        '/api/v1/conversations/45/automation_transitions',
+        {
+          action: 'return_to_bia',
+          idempotency_key: 'bia-request-12345678',
+          expected_last_message_id: 123,
+          expected_assignee_id: 7,
+        }
+      );
+    });
+
     it('#filter', () => {
       const payload = {
         page: 1,

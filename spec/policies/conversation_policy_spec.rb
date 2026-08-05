@@ -92,4 +92,20 @@ RSpec.describe ConversationPolicy, type: :policy do
       end
     end
   end
+
+  permissions :return_to_bia? do
+    context 'when user is an administrator' do
+      it 'allows the transition' do
+        expect(subject).to permit(administrator_context, conversation)
+      end
+    end
+
+    context 'when user is an agent with inbox access' do
+      before { create(:inbox_member, user: agent, inbox: conversation.inbox) }
+
+      it 'denies the transition' do
+        expect(subject).not_to permit(agent_context, conversation)
+      end
+    end
+  end
 end
