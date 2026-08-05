@@ -143,7 +143,7 @@ jobs:
           grep -q 'create_table "technical_incidents"' db/schema.rb
           grep -q 'create_table "technical_incident_deliveries"' db/schema.rb
           grep -q 'technical_incidents_enabled' db/schema.rb
-          grep -q 'idx_ti_deliveries_outbox_due' db/schema.rb
+          grep -q 'idx_ti_deliveries_outbox_ready' db/schema.rb
           grep -q 'create_table "conversation_automation_transitions"' db/schema.rb
           grep -q 'conversation_return_to_bia_enabled' db/schema.rb
           grep -q 'expected_assignee_id' db/schema.rb
