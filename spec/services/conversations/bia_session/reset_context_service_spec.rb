@@ -106,7 +106,8 @@ RSpec.describe Conversations::BiaSession::ResetContextService do
   it 'rolls back all changes when the operation record fails' do
     operation = ConversationBiaSessionOperation.new
     operation.errors.add(:base, 'controlled persistence failure')
-    operation_writer = ->(_conversation, _attributes) { raise ActiveRecord::RecordInvalid.new(operation) }
+    operation_writer = instance_double(ActiveRecord::Associations::CollectionProxy)
+    allow(operation_writer).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(operation))
     original = conversation.custom_attributes.deep_dup
 
     expect do

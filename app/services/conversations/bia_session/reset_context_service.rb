@@ -84,9 +84,7 @@ class Conversations::BiaSession::ResetContextService
       attributes_size_after: serialized_size(after_attributes),
       completed_at: Time.current
     }
-    return operation_writer.call(conversation, operation_attributes) if operation_writer
-
-    conversation.bia_session_operations.create!(operation_attributes)
+    (operation_writer || conversation.bia_session_operations).create!(operation_attributes)
   end
 
   def validate_request!
