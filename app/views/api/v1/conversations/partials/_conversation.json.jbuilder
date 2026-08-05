@@ -59,4 +59,10 @@ json.last_activity_at conversation.last_activity_at.to_i
 json.priority conversation.priority
 json.waiting_since conversation.waiting_since.to_i.to_i
 json.sla_policy_id conversation.sla_policy_id
+if Current.account.feature_enabled?('conversation_operational_buckets')
+  operational_projection = Conversations::OperationalBucket.new(conversation).call
+  json.operational_bucket operational_projection.bucket
+  json.operational_bucket_reason operational_projection.reason
+  json.operational_bucket_inconsistent operational_projection.inconsistent
+end
 json.partial! 'enterprise/api/v1/conversations/partials/conversation', conversation: conversation if ChatwootApp.enterprise?

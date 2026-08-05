@@ -42,18 +42,14 @@ class ConversationFinder
 
     mine_count, unassigned_count, all_count, = set_count_for_all_conversations
     assigned_count = all_count - unassigned_count
+    operational_bucket_counts = set_operational_bucket_counts
 
-    filter_by_assignee_type
+    filter_by_operational_bucket || filter_by_assignee_type
 
-    {
-      conversations: conversations,
-      count: {
-        mine_count: mine_count,
-        assigned_count: assigned_count,
-        unassigned_count: unassigned_count,
-        all_count: all_count
-      }
-    }
+    count = base_counts(mine_count, assigned_count, unassigned_count, all_count)
+    count[:operational_buckets] = operational_bucket_counts if operational_bucket_counts
+
+    { conversations: conversations, count: count }
   end
 
   def perform_meta_only
@@ -61,15 +57,12 @@ class ConversationFinder
 
     mine_count, unassigned_count, all_count, = set_count_for_all_conversations
     assigned_count = all_count - unassigned_count
+    operational_bucket_counts = set_operational_bucket_counts
 
-    {
-      count: {
-        mine_count: mine_count,
-        assigned_count: assigned_count,
-        unassigned_count: unassigned_count,
-        all_count: all_count
-      }
-    }
+    count = base_counts(mine_count, assigned_count, unassigned_count, all_count)
+    count[:operational_buckets] = operational_bucket_counts if operational_bucket_counts
+
+    { count: count }
   end
 
   private
@@ -135,6 +128,17 @@ class ConversationFinder
     @conversations
   end
 
+  def filter_by_operational_bucket
+    return false unless operational_buckets_enabled? && params[:operational_bucket].present?
+
+    @conversations = Conversations::OperationalBucket.scope(
+      @conversations,
+      bucket: params[:operational_bucket],
+      current_user: current_user
+    )
+    true
+  end
+
   def filter_by_conversation_type
     case @params[:conversation_type]
     when 'mention'
@@ -189,6 +193,25 @@ class ConversationFinder
       @conversations.unassigned.count,
       @conversations.count
     ]
+  end
+
+  def set_operational_bucket_counts
+    return unless operational_buckets_enabled?
+
+    Conversations::OperationalBucket.counts(@conversations, current_user: current_user)
+  end
+
+  def base_counts(mine_count, assigned_count, unassigned_count, all_count)
+    {
+      mine_count: mine_count,
+      assigned_count: assigned_count,
+      unassigned_count: unassigned_count,
+      all_count: all_count
+    }
+  end
+
+  def operational_buckets_enabled?
+    current_account.feature_enabled?('conversation_operational_buckets')
   end
 
   def current_page

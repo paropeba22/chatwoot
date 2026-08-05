@@ -7,6 +7,20 @@ RSpec.describe Featurable do
     expect(described_class::FEATURES.value?(:feature_technical_incidents)).to be(false)
     expect(described_class::FEATURES.value?(:feature_conversation_send_to_human_queue)).to be(false)
     expect(described_class::FEATURES.value?(:feature_conversation_return_to_bia)).to be(false)
+    expect(described_class::FEATURES.value?(:feature_conversation_operational_buckets)).to be(false)
+  end
+
+
+  it 'toggles canonical operational buckets outside the legacy bitmap' do
+    account = create(:account)
+    original_flags = account.feature_flags
+
+    account.enable_features!('conversation_operational_buckets')
+    expect(account.reload).to be_feature_enabled('conversation_operational_buckets')
+    expect(account.feature_flags).to eq(original_flags)
+
+    account.disable_features!('conversation_operational_buckets')
+    expect(account.reload).not_to be_feature_enabled('conversation_operational_buckets')
   end
 
   it 'persists the return-to-Bia feature outside the legacy bitmap' do
