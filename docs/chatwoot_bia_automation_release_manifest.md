@@ -18,7 +18,7 @@ or provider-idempotent contract.
 | Atomic session gate | `agent/chatwoot-bia-session-atomic-gate`, PR #6 | Phase 2 | flags off |
 | Incident form | `agent/chatwoot-incident-form-catalog-fix`, PR #4 | independent `develop` | Central off |
 | Phase 3 — canonical tabs | `agent/chatwoot-realtime-tabs-counters`, PR #7 | atomic gate | flag off |
-| Phase 4 — inactivity shadow | `agent/chatwoot-inactivity-shadow`, Draft PR to be recorded | Phase 3 | flag off; no schedule |
+| Phase 4 — inactivity shadow | `agent/chatwoot-inactivity-shadow`, PR #8 | Phase 3 | flag off; no schedule |
 
 The incident-form branch is not included in the stacked transition branches.
 Before integration, record the reviewed head SHA of every PR and retarget each
