@@ -150,6 +150,7 @@ RSpec.describe Conversations::AutomationTransitionService do
 
   it 'rejects a conversation without evidence that Bia managed it' do
     conversation.update!(label_list: [], custom_attributes: {})
+    attributes[:expected_session_generation] = 0
 
     expect { service.call }.to raise_error(described_class::Conflict) do |error|
       expect(error.reason_code).to eq('bia_inbox_incompatible')

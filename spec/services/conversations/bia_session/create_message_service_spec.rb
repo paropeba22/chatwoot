@@ -1,6 +1,16 @@
 require 'rails_helper'
 
 RSpec.describe Conversations::BiaSession::CreateMessageService do
+  subject(:service) do
+    described_class.new(
+      account: account,
+      actor: actor,
+      account_user: actor.account_users.find_by!(account: account),
+      conversation_display_id: conversation.display_id,
+      attributes: attributes
+    )
+  end
+
   let(:account) { create(:account).tap { |record| record.enable_features!('conversation_return_to_bia') } }
   let(:actor) { create(:user, account: account, role: :administrator) }
   let(:conversation) do
@@ -30,16 +40,6 @@ RSpec.describe Conversations::BiaSession::CreateMessageService do
       content_type: 'text',
       private: false
     }
-  end
-
-  subject(:service) do
-    described_class.new(
-      account: account,
-      actor: actor,
-      account_user: actor.account_users.find_by!(account: account),
-      conversation_display_id: conversation.display_id,
-      attributes: attributes
-    )
   end
 
   it 'creates one public message under the generation lock and replays idempotently' do

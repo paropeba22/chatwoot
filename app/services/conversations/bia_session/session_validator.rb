@@ -52,11 +52,19 @@ class Conversations::BiaSession::SessionValidator
     labels = conversation.label_list.to_a
 
     conflict!('conversation_not_open') unless conversation.open?
+    validate_human_state!(attributes, labels)
+    validate_bia_state!(attributes, labels)
+  end
+
+  def validate_human_state!(attributes, labels)
     conflict!('human_assignee_present') if conversation.assignee_id.present?
     conflict!('human_queue_active') if labels.include?(HUMAN_QUEUE_LABEL)
+    conflict!('human_return_pending') if attributes['bia_retorno_humano_pendente'] == true
+  end
+
+  def validate_bia_state!(attributes, labels)
     conflict!('bia_label_missing') unless labels.include?(BOT_LABEL)
     conflict!('session_not_active') unless attributes['bia_automation_state'] == 'active'
-    conflict!('human_return_pending') if attributes['bia_retorno_humano_pendente'] == true
   end
 
   def validate_generation!

@@ -1,6 +1,16 @@
 require 'rails_helper'
 
 RSpec.describe Conversations::BiaSession::ResetContextService do
+  subject(:service) do
+    described_class.new(
+      account: account,
+      actor: actor,
+      account_user: account_user,
+      conversation_display_id: conversation.display_id,
+      attributes: attributes
+    )
+  end
+
   let(:account) { create(:account).tap { |record| record.enable_features!('conversation_return_to_bia') } }
   let(:actor) { create(:user, account: account, role: :administrator) }
   let(:account_user) { actor.account_users.find_by!(account: account) }
@@ -38,16 +48,6 @@ RSpec.describe Conversations::BiaSession::ResetContextService do
       idempotency_key: "bia-reset-#{SecureRandom.uuid}",
       reset_profile: 'bia_session_v1'
     }
-  end
-
-  subject(:service) do
-    described_class.new(
-      account: account,
-      actor: actor,
-      account_user: account_user,
-      conversation_display_id: conversation.display_id,
-      attributes: attributes
-    )
   end
 
   before do
@@ -102,7 +102,9 @@ RSpec.describe Conversations::BiaSession::ResetContextService do
   end
 
   it 'rolls back all changes when the operation record fails' do
-    allow_any_instance_of(ConversationBiaSessionOperation).to receive(:save!).and_raise(ActiveRecord::RecordInvalid)
+    operations = conversation.bia_session_operations
+    allow(conversation).to receive(:bia_session_operations).and_return(operations)
+    allow(operations).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
     original = conversation.custom_attributes.deep_dup
 
     expect { service.call }.to raise_error(described_class::InvalidRequest)

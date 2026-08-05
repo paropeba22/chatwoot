@@ -4,9 +4,48 @@ RSpec.describe Conversations::BiaSession::ResetContextService, :non_transactiona
   self.use_transactional_tests = false
 
   let(:created_account_ids) { [] }
+  let(:created_conversation_ids) { [] }
 
   after do
+    Conversation.where(id: created_conversation_ids).destroy_all
     Account.where(id: created_account_ids).destroy_all
+  end
+
+  def run_concurrent_resets(account:, actors:, conversation:, message:, idempotency_key:, barrier:)
+    results = Concurrent::Array.new
+    errors = Concurrent::Array.new
+    threads = actors.map do |actor|
+      Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          reset_in_thread(account, actor, conversation, message, idempotency_key, barrier, results)
+        rescue StandardError => e
+          errors << e
+        ensure
+          Current.reset
+        end
+      end
+    end
+    threads.each(&:join)
+    [results, errors]
+  end
+
+  def reset_in_thread(account, actor, conversation, message, idempotency_key, barrier, results)
+    thread_account = Account.find(account.id)
+    thread_actor = User.find(actor.id)
+    barrier.wait
+    result = described_class.new(
+      account: thread_account,
+      actor: thread_actor,
+      account_user: thread_actor.account_users.find_by!(account: thread_account),
+      conversation_display_id: conversation.display_id,
+      attributes: {
+        expected_generation: 5,
+        source_message_id: message.id,
+        idempotency_key: idempotency_key,
+        reset_profile: 'bia_session_v1'
+      }
+    ).call
+    results << result.status
   end
 
   it 'serializes two PostgreSQL threads so exactly one applies and one replays' do
@@ -27,39 +66,14 @@ RSpec.describe Conversations::BiaSession::ResetContextService, :non_transactiona
         'concurrent_attribute' => 'preserved'
       }
     )
+    created_conversation_ids << conversation.id
     message = create(:message, account: account, conversation: conversation, inbox: conversation.inbox, message_type: :incoming, private: false)
     barrier = Concurrent::CyclicBarrier.new(2)
-    results = Concurrent::Array.new
-    errors = Concurrent::Array.new
     idempotency_key = "bia-reset-#{SecureRandom.uuid}"
-
-    threads = actors.map do |actor|
-      Thread.new do
-        ActiveRecord::Base.connection_pool.with_connection do
-          thread_account = Account.find(account.id)
-          thread_actor = User.find(actor.id)
-          barrier.wait
-          result = described_class.new(
-            account: thread_account,
-            actor: thread_actor,
-            account_user: thread_actor.account_users.find_by!(account: thread_account),
-            conversation_display_id: conversation.display_id,
-            attributes: {
-              expected_generation: 5,
-              source_message_id: message.id,
-              idempotency_key: idempotency_key,
-              reset_profile: 'bia_session_v1'
-            }
-          ).call
-          results << result.status
-        rescue StandardError => e
-          errors << e
-        ensure
-          Current.reset
-        end
-      end
-    end
-    threads.each(&:join)
+    results, errors = run_concurrent_resets(
+      account: account, actors: actors, conversation: conversation, message: message,
+      idempotency_key: idempotency_key, barrier: barrier
+    )
 
     expect(errors).to be_empty
     expect(results).to contain_exactly('accepted', 'duplicate')

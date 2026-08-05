@@ -2,9 +2,9 @@
 
 FactoryBot.define do
   factory :conversation_bia_session_operation do
-    account
-    conversation { association :conversation, account: account }
-    source_message { association :message, account: account, conversation: conversation, inbox: conversation.inbox }
+    conversation
+    account { conversation.account }
+    source_message { association :message, account: conversation.account, conversation: conversation, inbox: conversation.inbox }
     operation { 'reset_context' }
     reset_profile { 'bia_session_v1' }
     session_generation { 1 }

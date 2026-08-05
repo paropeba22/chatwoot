@@ -1,7 +1,22 @@
 class CreateConversationBiaSessionOperations < ActiveRecord::Migration[7.0]
-  def change
+  def up
     add_column :conversation_automation_transitions, :expected_session_generation, :integer
+    create_operation_table
+    add_foreign_keys
+    add_indexes
+    add_constraints
+  end
 
+  def down
+    remove_check_constraint :conversation_automation_transitions,
+                            name: 'conversation_automation_transitions_expected_generation_non_negative'
+    drop_table :conversation_bia_session_operations
+    remove_column :conversation_automation_transitions, :expected_session_generation
+  end
+
+  private
+
+  def create_operation_table
     create_table :conversation_bia_session_operations do |table|
       table.integer :account_id, null: false
       table.integer :conversation_id, null: false
@@ -21,13 +36,7 @@ class CreateConversationBiaSessionOperations < ActiveRecord::Migration[7.0]
       table.datetime :completed_at, null: false
       table.timestamps
     end
-
-    add_foreign_keys
-    add_indexes
-    add_constraints
   end
-
-  private
 
   def add_foreign_keys
     add_foreign_key :conversation_bia_session_operations, :accounts, on_delete: :cascade
