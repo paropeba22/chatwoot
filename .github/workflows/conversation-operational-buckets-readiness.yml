@@ -1,0 +1,93 @@
+name: Conversation operational buckets readiness
+
+on:
+  pull_request:
+    paths:
+      - 'app/finders/conversation_finder.rb'
+      - 'app/services/conversations/operational_bucket.rb'
+      - 'app/views/api/v1/**/conversation*.jbuilder'
+      - 'app/javascript/dashboard/components/ChatList.vue'
+      - 'app/javascript/dashboard/api/inbox/conversation.js'
+      - 'app/javascript/dashboard/store/**'
+      - 'app/javascript/dashboard/featureFlags.js'
+      - 'config/features.yml'
+      - 'db/migrate/20260806000001_add_operational_buckets_to_accounts.rb'
+      - 'spec/finders/conversation_finder_spec.rb'
+      - 'spec/services/conversations/operational_bucket_spec.rb'
+      - 'docs/chatwoot_realtime_tabs_counters_phase3.md'
+      - '.github/workflows/conversation-operational-buckets-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RAILS_ENV: test
+  NODE_ENV: test
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_VERSION: 8.24.3
+
+  ruby:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ''
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - run: bundle exec rails db:create db:schema:load db:migrate
+      - run: bundle exec rspec spec/services/conversations/operational_bucket_spec.rb spec/finders/conversation_finder_spec.rb spec/models/concerns/technical_incidents_featurable_spec.rb
+      - name: RuboCop changed Ruby
+        shell: bash
+        run: |
+          base_sha="$(git merge-base HEAD origin/agent/chatwoot-bia-session-atomic-gate)"
+          mapfile -d '' files < <(git diff --name-only --diff-filter=ACMR -z "$base_sha"...HEAD -- '*.rb' ':!db/schema.rb')
+          bundle exec rubocop --parallel -- "${files[@]}"
+      - run: bundle exec rails db:migrate:down VERSION=20260806000001
+      - run: bundle exec rails db:migrate:up VERSION=20260806000001
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase3-generated-schema
+          path: db/schema.rb
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec eslint app/javascript/dashboard/components/ChatList.vue app/javascript/dashboard/api/inbox/conversation.js app/javascript/dashboard/store/modules/conversations app/javascript/dashboard/store/mutation-types.js
+      - run: pnpm exec vitest run app/javascript/dashboard/api/specs/inbox/conversation.spec.js app/javascript/dashboard/store/modules/specs/conversations/actions.spec.js app/javascript/dashboard/store/modules/specs/conversations/getters.spec.js app/javascript/dashboard/store/modules/specs/conversations/mutations.spec.js --pool=forks --maxWorkers=1 --no-file-parallelism
+      - run: pnpm exec vite build
