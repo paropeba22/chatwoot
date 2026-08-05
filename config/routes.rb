@@ -130,6 +130,7 @@ Rails.application.routes.draw do
           post 'conversations/:conversation_id/sgp',
                to: 'conversations/sgp#create',
                as: :conversation_sgp
+          resource :conversation_inactivity_shadow, only: [:show]
           resources :conversations, only: [:index, :create, :show, :update, :destroy] do
             collection do
               get :meta

@@ -253,3 +253,6 @@
 - name: conversation_operational_buckets
   display_name: Canonical Conversation Operational Buckets
   enabled: false
+- name: conversation_inactivity_shadow
+  display_name: Conversation Inactivity Shadow Classifier
+  enabled: false
