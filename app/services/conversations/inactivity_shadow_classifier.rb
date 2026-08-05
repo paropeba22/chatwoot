@@ -5,9 +5,10 @@ class Conversations::InactivityShadowClassifier
     keyword_init: true
   )
 
-  def initialize(conversation, now: Time.current)
+  def initialize(conversation, now: Time.current, message_snapshot: nil)
     @conversation = conversation
     @now = now
+    @message_snapshot = message_snapshot
   end
 
   def call
@@ -27,7 +28,7 @@ class Conversations::InactivityShadowClassifier
 
   private
 
-  attr_reader :conversation, :now
+  attr_reader :conversation, :now, :message_snapshot
 
   def classify(projection)
     return %w[do_not_touch conversation_not_open] << 1.0 unless conversation.open?
@@ -68,14 +69,20 @@ class Conversations::InactivityShadowClassifier
   end
 
   def last_public_message
+    return message_snapshot[:last_public_message] if message_snapshot
+
     @last_public_message ||= conversation.messages.where(private: false).where.not(message_type: :activity).order(id: :desc).first
   end
 
   def last_public_incoming
+    return message_snapshot[:last_public_incoming] if message_snapshot
+
     @last_public_incoming ||= conversation.messages.incoming.where(private: false).order(id: :desc).first
   end
 
   def last_public_outgoing
+    return message_snapshot[:last_public_outgoing] if message_snapshot
+
     @last_public_outgoing ||= conversation.messages.outgoing.where(private: false).order(id: :desc).first
   end
 

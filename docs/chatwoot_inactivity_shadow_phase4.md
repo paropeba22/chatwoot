@@ -38,7 +38,9 @@ elapsed time alone is insufficient.
 
 `Conversations::InactivityShadowJob` scans one account in bounded ID-ordered
 batches of 200. A PostgreSQL account-scoped advisory lock prevents two workers
-from scanning the same account concurrently. Each conversation is upserted to
+from scanning the same account concurrently. Three `DISTINCT ON` queries load
+the latest public, incoming, and outgoing message snapshots for the whole
+batch, avoiding a per-conversation message N+1. Each conversation is upserted to
 one small assessment row. The row contains identifiers, category, reason,
 canonical bucket, generation, two durations, confidence, and observation time;
 it contains no message content, phone, document, payment data, or credentials.
