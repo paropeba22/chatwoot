@@ -146,6 +146,10 @@ Rails.application.routes.draw do
               resources :assignments, only: [:create]
               resources :labels, only: [:create, :index]
               resources :automation_transitions, only: [:create]
+              resource :bia_session, only: [], controller: 'bia_session' do
+                post :reset_context
+                post :messages, action: :create_message
+              end
               resource :participants, only: [:show, :create, :update, :destroy]
               resource :direct_uploads, only: [:create]
               resource :draft_messages, only: [:show, :update, :destroy]

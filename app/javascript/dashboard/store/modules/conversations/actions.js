@@ -485,13 +485,19 @@ const actions = {
 
   sendToHumanQueue: async (
     { dispatch },
-    { conversationId, idempotencyKey, expectedLastMessageId }
+    {
+      conversationId,
+      idempotencyKey,
+      expectedLastMessageId,
+      expectedSessionGeneration,
+    }
   ) => {
     try {
       const response = await ConversationApi.sendToHumanQueue({
         conversationId,
         idempotencyKey,
         expectedLastMessageId,
+        expectedSessionGeneration,
       });
       await dispatch('updateConversation', response.data.conversation);
       emitter.emit('fetch_conversation_stats');
@@ -513,6 +519,7 @@ const actions = {
       idempotencyKey,
       expectedLastMessageId,
       expectedAssigneeId,
+      expectedSessionGeneration,
     }
   ) => {
     try {
@@ -521,6 +528,7 @@ const actions = {
         idempotencyKey,
         expectedLastMessageId,
         expectedAssigneeId,
+        expectedSessionGeneration,
       });
       await dispatch('updateConversation', response.data.conversation);
       emitter.emit('fetch_conversation_stats');

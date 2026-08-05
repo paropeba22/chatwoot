@@ -133,6 +133,16 @@ class Message < ApplicationRecord
   has_many :attachments, dependent: :destroy, autosave: true, before_add: :validate_attachments_limit
   has_one :csat_survey_response, dependent: :destroy_async
   has_many :notifications, as: :primary_actor, dependent: :destroy_async
+  has_many :bia_session_source_operations,
+           class_name: 'ConversationBiaSessionOperation',
+           foreign_key: :source_message_id,
+           dependent: :restrict_with_error,
+           inverse_of: :source_message
+  has_many :bia_session_result_operations,
+           class_name: 'ConversationBiaSessionOperation',
+           foreign_key: :result_message_id,
+           dependent: :nullify,
+           inverse_of: :result_message
 
   after_create_commit :execute_after_create_commit_callbacks
 

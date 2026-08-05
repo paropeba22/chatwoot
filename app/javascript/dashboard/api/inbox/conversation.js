@@ -119,12 +119,18 @@ class ConversationApi extends ApiClient {
     });
   }
 
-  sendToHumanQueue({ conversationId, idempotencyKey, expectedLastMessageId }) {
+  sendToHumanQueue({
+    conversationId,
+    idempotencyKey,
+    expectedLastMessageId,
+    expectedSessionGeneration,
+  }) {
     return this.automationTransition({
       conversationId,
       action: 'send_to_human_queue',
       idempotencyKey,
       expectedLastMessageId,
+      expectedSessionGeneration,
     });
   }
 
@@ -133,6 +139,7 @@ class ConversationApi extends ApiClient {
     idempotencyKey,
     expectedLastMessageId,
     expectedAssigneeId,
+    expectedSessionGeneration,
   }) {
     return this.automationTransition({
       conversationId,
@@ -140,6 +147,7 @@ class ConversationApi extends ApiClient {
       idempotencyKey,
       expectedLastMessageId,
       expectedAssigneeId,
+      expectedSessionGeneration,
     });
   }
 
@@ -149,6 +157,7 @@ class ConversationApi extends ApiClient {
     idempotencyKey,
     expectedLastMessageId,
     expectedAssigneeId,
+    expectedSessionGeneration,
   }) {
     return axios.post(`${this.url}/${conversationId}/automation_transitions`, {
       action,
@@ -156,6 +165,9 @@ class ConversationApi extends ApiClient {
       expected_last_message_id: expectedLastMessageId,
       ...(expectedAssigneeId !== undefined && {
         expected_assignee_id: expectedAssigneeId,
+      }),
+      ...(expectedSessionGeneration !== undefined && {
+        expected_session_generation: expectedSessionGeneration,
       }),
     });
   }

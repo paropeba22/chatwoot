@@ -16,6 +16,9 @@ class ConversationAutomationTransition < ApplicationRecord
             format: { with: /\A[A-Za-z0-9][A-Za-z0-9._:-]*\z/ },
             uniqueness: { scope: %i[account_id conversation_id action] }
   validates :completed_at, presence: true
+  validates :expected_session_generation,
+            numericality: { only_integer: true, greater_than_or_equal_to: 0 },
+            allow_nil: true
   validate :account_consistency
 
   private

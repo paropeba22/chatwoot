@@ -12,11 +12,19 @@ class ConversationPolicy < ApplicationPolicy
   end
 
   def send_to_human_queue?
-    user.is_a?(User) && show?
+    (user.is_a?(User) || agent_bot?) && show?
   end
 
   def return_to_bia?
     user.is_a?(User) && administrator? && show?
+  end
+
+  def reset_bia_session?
+    (agent_bot? || (user.is_a?(User) && administrator?)) && show?
+  end
+
+  def create_bia_session_message?
+    (agent_bot? || (user.is_a?(User) && administrator?)) && show?
   end
 
   private
