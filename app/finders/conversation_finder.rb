@@ -66,7 +66,6 @@ class ConversationFinder
   def set_up
     set_inboxes
     set_team
-    set_assignee_type
 
     find_all_conversations
     filter_by_status unless params[:q]
@@ -82,10 +81,6 @@ class ConversationFinder
                  else
                    @current_user.assigned_inboxes.pluck(:id)
                  end
-  end
-
-  def set_assignee_type
-    @assignee_type = params[:assignee_type]
   end
 
   def set_team
@@ -113,7 +108,7 @@ class ConversationFinder
   end
 
   def filter_by_assignee_type
-    case @assignee_type
+    case params[:assignee_type]
     when 'me'
       @conversations = @conversations.assigned_to(current_user)
     when 'unassigned'
