@@ -12,7 +12,7 @@ on:
       - 'config/features.yml'
       - 'config/routes.rb'
       - 'db/migrate/20260807000001_create_conversation_inactivity_shadow_assessments.rb'
-      - 'spec/integration/conversations/automation_transition_service_bia_automation_lifecycle_spec.rb'
+      - 'spec/integration/conversations/automation_transition_service_call_spec.rb'
       - 'spec/jobs/conversations/inactivity_shadow_job_spec.rb'
       - 'spec/requests/api/v1/accounts/conversation_inactivity_shadow_spec.rb'
       - 'spec/services/conversations/inactivity_shadow_classifier_spec.rb'
@@ -72,7 +72,7 @@ jobs:
           spec/services/conversations/inactivity_shadow_classifier_spec.rb
           spec/jobs/conversations/inactivity_shadow_job_spec.rb
           spec/requests/api/v1/accounts/conversation_inactivity_shadow_spec.rb
-          spec/integration/conversations/automation_transition_service_bia_automation_lifecycle_spec.rb
+          spec/integration/conversations/automation_transition_service_call_spec.rb
           spec/services/conversations/operational_bucket_spec.rb
           spec/services/conversations/bia_session/reset_context_service_spec.rb
           spec/services/conversations/automation_transition_service_spec.rb
