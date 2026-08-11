@@ -134,7 +134,7 @@ jobs:
           name: conversation-automation-transitions-generated-schema
           path: db/schema.rb
           if-no-files-found: error
-      - name: Verify committed schema contains the generated phase 2 projection
+      - name: Verify committed schema contains the release projection
         shell: bash
         run: |
           grep -q 'conversation_send_to_human_queue_enabled' db/schema.rb
@@ -143,7 +143,7 @@ jobs:
           grep -q 'create_table "conversation_automation_transitions"' db/schema.rb
           grep -q 'idx_conversation_automation_transitions_idempotency' db/schema.rb
           grep -q 'conversation_automation_transitions_action_allowlist' db/schema.rb
-          grep -q 'define(version: 2026_08_05_000001)' db/schema.rb
+          grep -q 'define(version: 2026_08_07_000001)' db/schema.rb
           grep -q 'expected_session_generation' db/schema.rb
           grep -q 'create_table "conversation_bia_session_operations"' db/schema.rb
           grep -q 'idx_bia_session_operations_idempotency' db/schema.rb
