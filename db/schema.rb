@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_06_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_07_000001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -77,6 +77,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_06_000001) do
     t.boolean "conversation_send_to_human_queue_enabled", default: false, null: false
     t.boolean "conversation_return_to_bia_enabled", default: false, null: false
     t.boolean "conversation_operational_buckets_enabled", default: false, null: false
+    t.boolean "conversation_inactivity_shadow_enabled", default: false, null: false
     t.index ["status"], name: "index_accounts_on_status"
   end
 
@@ -732,6 +733,27 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_06_000001) do
     t.check_constraint "operation::text = ANY (ARRAY['reset_context'::character varying::text, 'create_message'::character varying::text])", name: "conversation_bia_session_operations_operation_allowlist"
     t.check_constraint "session_generation >= 0", name: "conversation_bia_session_operations_generation_non_negative"
     t.check_constraint "status::text = 'completed'::text", name: "conversation_bia_session_operations_status_allowlist"
+  end
+
+  create_table "conversation_inactivity_shadow_assessments", force: :cascade do |t|
+    t.integer "account_id", null: false
+    t.integer "conversation_id", null: false
+    t.string "classification", null: false
+    t.string "reason_code", null: false
+    t.string "operational_bucket"
+    t.integer "session_generation", default: 0, null: false
+    t.integer "customer_wait_seconds"
+    t.integer "operation_wait_seconds"
+    t.decimal "confidence", precision: 4, scale: 3, null: false
+    t.datetime "observed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "classification", "observed_at"], name: "idx_inactivity_shadow_reporting"
+    t.index ["account_id", "conversation_id"], name: "idx_inactivity_shadow_account_conversation", unique: true
+    t.check_constraint "(customer_wait_seconds IS NULL OR customer_wait_seconds >= 0) AND (operation_wait_seconds IS NULL OR operation_wait_seconds >= 0)", name: "inactivity_shadow_waits_non_negative"
+    t.check_constraint "classification::text = ANY (ARRAY['waiting_customer'::character varying, 'waiting_human'::character varying, 'waiting_automation'::character varying, 'likely_completed'::character varying, 'operation_pending'::character varying, 'handoff_pending'::character varying, 'stale_inconsistent'::character varying, 'do_not_touch'::character varying, 'unknown'::character varying]::text[])", name: "inactivity_shadow_classification_allowed"
+    t.check_constraint "confidence >= 0::numeric AND confidence <= 1::numeric", name: "inactivity_shadow_confidence_range"
+    t.check_constraint "session_generation >= 0", name: "inactivity_shadow_generation_non_negative"
   end
 
   create_table "conversation_participants", force: :cascade do |t|
@@ -1597,6 +1619,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_06_000001) do
   add_foreign_key "conversation_bia_session_operations", "messages", column: "result_message_id", on_delete: :nullify
   add_foreign_key "conversation_bia_session_operations", "messages", column: "source_message_id", on_delete: :cascade
   add_foreign_key "conversation_bia_session_operations", "users", column: "actor_id", on_delete: :nullify
+  add_foreign_key "conversation_inactivity_shadow_assessments", "accounts", on_delete: :cascade
+  add_foreign_key "conversation_inactivity_shadow_assessments", "conversations", on_delete: :cascade
   add_foreign_key "inboxes", "portals"
   add_foreign_key "technical_incident_conversation_links", "accounts"
   add_foreign_key "technical_incident_conversation_links", "conversations"

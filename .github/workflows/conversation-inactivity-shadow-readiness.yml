@@ -1,0 +1,93 @@
+name: Conversation inactivity shadow readiness
+
+on:
+  pull_request:
+    paths:
+      - 'app/controllers/api/v1/accounts/conversation_inactivity_shadows_controller.rb'
+      - 'app/jobs/conversations/inactivity_shadow_job.rb'
+      - 'app/models/account.rb'
+      - 'app/models/concerns/featurable.rb'
+      - 'app/models/conversation_inactivity_shadow_assessment.rb'
+      - 'app/services/conversations/inactivity_shadow_classifier.rb'
+      - 'config/features.yml'
+      - 'config/routes.rb'
+      - 'db/migrate/20260807000001_create_conversation_inactivity_shadow_assessments.rb'
+      - 'spec/integration/conversations/automation_transition_service_call_spec.rb'
+      - 'spec/jobs/conversations/inactivity_shadow_job_spec.rb'
+      - 'spec/requests/api/v1/accounts/conversation_inactivity_shadow_spec.rb'
+      - 'spec/services/conversations/inactivity_shadow_classifier_spec.rb'
+      - 'docs/chatwoot_inactivity_shadow_phase4.md'
+      - 'docs/chatwoot_bia_automation_release_manifest.md'
+      - '.github/workflows/conversation-inactivity-shadow-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RAILS_ENV: test
+  NODE_ENV: test
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_VERSION: 8.24.3
+
+  ruby:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ''
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Prepare test database
+        run: bundle exec rails db:create db:schema:load db:migrate
+      - name: Phase 4 and integrated lifecycle specs
+        run: >-
+          bundle exec rspec
+          spec/services/conversations/inactivity_shadow_classifier_spec.rb
+          spec/jobs/conversations/inactivity_shadow_job_spec.rb
+          spec/requests/api/v1/accounts/conversation_inactivity_shadow_spec.rb
+          spec/integration/conversations/automation_transition_service_call_spec.rb
+          spec/services/conversations/operational_bucket_spec.rb
+          spec/services/conversations/bia_session/reset_context_service_spec.rb
+          spec/services/conversations/automation_transition_service_spec.rb
+          spec/models/concerns/technical_incidents_featurable_spec.rb
+      - name: RuboCop changed Ruby
+        shell: bash
+        run: |
+          base_sha="$(git merge-base HEAD origin/agent/chatwoot-realtime-tabs-counters)"
+          mapfile -d '' files < <(git diff --name-only --diff-filter=ACMR -z "$base_sha"...HEAD -- '*.rb' ':!db/schema.rb')
+          bundle exec rubocop --parallel -- "${files[@]}"
+      - name: Migration down
+        run: bundle exec rails db:migrate:down VERSION=20260807000001
+      - name: Migration up again
+        run: bundle exec rails db:migrate:up VERSION=20260807000001
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase4-generated-schema
+          path: db/schema.rb

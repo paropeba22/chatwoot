@@ -8,6 +8,19 @@ RSpec.describe Featurable do
     expect(described_class::FEATURES.value?(:feature_conversation_send_to_human_queue)).to be(false)
     expect(described_class::FEATURES.value?(:feature_conversation_return_to_bia)).to be(false)
     expect(described_class::FEATURES.value?(:feature_conversation_operational_buckets)).to be(false)
+    expect(described_class::FEATURES.value?(:feature_conversation_inactivity_shadow)).to be(false)
+  end
+
+  it 'toggles inactivity shadow outside the legacy bitmap' do
+    account = create(:account)
+    original_flags = account.feature_flags
+
+    account.enable_features!('conversation_inactivity_shadow')
+    expect(account.reload).to be_feature_enabled('conversation_inactivity_shadow')
+    expect(account.feature_flags).to eq(original_flags)
+
+    account.disable_features!('conversation_inactivity_shadow')
+    expect(account.reload).not_to be_feature_enabled('conversation_inactivity_shadow')
   end
 
   it 'toggles canonical operational buckets outside the legacy bitmap' do

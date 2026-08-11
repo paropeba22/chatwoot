@@ -20,6 +20,7 @@ module Featurable
     conversation_send_to_human_queue
     conversation_return_to_bia
     conversation_operational_buckets
+    conversation_inactivity_shadow
   ].freeze
 
   FEATURE_LIST = YAML.safe_load(Rails.root.join('config/features.yml').read).freeze
