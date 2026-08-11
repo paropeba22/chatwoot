@@ -10,9 +10,7 @@ class Conversations::InactivityShadowJob < ApplicationJob
 
     ActiveRecord::Base.connection_pool.with_connection do |connection|
       lock_acquired = acquire_lock(connection, account.id)
-      return unless lock_acquired
-
-      process_batch(account, after_id, batch_size)
+      process_batch(account, after_id, batch_size) if lock_acquired
     ensure
       release_lock(connection, account.id) if lock_acquired
     end
@@ -29,17 +27,12 @@ class Conversations::InactivityShadowJob < ApplicationJob
 
   def persist_assessment(account, conversation, message_snapshot)
     result = Conversations::InactivityShadowClassifier.new(conversation, message_snapshot: message_snapshot).call
-    attributes = result.to_h.merge(
+    assessment = ConversationInactivityShadowAssessment.find_or_initialize_by(
       account_id: account.id,
-      conversation_id: conversation.id,
-      observed_at: Time.current,
-      created_at: Time.current,
-      updated_at: Time.current
+      conversation_id: conversation.id
     )
-    ConversationInactivityShadowAssessment.upsert(
-      attributes,
-      unique_by: :idx_inactivity_shadow_account_conversation
-    )
+    assessment.assign_attributes(result.to_h.merge(observed_at: Time.current))
+    assessment.save!
   end
 
   def schedule_next(account, conversations, batch_size)
@@ -50,7 +43,8 @@ class Conversations::InactivityShadowJob < ApplicationJob
 
   def message_snapshots(conversations)
     conversation_ids = conversations.map(&:id)
-    public_messages = Message.where(conversation_id: conversation_ids, private: false).where.not(message_type: :activity)
+    public_messages = Message.where(conversation_id: conversation_ids, private: false)
+                             .where.not(message_type: :activity)
     latest = latest_by_conversation(public_messages)
     incoming = latest_by_conversation(public_messages.incoming)
     outgoing = latest_by_conversation(public_messages.outgoing)

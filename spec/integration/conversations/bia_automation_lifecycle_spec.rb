@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Bia automation lifecycle', type: :service do
+RSpec.describe Conversations::AutomationTransitionService, 'Bia automation lifecycle', type: :service do
   let(:account) do
     create(:account).tap do |record|
       record.enable_features!(
@@ -28,7 +28,14 @@ RSpec.describe 'Bia automation lifecycle', type: :service do
     )
   end
   let!(:source_message) do
-    create(:message, account: account, conversation: conversation, inbox: conversation.inbox, message_type: :incoming, private: false)
+    create(
+      :message,
+      account: account,
+      conversation: conversation,
+      inbox: conversation.inbox,
+      message_type: :incoming,
+      private: false
+    )
   end
 
   def transition(action, generation)
@@ -40,22 +47,22 @@ RSpec.describe 'Bia automation lifecycle', type: :service do
       attributes: {
         action: action,
         idempotency_key: "#{action}-#{SecureRandom.uuid}",
-        expected_last_message_id: conversation.messages.where.not(message_type: :activity).maximum(:id),
+        expected_last_message_id: source_message.id,
         expected_assignee_id: conversation.assignee_id,
         expected_session_generation: generation
       }
     ).call
   end
 
-  it 'moves Bia to human queue and back without public output, then resets only on a newer incoming message', :aggregate_failures do
-    expect { transition('send_to_human_queue', 1) }.not_to change { public_outgoing_count }
+  it 'moves Bia to human queue and back, then resets on a newer incoming message', :aggregate_failures do
+    expect { transition('send_to_human_queue', 1) }.not_to(change { public_outgoing_count })
     expect(conversation.reload.custom_attributes).to include(
       'bia_automation_state' => 'paused_human',
       'bia_session_generation' => 2
     )
     expect(Conversations::OperationalBucket.new(conversation).call.bucket).to eq('human_queue')
 
-    expect { transition('return_to_bia', 2) }.not_to change { public_outgoing_count }
+    expect { transition('return_to_bia', 2) }.not_to(change { public_outgoing_count })
     conversation.reload
     expect(conversation.custom_attributes).to include(
       'bia_automation_state' => 'active',

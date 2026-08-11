@@ -33,8 +33,8 @@ class Conversations::InactivityShadowClassifier
   def classify(projection)
     return %w[do_not_touch conversation_not_open] << 1.0 unless conversation.open?
     return %w[stale_inconsistent contradictory_operational_state] << 1.0 if projection.inconsistent
-    return %w[operation_pending context_reset_pending] << 1.0 if context_reset_pending?
-    return %w[operation_pending external_operation_pending] << 0.95 if operation_pending?
+    pending = pending_classification
+    return pending if pending
     return %w[handoff_pending awaiting_human] << 1.0 if projection.bucket == 'human_queue'
     return %w[waiting_human human_assigned] << 1.0 if projection.bucket == 'mine'
     return classify_bia if projection.bucket == 'bia'
@@ -55,13 +55,18 @@ class Conversations::InactivityShadowClassifier
     attributes['bia_context_reset_required'] == true
   end
 
+  def pending_classification
+    return %w[operation_pending context_reset_pending] << 1.0 if context_reset_pending?
+    return %w[operation_pending external_operation_pending] << 0.95 if operation_pending?
+  end
+
   def operation_pending?
     attributes['liberacao_ativa'] == true || attributes['operation_pending'] == true ||
       attributes['handoff_pending'] == true
   end
 
   def outgoing_delivery_pending?
-    last_public_outgoing && !%w[sent delivered read].include?(last_public_outgoing.status)
+    last_public_outgoing && %w[sent delivered read].exclude?(last_public_outgoing.status)
   end
 
   def completed_action?
