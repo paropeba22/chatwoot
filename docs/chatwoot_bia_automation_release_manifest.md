@@ -58,11 +58,21 @@ This evidence does not remove the activation blockers documented below.
 - active backup: `artifacts/antigravity/backups/AntiGravity_8k30Q8FFwvr3lbtu_active_4ec83b46_2026-08-05.json` (local only, never commit);
 - active backup SHA-256: `EF72BE325B68E0109E55461AF220B7A8B58342FDAB0A56F12CC7E028E9C90EB0`.
 
-The active version, credentials, and production webhook remain unchanged. V2
-uses the Chatwoot CAS reset and preserves Entry, Pre-Write, Pre-Send, Late
+At closeout on 2026-08-11, a fresh read-only MCP query no longer reported the
+original baseline as active. It reported workflow version
+`e75638c3-5f04-4e03-9bdc-96754f379a3e` as both the current and active version,
+with 686 nodes and 659 connection sources, updated at
+`2026-08-11T17:09:28.208Z`. Its saved-version metadata says it was authored
+via MCP as `Preflight legacy/strict backward-compatible` and describes itself
+as unpublished. This inconsistency must be reconciled in the n8n UI/API before
+the overnight window; this work did not publish, restore, or otherwise mutate
+the workflow during the revalidation.
+
+V2 uses the Chatwoot CAS reset and preserves Entry, Pre-Write, Pre-Send, Late
 Guard, legacy/strict mode, fail-closed routing, and Central-off gates. It is not
-approved for publication while direct heterogeneous EvolutionAPI senders and
-irreversible external operations retain a network TOCTOU window.
+approved for publication while the active-version discrepancy, direct
+heterogeneous EvolutionAPI senders, and irreversible external operations
+retain unresolved risk.
 
 ## Migrations
 
@@ -181,6 +191,9 @@ flag and stopping the shadow job; it has no conversation mutations to undo.
 - The AntiGravity V2 structural validator retains documented pre-existing
   workflow warnings. Any effect path that bypasses session guards blocks
   publication.
+- The n8n API's current/active version now differs from the recorded stable
+  baseline `4ec83b46-b85c-4413-85cd-c33e7588f9f3`; establish the actual
+  published graph and its hash before any release action.
 
 Until these blockers are resolved and CI is fully reviewed, the correct final
 decision is **keep every flag off and do not publish the draft**.
