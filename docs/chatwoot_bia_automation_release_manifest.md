@@ -61,12 +61,20 @@ This evidence does not remove the activation blockers documented below.
 At closeout on 2026-08-11, a fresh read-only MCP query no longer reported the
 original baseline as active. It reported workflow version
 `e75638c3-5f04-4e03-9bdc-96754f379a3e` as both the current and active version,
-with 686 nodes and 659 connection sources, updated at
+with 686 nodes, 855 connection edges, and 659 connection sources, updated at
 `2026-08-11T17:09:28.208Z`. Its saved-version metadata says it was authored
 via MCP as `Preflight legacy/strict backward-compatible` and describes itself
 as unpublished. This inconsistency must be reconciled in the n8n UI/API before
 the overnight window; this work did not publish, restore, or otherwise mutate
 the workflow during the revalidation.
+
+The exact V1 and V2 version IDs above are no longer retrievable through n8n
+history and are reported as pruned by retention. The current graph still
+contains the session entry, pre-write, pre-send, late-guard, and CAS-result
+families, but it is not the byte-identical reviewed V2 graph. The local active
+backup and deterministic harness remain available, but a fresh sanitized
+export and full diff of the actual current/published graph are mandatory before
+publication or activation.
 
 V2 uses the Chatwoot CAS reset and preserves Entry, Pre-Write, Pre-Send, Late
 Guard, legacy/strict mode, fail-closed routing, and Central-off gates. It is not
@@ -194,6 +202,9 @@ flag and stopping the shadow job; it has no conversation mutations to undo.
 - The n8n API's current/active version now differs from the recorded stable
   baseline `4ec83b46-b85c-4413-85cd-c33e7588f9f3`; establish the actual
   published graph and its hash before any release action.
+- The reviewed V1/V2 history entries were pruned; do not rely on their IDs as
+  rollback targets. Recreate a reviewed candidate only from a newly exported
+  current graph after reconciling the active-version discrepancy.
 
 Until these blockers are resolved and CI is fully reviewed, the correct final
 decision is **keep every flag off and do not publish the draft**.
