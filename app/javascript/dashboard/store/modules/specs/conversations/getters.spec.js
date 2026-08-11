@@ -129,6 +129,32 @@ describe('#getters', () => {
     });
   });
   describe('#getUnAssignedChats', () => {
+    it('projects the send-to-queue final state only into the unassigned tab', () => {
+      const queuedConversation = {
+        id: 200,
+        inbox_id: 2,
+        status: 'open',
+        meta: {},
+        labels: ['aguardando-humano', 'priority-customer'],
+        custom_attributes: { bia_retorno_humano_pendente: true },
+      };
+      const state = { allConversations: [queuedConversation] };
+      const activeFilters = { status: 'open' };
+
+      expect(getters.getUnAssignedChats(state)(activeFilters)).toEqual([
+        queuedConversation,
+      ]);
+      expect(
+        getters.getMineChats(
+          state,
+          {},
+          {},
+          { getCurrentUser: { id: 1 } }
+        )(activeFilters)
+      ).toEqual([]);
+      expect(queuedConversation.labels).not.toContain('bot-bia');
+    });
+
     it('order returns only chats assigned to user', () => {
       const conversationList = [
         {

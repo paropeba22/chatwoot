@@ -115,6 +115,7 @@ class Conversation < ApplicationRecord
   has_many :reporting_events, dependent: :destroy_async
   has_many :technical_incident_conversation_links, dependent: :destroy_async
   has_many :technical_incidents, through: :technical_incident_conversation_links
+  has_many :automation_transitions, class_name: 'ConversationAutomationTransition', dependent: :destroy_async
 
   before_save :ensure_snooze_until_reset
   before_create :determine_conversation_status

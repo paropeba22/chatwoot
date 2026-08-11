@@ -3,12 +3,16 @@ module AutoAssignmentHandler
   include Events::Types
 
   included do
+    attr_accessor :skip_auto_assignment
+
     after_save :run_auto_assignment
   end
 
   private
 
   def run_auto_assignment
+    return if skip_auto_assignment
+
     # Assignment V2: Also trigger assignment when conversation is resolved or snoozed,
     # bypassing the open-only condition so the AssignmentJob can redistribute capacity.
     return unless conversation_status_changed_to_open? || conversation_status_changed_to_resolved_or_snoozed?

@@ -244,3 +244,6 @@
 - name: technical_incidents
   display_name: Technical Incidents
   enabled: false
+- name: conversation_send_to_human_queue
+  display_name: Send Conversations to Human Queue
+  enabled: false

@@ -46,6 +46,7 @@ export const FEATURE_FLAGS = {
   ADVANCED_SEARCH: 'advanced_search',
   CONVERSATION_REQUIRED_ATTRIBUTES: 'conversation_required_attributes',
   TECHNICAL_INCIDENTS: 'technical_incidents',
+  CONVERSATION_SEND_TO_HUMAN_QUEUE: 'conversation_send_to_human_queue',
 };
 
 export const PREMIUM_FEATURES = [

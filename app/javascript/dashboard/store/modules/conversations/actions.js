@@ -13,6 +13,7 @@ import {
 import messageReadActions from './actions/messageReadActions';
 import messageTranslateActions from './actions/messageTranslateActions';
 import * as Sentry from '@sentry/vue';
+import { emitter } from 'shared/helpers/mitt';
 import {
   handleVoiceCallCreated,
   handleVoiceCallUpdated,
@@ -479,6 +480,29 @@ const actions = {
       });
     } catch (error) {
       // Handle error
+    }
+  },
+
+  sendToHumanQueue: async (
+    { dispatch },
+    { conversationId, idempotencyKey, expectedLastMessageId }
+  ) => {
+    try {
+      const response = await ConversationApi.sendToHumanQueue({
+        conversationId,
+        idempotencyKey,
+        expectedLastMessageId,
+      });
+      await dispatch('updateConversation', response.data.conversation);
+      emitter.emit('fetch_conversation_stats');
+      return response.data;
+    } catch (error) {
+      const authoritativeConversation = error.response?.data?.conversation;
+      if (error.response?.status === 409 && authoritativeConversation) {
+        await dispatch('updateConversation', authoritativeConversation);
+        emitter.emit('fetch_conversation_stats');
+      }
+      throw error;
     }
   },
 

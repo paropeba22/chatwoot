@@ -232,6 +232,7 @@ pt_BR:
       delivery_status:
         error_code: 'Código de erro: %{error_code}'
     activity:
+      sent_to_human_queue: 'Conversa enviada para a fila de atendimento humano por %{user_name}.'
       captain:
         resolved: 'A conversa foi marcada como resolvida por %{user_name} por inatividade'
         resolved_with_reason: 'A conversa foi marcada como resolvida por %{user_name} (%{reason})'
