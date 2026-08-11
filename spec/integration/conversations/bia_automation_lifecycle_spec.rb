@@ -47,7 +47,7 @@ RSpec.describe Conversations::AutomationTransitionService, 'Bia automation lifec
       attributes: {
         action: action,
         idempotency_key: "#{action}-#{SecureRandom.uuid}",
-        expected_last_message_id: source_message.id,
+        expected_last_message_id: conversation.messages.where.not(message_type: :activity).maximum(:id),
         expected_assignee_id: conversation.assignee_id,
         expected_session_generation: generation
       }
@@ -55,6 +55,7 @@ RSpec.describe Conversations::AutomationTransitionService, 'Bia automation lifec
   end
 
   it 'moves Bia to human queue and back, then resets on a newer incoming message', :aggregate_failures do
+    expect(source_message).to be_incoming
     expect { transition('send_to_human_queue', 1) }.not_to(change { public_outgoing_count })
     expect(conversation.reload.custom_attributes).to include(
       'bia_automation_state' => 'paused_human',

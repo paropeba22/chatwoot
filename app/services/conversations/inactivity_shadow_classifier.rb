@@ -94,7 +94,7 @@ class Conversations::InactivityShadowClassifier
   end
 
   def latest_public(scope)
-    scope.order(created_at: :desc, id: :desc).first
+    scope.reorder(created_at: :desc, id: :desc).first
   end
 
   def waiting_seconds(message)
