@@ -24,6 +24,29 @@ The incident-form branch is not included in the stacked transition branches.
 Before integration, record the reviewed head SHA of every PR and retarget each
 stacked PR only after its parent is merged.
 
+## Reviewed heads and readiness evidence (2026-08-11)
+
+| Layer | Reviewed head | Readiness evidence |
+| --- | --- | --- |
+| Phase 1 / PR #3 | `48b13a790c9fed2bc4c5d9cd04a65c2d94ae51a1` | parent of Phase 2; flag off |
+| Incident form / PR #4 | `4a61f4b8f37adb3e2ff2d30f509d0a4b936c1123` | independent; Central off |
+| Phase 2 / PR #5 | `ec3b65577e368cfb725cdd5eae339b983cf99034` | parent of atomic gate; flag off |
+| Atomic session gate / PR #6 | `c22eff7019f0e418093be79685d278d3afdaaa05` | run `31516880952` green |
+| Phase 3 / PR #7 | `3f3cc2f21e87ebce8a4220101f342233d6191a8c` | run `31516948605` green |
+| Phase 4 implementation and generated schema / PR #8 | `bf6d64a7da1195052cf70c84baf0a9ef6404aa51` | code run `31517715687` green; flag off; no schedule |
+
+Rails generated and uploaded each schema; no schema was edited manually:
+
+- CAS artifact `9111483154`, digest
+  `sha256:ba97dda52b17ca88d76c7980ee86e7fb460dd935ce195091f2f125e6c688e3fe`;
+- Phase 3 artifact `9111703031`, digest
+  `sha256:74ddc14ffb7635c40c5b8c1c0a98d3d1c1d8e3091efc0ed0b23116cb696e660f`;
+- Phase 4 artifact `9111811000`, digest
+  `sha256:210a00a6cdb759ad897e0b7dfc4e4b487c7b816dd8004a7b56c778e696445d4d`.
+
+The deterministic AntiGravity session/CAS harness passed 49 of 49 scenarios.
+This evidence does not remove the activation blockers documented below.
+
 ## AntiGravity inventory
 
 - workflow: `8k30Q8FFwvr3lbtu`;
