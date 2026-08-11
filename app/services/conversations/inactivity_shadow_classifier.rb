@@ -33,6 +33,7 @@ class Conversations::InactivityShadowClassifier
   def classify(projection)
     return %w[do_not_touch conversation_not_open] << 1.0 unless conversation.open?
     return %w[stale_inconsistent contradictory_operational_state] << 1.0 if projection.inconsistent
+
     pending = pending_classification
     return pending if pending
     return %w[handoff_pending awaiting_human] << 1.0 if projection.bucket == 'human_queue'

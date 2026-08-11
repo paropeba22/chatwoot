@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Conversations::AutomationTransitionService, 'Bia automation lifecycle', type: :service do
+RSpec.describe Conversations::AutomationTransitionService, '#call', type: :service do
   let(:account) do
     create(:account).tap do |record|
       record.enable_features!(
