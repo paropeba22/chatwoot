@@ -3,6 +3,7 @@ require 'rails_helper'
 RSpec.describe 'Conversation automation transitions API', type: :request do
   let(:account) { create(:account).tap { |record| record.enable_features!('conversation_send_to_human_queue') } }
   let(:agent) { create(:user, account: account, role: :agent) }
+  let(:administrator) { create(:user, account: account, role: :administrator) }
   let(:conversation) { create(:conversation, account: account, label_list: %w[bot-bia retained]) }
   let(:message) { create(:message, account: account, conversation: conversation, inbox: conversation.inbox) }
   let(:path) { "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}/automation_transitions" }
@@ -75,5 +76,71 @@ RSpec.describe 'Conversation automation transitions API', type: :request do
     post cross_account_path, headers: other_agent.create_new_auth_token, params: params, as: :json
 
     expect(response).to have_http_status(:not_found)
+  end
+
+  describe 'return_to_bia' do
+    let(:return_params) do
+      {
+        action: 'return_to_bia',
+        idempotency_key: "bia-#{SecureRandom.uuid}",
+        expected_last_message_id: message.id,
+        expected_assignee_id: conversation.assignee_id
+      }
+    end
+
+    before do
+      account.enable_features!('conversation_return_to_bia')
+      conversation.update!(
+        label_list: %w[aguardando-humano retained],
+        custom_attributes: {
+          'bia_retorno_humano_pendente' => true,
+          'bia_automation_state' => 'paused_human',
+          'bia_session_generation' => 2
+        }
+      )
+    end
+
+    it 'returns the authoritative Bia projection to an administrator' do
+      post path, headers: administrator.create_new_auth_token, params: return_params, as: :json
+
+      expect(response).to have_http_status(:ok)
+      body = response.parsed_body
+      expect(body).to include('status' => 'accepted', 'reason_code' => 'returned_to_bia')
+      expect(body.dig('conversation', 'status')).to eq('open')
+      expect(body.dig('conversation', 'meta', 'assignee')).to be_nil
+      expect(body.dig('conversation', 'labels')).to contain_exactly('bot-bia', 'retained')
+      expect(body.dig('conversation', 'custom_attributes')).to include(
+        'bia_automation_state' => 'active',
+        'bia_session_generation' => 3,
+        'bia_resume_after_message_id' => message.id,
+        'bia_context_reset_required' => true,
+        'bia_retorno_humano_pendente' => false
+      )
+    end
+
+    it 'returns the authoritative conversation with a specific 409 reason' do
+      return_params[:expected_assignee_id] = create(:user, account: account).id
+
+      post path, headers: administrator.create_new_auth_token, params: return_params, as: :json
+
+      expect(response).to have_http_status(:conflict)
+      expect(response.parsed_body).to include('status' => 'conflict', 'reason_code' => 'stale_assignee')
+      expect(response.parsed_body['conversation']).to be_present
+    end
+
+    it 'does not expose the return action while its independent feature is disabled' do
+      account.disable_features!('conversation_return_to_bia')
+
+      post path, headers: administrator.create_new_auth_token, params: return_params, as: :json
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.parsed_body['error']).to eq('feature_disabled')
+    end
+
+    it 'denies a regular agent even when they can access the conversation' do
+      post path, headers: agent.create_new_auth_token, params: return_params, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
   end
 end

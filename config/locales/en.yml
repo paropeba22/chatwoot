@@ -247,6 +247,7 @@ en:
         error_code: 'Error code: %{error_code}'
     activity:
       sent_to_human_queue: 'Conversation sent to the human support queue by %{user_name}.'
+      returned_to_bia: 'Conversation returned to Bia by %{user_name}. Automation will wait for a new customer message.'
       captain:
         resolved: 'Conversation was marked resolved by %{user_name} due to inactivity'
         resolved_with_reason: 'Conversation was marked resolved by %{user_name} (%{reason})'

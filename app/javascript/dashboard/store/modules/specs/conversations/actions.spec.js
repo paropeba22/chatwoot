@@ -119,6 +119,73 @@ describe('#actions', () => {
     });
   });
 
+  describe('#returnToBia', () => {
+    const payload = {
+      conversationId: 45,
+      idempotencyKey: 'bia-request-12345678',
+      expectedLastMessageId: 123,
+      expectedAssigneeId: 7,
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('updates the store from the authoritative response', async () => {
+      const conversation = {
+        id: 45,
+        status: 'open',
+        labels: ['bot-bia'],
+        meta: {},
+        custom_attributes: {
+          bia_automation_state: 'active',
+          bia_session_generation: 5,
+        },
+      };
+      vi.spyOn(ConversationApi, 'returnToBia').mockResolvedValue({
+        data: { status: 'accepted', conversation },
+      });
+      const localDispatch = vi.fn().mockResolvedValue();
+
+      const result = await actions.returnToBia(
+        { dispatch: localDispatch },
+        payload
+      );
+
+      expect(ConversationApi.returnToBia).toHaveBeenCalledWith(payload);
+      expect(localDispatch).toHaveBeenCalledWith(
+        'updateConversation',
+        conversation
+      );
+      expect(result.status).toBe('accepted');
+    });
+
+    it('applies the authoritative conversation from a conflict and rethrows', async () => {
+      const conversation = {
+        id: 45,
+        status: 'open',
+        labels: ['aguardando-humano'],
+        meta: { assignee: { id: 8 } },
+      };
+      const error = {
+        response: {
+          status: 409,
+          data: { status: 'conflict', conversation },
+        },
+      };
+      vi.spyOn(ConversationApi, 'returnToBia').mockRejectedValue(error);
+      const localDispatch = vi.fn().mockResolvedValue();
+
+      await expect(
+        actions.returnToBia({ dispatch: localDispatch }, payload)
+      ).rejects.toBe(error);
+      expect(localDispatch).toHaveBeenCalledWith(
+        'updateConversation',
+        conversation
+      );
+    });
+  });
+
   describe('#getConversation', () => {
     it('sends correct actions if API is success', async () => {
       axios.get.mockResolvedValue({

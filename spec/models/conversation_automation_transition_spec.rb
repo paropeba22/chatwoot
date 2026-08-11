@@ -21,8 +21,12 @@ RSpec.describe ConversationAutomationTransition do
     expect(index.columns).to eq(%w[account_id conversation_id action idempotency_key])
   end
 
-  it 'accepts only the implemented action' do
+  it 'accepts both implemented actions and rejects unknown actions' do
     transition.action = 'return_to_bia'
+
+    expect(transition).to be_valid
+
+    transition.action = 'unknown'
 
     expect(transition).not_to be_valid
     expect(transition.errors[:action]).to be_present
@@ -59,6 +63,18 @@ RSpec.describe ConversationAutomationTransition do
            conversation: create(:conversation, account: account),
            actor: actor,
            idempotency_key: transition.idempotency_key)
+
+    expect(transition).to be_valid
+  end
+
+  it 'isolates the same idempotency key by action' do
+    create(:conversation_automation_transition,
+           account: account,
+           conversation: conversation,
+           actor: actor,
+           action: 'send_to_human_queue',
+           idempotency_key: transition.idempotency_key)
+    transition.action = 'return_to_bia'
 
     expect(transition).to be_valid
   end

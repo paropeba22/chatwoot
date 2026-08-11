@@ -15,8 +15,6 @@ class Conversations::AutomationTransitionService
   class InvalidRequest < Error; end
   class FeatureDisabled < Error; end
 
-  ACTION = 'send_to_human_queue'.freeze
-
   def initialize(account:, actor:, account_user:, conversation_display_id:, attributes:)
     @account = account
     @actor = actor
@@ -41,21 +39,37 @@ class Conversations::AutomationTransitionService
 
   attr_reader :account, :actor, :account_user, :conversation_display_id, :attributes
 
+  delegate :action, :feature, :policy, :projection, :accepted_reason_code, :already_reason_code, to: :configuration
+
   def perform_locked_transition(conversation)
     authorize!(conversation)
     ensure_feature_enabled!(conversation)
     return idempotent_replay(conversation) if existing_transition(conversation)
-    return already_in_queue(conversation) if projection(conversation).final?
+    return already_projected(conversation) if projection_for(conversation).final?
 
-    validate_last_message!(conversation)
+    validate_concurrency!(conversation)
+    validate_projection!(conversation)
     apply_transition!(conversation)
   end
 
   def validate_request!
-    raise InvalidRequest, 'unsupported_action' unless attributes[:action] == ACTION
+    raise InvalidRequest, 'unsupported_action' unless configuration
     raise InvalidRequest, 'invalid_idempotency_key' unless valid_idempotency_key?
 
+    validate_return_expectations!
+
     normalized_expected_last_message_id
+    normalized_expected_assignee_id
+  end
+
+  def validate_return_expectations!
+    return unless action == 'return_to_bia'
+    raise InvalidRequest, 'expected_last_message_id_required' unless attributes.key?(:expected_last_message_id)
+    raise InvalidRequest, 'expected_assignee_id_required' unless attributes.key?(:expected_assignee_id)
+  end
+
+  def configuration
+    @configuration ||= Conversations::AutomationTransitions::ActionRegistry.fetch(attributes[:action])
   end
 
   def valid_idempotency_key?
@@ -66,50 +80,65 @@ class Conversations::AutomationTransitionService
     return @normalized_expected_last_message_id if defined?(@normalized_expected_last_message_id)
     return @normalized_expected_last_message_id = nil if attributes[:expected_last_message_id].blank?
 
-    value = attributes[:expected_last_message_id]
-    @normalized_expected_last_message_id = value.is_a?(Integer) ? value : Integer(value, 10)
+    @normalized_expected_last_message_id = normalize_non_negative_integer(attributes[:expected_last_message_id])
   rescue ArgumentError, TypeError
     raise InvalidRequest, 'invalid_expected_last_message_id'
   end
 
+  def normalized_expected_assignee_id
+    return @normalized_expected_assignee_id if defined?(@normalized_expected_assignee_id)
+    return @normalized_expected_assignee_id = :not_provided unless attributes.key?(:expected_assignee_id)
+    return @normalized_expected_assignee_id = nil if attributes[:expected_assignee_id].blank?
+
+    @normalized_expected_assignee_id = normalize_non_negative_integer(attributes[:expected_assignee_id])
+  rescue ArgumentError, TypeError
+    raise InvalidRequest, 'invalid_expected_assignee_id'
+  end
+
+  def normalize_non_negative_integer(value)
+    normalized = value.is_a?(Integer) ? value : Integer(value, 10)
+    raise ArgumentError if normalized.negative?
+
+    normalized
+  end
+
   def authorize!(conversation)
     context = { user: actor, account: account, account_user: account_user }
-    Pundit.authorize(context, conversation, :send_to_human_queue?)
+    Pundit.authorize(context, conversation, policy)
   end
 
   def ensure_feature_enabled!(conversation)
-    return if account.reload.feature_enabled?('conversation_send_to_human_queue')
+    return if account.reload.feature_enabled?(feature)
 
     raise FeatureDisabled.new('feature_disabled', conversation: conversation)
   end
 
   def existing_transition(conversation)
     @existing_transition ||= conversation.automation_transitions.find_by(
-      action: ACTION,
+      action: action,
       idempotency_key: attributes[:idempotency_key]
     )
   end
 
   def idempotent_replay(conversation)
-    Result.new(
-      status: 'duplicate',
-      reason_code: 'idempotency_replay',
-      conversation: conversation,
-      transition: existing_transition(conversation)
-    )
+    build_result('duplicate', 'idempotency_replay', conversation, existing_transition(conversation))
   end
 
-  def already_in_queue(conversation)
-    Result.new(
-      status: 'duplicate',
-      reason_code: 'already_in_human_queue',
-      conversation: conversation,
-      transition: latest_completed_transition(conversation)
-    )
+  def already_projected(conversation)
+    build_result('duplicate', already_reason_code, conversation, latest_completed_transition(conversation))
+  end
+
+  def build_result(status, reason_code, conversation, transition)
+    Result.new(status: status, reason_code: reason_code, conversation: conversation, transition: transition)
   end
 
   def latest_completed_transition(conversation)
-    conversation.automation_transitions.where(action: ACTION, status: 'completed').order(id: :desc).first
+    conversation.automation_transitions.where(action: action, status: 'completed').order(id: :desc).first
+  end
+
+  def validate_concurrency!(conversation)
+    validate_last_message!(conversation)
+    validate_assignee!(conversation)
   end
 
   def validate_last_message!(conversation)
@@ -119,41 +148,50 @@ class Conversations::AutomationTransitionService
     raise Conflict.new('stale_last_message', conversation: conversation)
   end
 
+  def validate_assignee!(conversation)
+    return if normalized_expected_assignee_id == :not_provided
+    return if normalized_expected_assignee_id == conversation.assignee_id
+
+    raise Conflict.new('stale_assignee', conversation: conversation)
+  end
+
   def current_last_message_id(conversation)
     conversation.messages.where.not(message_type: :activity).reorder(nil).maximum(:id)
   end
 
+  def validate_projection!(conversation)
+    projection_for(conversation).validate! if projection_for(conversation).respond_to?(:validate!)
+  rescue Conversations::AutomationTransitions::BiaProjection::InvalidState => e
+    raise Conflict.new(e.reason_code, conversation: conversation)
+  end
+
   def apply_transition!(conversation)
-    before_state = projection(conversation).snapshot
-    projection(conversation).apply!
+    before_state = projection_for(conversation).snapshot
+    projection_for(conversation).apply!
     transition = audit_recorder.record!(
       conversation: conversation,
       before_state: before_state,
-      after_state: projection(conversation).snapshot
+      after_state: projection_for(conversation).snapshot
     )
 
-    Result.new(
-      status: 'accepted',
-      reason_code: 'sent_to_human_queue',
-      conversation: conversation,
-      transition: transition
-    )
+    build_result('accepted', accepted_reason_code, conversation, transition)
   end
 
   def audit_recorder
     @audit_recorder ||= Conversations::AutomationTransitions::AuditRecorder.new(
       account: account,
       actor: actor,
-      action: ACTION,
+      configuration: configuration,
       attributes: {
         idempotency_key: attributes[:idempotency_key],
-        expected_last_message_id: normalized_expected_last_message_id
+        expected_last_message_id: normalized_expected_last_message_id,
+        expected_assignee_id: normalized_expected_assignee_id == :not_provided ? nil : normalized_expected_assignee_id
       }
     )
   end
 
-  def projection(conversation)
-    @projection ||= Conversations::AutomationTransitions::HumanQueueProjection.new(conversation)
+  def projection_for(conversation)
+    @projection_for ||= projection.new(conversation)
   end
 
   def log_failure(reason_code, conversation)
@@ -162,7 +200,7 @@ class Conversations::AutomationTransitionService
       reason_code: reason_code,
       account_id: account.id,
       conversation_id: conversation&.id,
-      action: ACTION
+      action: action || attributes[:action].to_s
     )
   end
 end

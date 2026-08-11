@@ -31,4 +31,25 @@ RSpec.describe ConversationPolicy, type: :policy do
 
     expect(policy.send_to_human_queue?).to be(false)
   end
+
+  it 'allows a custom role with conversation access and the return permission' do
+    role = create(:custom_role, account: account, permissions: %w[conversation_manage conversation_return_to_ai])
+    account_user.update!(custom_role: role)
+
+    expect(policy.return_to_bia?).to be(true)
+  end
+
+  it 'denies a custom role without the return permission' do
+    role = create(:custom_role, account: account, permissions: %w[conversation_manage])
+    account_user.update!(custom_role: role)
+
+    expect(policy.return_to_bia?).to be(false)
+  end
+
+  it 'denies the return permission when the custom role cannot access the conversation' do
+    role = create(:custom_role, account: account, permissions: %w[conversation_participating_manage conversation_return_to_ai])
+    account_user.update!(custom_role: role)
+
+    expect(policy.return_to_bia?).to be(false)
+  end
 end

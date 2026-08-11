@@ -155,6 +155,35 @@ describe('#getters', () => {
       expect(queuedConversation.labels).not.toContain('bot-bia');
     });
 
+    it('projects the return-to-Bia final state out of queue and mine tabs', () => {
+      const biaConversation = {
+        id: 201,
+        inbox_id: 2,
+        status: 'open',
+        meta: {},
+        labels: ['bot-bia', 'priority-customer'],
+        custom_attributes: {
+          bia_automation_state: 'active',
+          bia_session_generation: 5,
+          bia_retorno_humano_pendente: false,
+        },
+      };
+      const state = { allConversations: [biaConversation] };
+      const activeFilters = { status: 'open' };
+
+      expect(getters.getUnAssignedChats(state)(activeFilters)).toEqual([]);
+      expect(
+        getters.getMineChats(
+          state,
+          {},
+          {},
+          { getCurrentUser: { id: 1 } }
+        )(activeFilters)
+      ).toEqual([]);
+      expect(biaConversation.labels).toContain('bot-bia');
+      expect(biaConversation.labels).not.toContain('aguardando-humano');
+    });
+
     it('order returns only chats assigned to user', () => {
       const conversationList = [
         {

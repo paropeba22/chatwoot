@@ -120,10 +120,43 @@ class ConversationApi extends ApiClient {
   }
 
   sendToHumanQueue({ conversationId, idempotencyKey, expectedLastMessageId }) {
-    return axios.post(`${this.url}/${conversationId}/automation_transitions`, {
+    return this.automationTransition({
+      conversationId,
       action: 'send_to_human_queue',
+      idempotencyKey,
+      expectedLastMessageId,
+    });
+  }
+
+  returnToBia({
+    conversationId,
+    idempotencyKey,
+    expectedLastMessageId,
+    expectedAssigneeId,
+  }) {
+    return this.automationTransition({
+      conversationId,
+      action: 'return_to_bia',
+      idempotencyKey,
+      expectedLastMessageId,
+      expectedAssigneeId,
+    });
+  }
+
+  automationTransition({
+    conversationId,
+    action,
+    idempotencyKey,
+    expectedLastMessageId,
+    expectedAssigneeId,
+  }) {
+    return axios.post(`${this.url}/${conversationId}/automation_transitions`, {
+      action,
       idempotency_key: idempotencyKey,
       expected_last_message_id: expectedLastMessageId,
+      ...(expectedAssigneeId !== undefined && {
+        expected_assignee_id: expectedAssigneeId,
+      }),
     });
   }
 

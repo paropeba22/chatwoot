@@ -1,6 +1,4 @@
 class Api::V1::Accounts::Conversations::AutomationTransitionsController < Api::V1::Accounts::BaseController
-  before_action :ensure_feature_enabled!
-
   def create
     result = transition_service.call
     @conversation = result.conversation.reload
@@ -29,11 +27,7 @@ class Api::V1::Accounts::Conversations::AutomationTransitionsController < Api::V
 
   def transition_params
     ActionController::Parameters.new(request.request_parameters)
-                                .permit(:action, :idempotency_key, :expected_last_message_id)
-  end
-
-  def ensure_feature_enabled!
-    render_feature_disabled unless Current.account.feature_enabled?('conversation_send_to_human_queue')
+                                .permit(:action, :idempotency_key, :expected_last_message_id, :expected_assignee_id)
   end
 
   def render_feature_disabled

@@ -13,6 +13,7 @@ export const AVAILABLE_CUSTOM_ROLE_PERMISSIONS = [
   'technical_incident_archive',
   'technical_incident_audit',
   'conversation_send_to_queue',
+  'conversation_return_to_ai',
 ];
 
 export const ROLES = ['agent', 'administrator'];

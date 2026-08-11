@@ -13,7 +13,7 @@ class Conversations::AutomationTransitions::HumanQueueProjection
       assignee: nil,
       assignee_agent_bot: nil,
       waiting_since: conversation.waiting_since || Time.current,
-      custom_attributes: paused_custom_attributes
+      custom_attributes: session.pause
     )
     conversation.label_list = projected_labels
     conversation.save!
@@ -37,7 +37,9 @@ class Conversations::AutomationTransitions::HumanQueueProjection
       agent_bot_assignee_present: conversation.assignee_agent_bot_id.present?,
       bot_bia: labels.include?(BOT_LABEL),
       aguardando_humano: labels.include?(HUMAN_QUEUE_LABEL),
-      bia_retorno_humano_pendente: conversation.custom_attributes['bia_retorno_humano_pendente'] == true
+      bia_retorno_humano_pendente: conversation.custom_attributes['bia_retorno_humano_pendente'] == true,
+      bia_automation_state: session.state.presence,
+      bia_session_generation: session.generation
     }
   end
 
@@ -53,7 +55,7 @@ class Conversations::AutomationTransitions::HumanQueueProjection
     (labels - [BOT_LABEL]).union([HUMAN_QUEUE_LABEL])
   end
 
-  def paused_custom_attributes
-    (conversation.custom_attributes || {}).deep_dup.merge('bia_retorno_humano_pendente' => true)
+  def session
+    @session ||= Conversations::AutomationTransitions::BiaSession.new(conversation)
   end
 end

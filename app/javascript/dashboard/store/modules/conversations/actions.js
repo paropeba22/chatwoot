@@ -506,6 +506,35 @@ const actions = {
     }
   },
 
+  returnToBia: async (
+    { dispatch },
+    {
+      conversationId,
+      idempotencyKey,
+      expectedLastMessageId,
+      expectedAssigneeId,
+    }
+  ) => {
+    try {
+      const response = await ConversationApi.returnToBia({
+        conversationId,
+        idempotencyKey,
+        expectedLastMessageId,
+        expectedAssigneeId,
+      });
+      await dispatch('updateConversation', response.data.conversation);
+      emitter.emit('fetch_conversation_stats');
+      return response.data;
+    } catch (error) {
+      const authoritativeConversation = error.response?.data?.conversation;
+      if (error.response?.status === 409 && authoritativeConversation) {
+        await dispatch('updateConversation', authoritativeConversation);
+        emitter.emit('fetch_conversation_stats');
+      }
+      throw error;
+    }
+  },
+
   setConversationFilters({ commit }, data) {
     commit(types.SET_CONVERSATION_FILTERS, data);
   },

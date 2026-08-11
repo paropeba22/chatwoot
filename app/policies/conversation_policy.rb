@@ -15,6 +15,10 @@ class ConversationPolicy < ApplicationPolicy
     user.is_a?(User) && show?
   end
 
+  def return_to_bia?
+    user.is_a?(User) && administrator? && show?
+  end
+
   private
 
   def agent_can_view_conversation?

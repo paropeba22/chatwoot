@@ -257,3 +257,170 @@ describe('MoreActions send to human queue', () => {
     expect(mocks.alert).toHaveBeenCalledWith(message);
   });
 });
+
+describe('MoreActions return to Bia', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.currentChat = {
+      id: 45,
+      status: 'open',
+      muted: false,
+      labels: ['aguardando-humano', 'priority-customer'],
+      meta: { assignee: { id: 7 } },
+      custom_attributes: {
+        bia_retorno_humano_pendente: true,
+        bia_automation_state: 'paused_human',
+        bia_session_generation: 4,
+      },
+      last_non_activity_message: { id: 123 },
+    };
+    mocks.featureEnabled = true;
+    mocks.permitted = true;
+    mocks.confirmed = true;
+    mocks.dispatch.mockResolvedValue({ status: 'accepted' });
+  });
+
+  it('shows the action for an authorized human-managed conversation', async () => {
+    const wrapper = mountComponent();
+    const dropdown = await openMenu(wrapper);
+
+    expect(dropdown.props('menuItems')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: 'return_to_bia' }),
+      ])
+    );
+  });
+
+  it.each([
+    ['feature disabled', false, true],
+    ['permission denied', true, false],
+  ])('hides the action when %s', async (_reason, feature, permitted) => {
+    mocks.featureEnabled = feature;
+    mocks.permitted = permitted;
+    const wrapper = mountComponent();
+    const dropdown = await openMenu(wrapper);
+
+    expect(dropdown.props('menuItems')).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: 'return_to_bia' }),
+      ])
+    );
+  });
+
+  it.each(['resolved', 'pending', 'snoozed'])(
+    'hides the action for a %s conversation',
+    async status => {
+      mocks.currentChat.status = status;
+      const wrapper = mountComponent();
+      const dropdown = await openMenu(wrapper);
+
+      expect(dropdown.props('menuItems')).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ action: 'return_to_bia' }),
+        ])
+      );
+    }
+  );
+
+  it('hides the action when the conversation is already in a complete Bia session', async () => {
+    mocks.currentChat = {
+      ...mocks.currentChat,
+      labels: ['bot-bia', 'priority-customer'],
+      meta: {},
+      custom_attributes: {
+        bia_retorno_humano_pendente: false,
+        bia_automation_state: 'active',
+        bia_session_generation: 5,
+      },
+    };
+    const wrapper = mountComponent();
+    const dropdown = await openMenu(wrapper);
+
+    expect(dropdown.props('menuItems')).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: 'return_to_bia' }),
+      ])
+    );
+  });
+
+  it('does not call the backend when confirmation is cancelled', async () => {
+    mocks.confirmed = false;
+    const wrapper = mountComponent();
+    const dropdown = await openMenu(wrapper);
+
+    dropdown.vm.$emit('action', { action: 'return_to_bia' });
+    await flushPromises();
+
+    expect(mocks.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('submits one authoritative transition and reports that Bia will wait', async () => {
+    const wrapper = mountComponent();
+    const dropdown = await openMenu(wrapper);
+
+    dropdown.vm.$emit('action', { action: 'return_to_bia' });
+    await flushPromises();
+
+    expect(mocks.dispatch).toHaveBeenCalledTimes(1);
+    expect(mocks.dispatch).toHaveBeenCalledWith('returnToBia', {
+      conversationId: 45,
+      idempotencyKey: expect.stringMatching(/^bia-\d+-uuid-12345678$/),
+      expectedLastMessageId: 123,
+      expectedAssigneeId: 7,
+    });
+    expect(mocks.alert).toHaveBeenCalledWith(
+      'CONVERSATION.RETURN_TO_BIA.SUCCESS'
+    );
+  });
+
+  it('blocks a second transition while return is pending', async () => {
+    let resolveRequest;
+    mocks.dispatch.mockReturnValue(
+      new Promise(resolve => {
+        resolveRequest = resolve;
+      })
+    );
+    const wrapper = mountComponent();
+    const dropdown = await openMenu(wrapper);
+
+    dropdown.vm.$emit('action', { action: 'return_to_bia' });
+    dropdown.vm.$emit('action', { action: 'return_to_bia' });
+    await flushPromises();
+
+    expect(mocks.dispatch).toHaveBeenCalledTimes(1);
+    expect(wrapper.findComponent(ButtonV4).props('isLoading')).toBe(true);
+
+    resolveRequest({ status: 'accepted' });
+    await flushPromises();
+  });
+
+  it.each([
+    [409, 'CONVERSATION.RETURN_TO_BIA.CONFLICT'],
+    [500, 'CONVERSATION.RETURN_TO_BIA.ERROR'],
+  ])('shows the correct feedback for HTTP %s', async (status, message) => {
+    mocks.dispatch.mockRejectedValue({ response: { status } });
+    const wrapper = mountComponent();
+    const dropdown = await openMenu(wrapper);
+
+    dropdown.vm.$emit('action', { action: 'return_to_bia' });
+    await flushPromises();
+
+    expect(mocks.alert).toHaveBeenCalledWith(message);
+  });
+
+  it('keeps the return action available in the mobile header layout', async () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 375,
+    });
+    window.dispatchEvent(new Event('resize'));
+    const wrapper = mountComponent();
+    const dropdown = await openMenu(wrapper);
+
+    expect(dropdown.props('menuItems')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: 'return_to_bia' }),
+      ])
+    );
+  });
+});

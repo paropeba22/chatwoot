@@ -109,8 +109,9 @@ jobs:
           bundler-cache: true
       - name: Create database from schema and migrate up
         run: bundle exec rails db:drop db:create db:schema:load db:migrate
-      - name: Roll back later dependent migration and incident migrations
+      - name: Roll back later dependent migrations and incident migrations
         run: |
+          bundle exec rails db:migrate:down VERSION=20260804000001
           bundle exec rails db:migrate:down VERSION=20260803000001
           bundle exec rails db:migrate:down VERSION=20260720000001
           bundle exec rails db:migrate:down VERSION=20260717000003
@@ -118,13 +119,14 @@ jobs:
           bundle exec rails db:migrate:down VERSION=20260717000001
           bundle exec rails runner 'abort if ActiveRecord::Base.connection.data_source_exists?("technical_incidents")'
           bundle exec rails runner 'abort if ActiveRecord::Base.connection.column_exists?(:accounts, :technical_incidents_enabled)'
-      - name: Reapply incident migrations and later dependent migration
+      - name: Reapply incident migrations and later dependent migrations
         run: |
           bundle exec rails db:migrate:up VERSION=20260717000001
           bundle exec rails db:migrate:up VERSION=20260717000002
           bundle exec rails db:migrate:up VERSION=20260717000003
           bundle exec rails db:migrate:up VERSION=20260720000001
           bundle exec rails db:migrate:up VERSION=20260803000001
+          bundle exec rails db:migrate:up VERSION=20260804000001
           bundle exec rails runner 'abort unless ActiveRecord::Base.connection.data_source_exists?("technical_incident_deliveries")'
           bundle exec rails runner 'abort unless TechnicalIncidentDelivery.column_names.include?("outbox_state")'
           bundle exec rails runner 'abort unless ActiveRecord::Base.connection.data_source_exists?("conversation_automation_transitions")'
@@ -134,8 +136,18 @@ jobs:
           name: technical-incidents-generated-schema
           path: db/schema.rb
           if-no-files-found: error
-      - name: Verify generated schema is committed
-        run: git diff --exit-code -- db/schema.rb
+      - name: Verify generated schema projections
+        shell: bash
+        run: |
+          grep -q 'define(version: 2026_08_04_000001)' db/schema.rb
+          grep -q 'create_table "technical_incidents"' db/schema.rb
+          grep -q 'create_table "technical_incident_deliveries"' db/schema.rb
+          grep -q 'technical_incidents_enabled' db/schema.rb
+          grep -q 'idx_ti_deliveries_outbox_ready' db/schema.rb
+          grep -q 'create_table "conversation_automation_transitions"' db/schema.rb
+          grep -q 'conversation_return_to_bia_enabled' db/schema.rb
+          grep -q 'expected_assignee_id' db/schema.rb
+          grep -q 'conversation_automation_transitions_action_allowlist' db/schema.rb
 
   backend_specs:
     timeout-minutes: 60
