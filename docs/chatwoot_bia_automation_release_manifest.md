@@ -24,6 +24,20 @@ The incident-form branch is not included in the stacked transition branches.
 Before integration, record the reviewed head SHA of every PR and retarget each
 stacked PR only after its parent is merged.
 
+## GitHub consolidation snapshot (2026-08-11)
+
+- pre-release `develop`: `e28a13169170832162193e1790eb2975b7441cfd`;
+- PR #3 merge commit: `7d0b091517fd15f4f230978b139f67e87ceb8923`;
+- PR #5 merge commit: `0f5f9ffd038e6ad89f006f4ed349dabaf84f627f`;
+- PR #6 merge commit: `5a5b5485d6084a8fb6563f04cff0ae2ae85afa7c`;
+- PR #4 merge commit: `dd0e9858b717b38c6589270209e84482e9f4586d`;
+- PR #7 merge commit: `8e73370a5da5c05c270ffc678a020acb23b688e3`;
+- PR #8 merge commit: `1d33c339be73f3f64c22998935dccd4314421e07`.
+
+All six pull requests were incorporated with merge commits. Their feature
+flags remain off. The final candidate SHA must be recorded after the release
+readiness tooling commit is merged and all final checks complete.
+
 ## Reviewed heads and readiness evidence (2026-08-11)
 
 | Layer | Reviewed head | Readiness evidence |
@@ -33,7 +47,7 @@ stacked PR only after its parent is merged.
 | Phase 2 / PR #5 | `ec3b65577e368cfb725cdd5eae339b983cf99034` | parent of atomic gate; flag off |
 | Atomic session gate / PR #6 | `c22eff7019f0e418093be79685d278d3afdaaa05` | run `31516880952` green |
 | Phase 3 / PR #7 | `3f3cc2f21e87ebce8a4220101f342233d6191a8c` | run `31516948605` green |
-| Phase 4 implementation and generated schema / PR #8 | `bf6d64a7da1195052cf70c84baf0a9ef6404aa51` | code run `31517715687` green; flag off; no schedule |
+| Phase 4 implementation and generated schema / PR #8 | `3c0338010d03692315e60adabaebaeeb07040a1c` | final branch head; flag off; no schedule |
 
 Rails generated and uploaded each schema; no schema was edited manually:
 
@@ -96,6 +110,20 @@ reviewed image:
 All are additive. CI must prove PostgreSQL 16 up/down/up and upload the Rails
 generated schema. Assess lock duration on a production-sized clone. Do not run
 `down` after live feature use without reconciling audit/operation rows.
+
+The repository `Procfile` defines a release command that executes
+`POSTGRES_STATEMENT_TIMEOUT=600s bundle exec rails db:chatwoot_prepare`.
+The Docker production compose file and Rails entrypoint do not execute this
+command automatically. Unless the EasyPanel service has an explicitly
+configured release command, treat migrations as manual: after the database
+backup and before starting the new web/workers, run exactly:
+
+```sh
+POSTGRES_STATEMENT_TIMEOUT=600s bundle exec rails db:chatwoot_prepare
+```
+
+Run it once from the reviewed release image. Do not start new web or Sidekiq
+processes until it succeeds; then switch web and workers to the same image.
 
 ## Feature flags and activation order
 
