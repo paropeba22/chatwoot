@@ -87,6 +87,28 @@ describe ConversationFinder do
       end
     end
 
+    context 'with canonical operational buckets enabled' do
+      let(:params) { { status: 'open', operational_bucket: 'bia' } }
+
+      before { account.enable_features!('conversation_operational_buckets') }
+
+      it 'uses one projection for the list and all tab counters' do
+        mine = create(:conversation, account: account, inbox: inbox, assignee: user_1)
+        queue = create(:conversation, account: account, inbox: inbox, label_list: ['aguardando-humano'])
+        bia = create(:conversation, account: account, inbox: inbox, label_list: ['bot-bia'])
+
+        result = conversation_finder.perform
+
+        expect(result[:conversations]).to contain_exactly(bia)
+        expect(result.dig(:count, :operational_buckets)).to include(
+          'mine' => 3,
+          'human_queue' => 1,
+          'bia' => 1
+        )
+        expect(result[:conversations]).not_to include(mine, queue)
+      end
+    end
+
     context 'with status all' do
       let(:params) { { status: 'all' } }
 

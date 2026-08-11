@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_05_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_06_000001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -76,6 +76,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_05_000001) do
     t.boolean "technical_incidents_enabled", default: false, null: false
     t.boolean "conversation_send_to_human_queue_enabled", default: false, null: false
     t.boolean "conversation_return_to_bia_enabled", default: false, null: false
+    t.boolean "conversation_operational_buckets_enabled", default: false, null: false
     t.index ["status"], name: "index_accounts_on_status"
   end
 
@@ -698,7 +699,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_05_000001) do
     t.index ["actor_id"], name: "index_conversation_automation_transitions_on_actor_id"
     t.index ["audit_message_id"], name: "index_conversation_automation_transitions_on_audit_message_id"
     t.index ["conversation_id"], name: "index_conversation_automation_transitions_on_conversation_id"
-    t.check_constraint "action::text = ANY (ARRAY['send_to_human_queue'::character varying, 'return_to_bia'::character varying]::text[])", name: "conversation_automation_transitions_action_allowlist"
+    t.check_constraint "action::text = ANY (ARRAY['send_to_human_queue'::character varying::text, 'return_to_bia'::character varying::text])", name: "conversation_automation_transitions_action_allowlist"
     t.check_constraint "expected_session_generation IS NULL OR expected_session_generation >= 0", name: "automation_transitions_expected_generation_non_negative"
     t.check_constraint "status::text = 'completed'::text", name: "conversation_automation_transitions_status_allowlist"
   end
@@ -728,7 +729,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_05_000001) do
     t.index ["conversation_id"], name: "index_conversation_bia_session_operations_on_conversation_id"
     t.index ["result_message_id"], name: "index_conversation_bia_session_operations_on_result_message_id"
     t.index ["source_message_id"], name: "index_conversation_bia_session_operations_on_source_message_id"
-    t.check_constraint "operation::text = ANY (ARRAY['reset_context'::character varying, 'create_message'::character varying]::text[])", name: "conversation_bia_session_operations_operation_allowlist"
+    t.check_constraint "operation::text = ANY (ARRAY['reset_context'::character varying::text, 'create_message'::character varying::text])", name: "conversation_bia_session_operations_operation_allowlist"
     t.check_constraint "session_generation >= 0", name: "conversation_bia_session_operations_generation_non_negative"
     t.check_constraint "status::text = 'completed'::text", name: "conversation_bia_session_operations_status_allowlist"
   end

@@ -64,8 +64,13 @@ describe('#buildConversationList', () => {
       'all'
     );
 
-    expect(commit).toHaveBeenCalledWith(types.SET_ALL_CONVERSATION, [{ id: 1 }]);
-    expect(dispatch).not.toHaveBeenCalledWith('conversationStats/set', expect.anything());
+    expect(commit).toHaveBeenCalledWith(types.SET_ALL_CONVERSATION, [
+      { id: 1 },
+    ]);
+    expect(dispatch).not.toHaveBeenCalledWith(
+      'conversationStats/set',
+      expect.anything()
+    );
   });
 
   it('keeps syncing stats for normal non-filtered list fetches', () => {

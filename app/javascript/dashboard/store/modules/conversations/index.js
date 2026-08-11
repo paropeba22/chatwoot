@@ -12,6 +12,8 @@ const state = {
   allConversations: [],
   attachments: {},
   listLoadingStatus: true,
+  listRequestSequence: 0,
+  listRequestError: false,
   chatStatusFilter: wootConstants.STATUS_TYPE.OPEN,
   chatSortFilter: wootConstants.SORT_BY_TYPE.LATEST,
   currentInbox: null,
@@ -279,11 +281,24 @@ export const mutations = {
     }
   },
 
-  [types.SET_LIST_LOADING_STATUS](_state) {
+  [types.SET_LIST_LOADING_STATUS](_state, sequence) {
     _state.listLoadingStatus = true;
+    _state.listRequestError = false;
+    if (sequence !== undefined) _state.listRequestSequence = sequence;
   },
 
-  [types.CLEAR_LIST_LOADING_STATUS](_state) {
+  [types.CLEAR_LIST_LOADING_STATUS](_state, sequence) {
+    if (sequence !== undefined && sequence !== _state.listRequestSequence) {
+      return;
+    }
+
+    _state.listLoadingStatus = false;
+  },
+
+  [types.SET_LIST_REQUEST_ERROR](_state, sequence) {
+    if (sequence !== _state.listRequestSequence) return;
+
+    _state.listRequestError = true;
     _state.listLoadingStatus = false;
   },
 

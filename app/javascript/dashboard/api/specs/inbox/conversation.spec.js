@@ -62,6 +62,20 @@ describe('#ConversationAPI', () => {
       });
     });
 
+    it('#get requests one canonical operational bucket', () => {
+      conversationAPI.get({
+        status: 'open',
+        operationalBucket: 'human_queue',
+      });
+
+      expect(axiosMock.get).toHaveBeenCalledWith('/api/v1/conversations', {
+        params: expect.objectContaining({
+          status: 'open',
+          operational_bucket: 'human_queue',
+        }),
+      });
+    });
+
     it('#search', () => {
       conversationAPI.search({
         q: 'leads',

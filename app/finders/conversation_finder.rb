@@ -40,36 +40,25 @@ class ConversationFinder
   def perform
     set_up
 
-    mine_count, unassigned_count, all_count, = set_count_for_all_conversations
-    assigned_count = all_count - unassigned_count
+    operational_bucket_counts = set_operational_bucket_counts
+    count = conversation_counts
 
-    filter_by_assignee_type
+    filter_by_operational_bucket || filter_by_assignee_type
 
-    {
-      conversations: conversations,
-      count: {
-        mine_count: mine_count,
-        assigned_count: assigned_count,
-        unassigned_count: unassigned_count,
-        all_count: all_count
-      }
-    }
+    count[:operational_buckets] = operational_bucket_counts if operational_bucket_counts
+
+    { conversations: conversations, count: count }
   end
 
   def perform_meta_only
     set_up
 
-    mine_count, unassigned_count, all_count, = set_count_for_all_conversations
-    assigned_count = all_count - unassigned_count
+    operational_bucket_counts = set_operational_bucket_counts
 
-    {
-      count: {
-        mine_count: mine_count,
-        assigned_count: assigned_count,
-        unassigned_count: unassigned_count,
-        all_count: all_count
-      }
-    }
+    count = conversation_counts
+    count[:operational_buckets] = operational_bucket_counts if operational_bucket_counts
+
+    { count: count }
   end
 
   private
@@ -77,7 +66,6 @@ class ConversationFinder
   def set_up
     set_inboxes
     set_team
-    set_assignee_type
 
     find_all_conversations
     filter_by_status unless params[:q]
@@ -93,10 +81,6 @@ class ConversationFinder
                  else
                    @current_user.assigned_inboxes.pluck(:id)
                  end
-  end
-
-  def set_assignee_type
-    @assignee_type = params[:assignee_type]
   end
 
   def set_team
@@ -124,7 +108,7 @@ class ConversationFinder
   end
 
   def filter_by_assignee_type
-    case @assignee_type
+    case params[:assignee_type]
     when 'me'
       @conversations = @conversations.assigned_to(current_user)
     when 'unassigned'
@@ -133,6 +117,17 @@ class ConversationFinder
       @conversations = @conversations.assigned
     end
     @conversations
+  end
+
+  def filter_by_operational_bucket
+    return false unless operational_buckets_enabled? && params[:operational_bucket].present?
+
+    @conversations = Conversations::OperationalBucket.scope(
+      @conversations,
+      bucket: params[:operational_bucket],
+      current_user: current_user
+    )
+    true
   end
 
   def filter_by_conversation_type
@@ -189,6 +184,26 @@ class ConversationFinder
       @conversations.unassigned.count,
       @conversations.count
     ]
+  end
+
+  def set_operational_bucket_counts
+    return unless operational_buckets_enabled?
+
+    Conversations::OperationalBucket.counts(@conversations, current_user: current_user)
+  end
+
+  def conversation_counts
+    mine_count, unassigned_count, all_count, = set_count_for_all_conversations
+    {
+      mine_count: mine_count,
+      assigned_count: all_count - unassigned_count,
+      unassigned_count: unassigned_count,
+      all_count: all_count
+    }
+  end
+
+  def operational_buckets_enabled?
+    current_account.feature_enabled?('conversation_operational_buckets')
   end
 
   def current_page

@@ -565,12 +565,21 @@ describe('#actions', () => {
       axios.post.mockResolvedValue({
         data: dataReceived,
       });
-      await actions.fetchFilteredConversations({ commit }, dataToSend);
-      expect(commit).toHaveBeenCalledTimes(2);
-      expect(commit.mock.calls).toEqual([
-        ['SET_LIST_LOADING_STATUS'],
+      await actions.fetchFilteredConversations(
+        { commit, dispatch },
+        dataToSend
+      );
+      expect(commit).toHaveBeenCalledTimes(4);
+      expect(commit.mock.calls.slice(0, 3)).toEqual([
+        ['SET_LIST_LOADING_STATUS', 1],
         ['SET_ALL_CONVERSATION', dataReceived.payload],
+        ['CLEAR_LIST_LOADING_STATUS'],
       ]);
+      expect(commit).toHaveBeenNthCalledWith(
+        4,
+        `contacts/${types.SET_CONTACTS}`,
+        [dataReceived.payload[0].meta.sender]
+      );
     });
   });
 

@@ -1094,6 +1094,40 @@ describe('#mutations', () => {
     });
   });
 
+  describe('#list request sequencing', () => {
+    it('ignores completion and failure from stale requests', () => {
+      const state = {
+        listLoadingStatus: true,
+        listRequestSequence: 4,
+        listRequestError: false,
+      };
+
+      mutations[types.CLEAR_LIST_LOADING_STATUS](state, 3);
+      mutations[types.SET_LIST_REQUEST_ERROR](state, 3);
+
+      expect(state).toMatchObject({
+        listLoadingStatus: true,
+        listRequestSequence: 4,
+        listRequestError: false,
+      });
+    });
+
+    it('finishes the current failed request explicitly', () => {
+      const state = {
+        listLoadingStatus: true,
+        listRequestSequence: 4,
+        listRequestError: false,
+      };
+
+      mutations[types.SET_LIST_REQUEST_ERROR](state, 4);
+
+      expect(state).toMatchObject({
+        listLoadingStatus: false,
+        listRequestError: true,
+      });
+    });
+  });
+
   describe('#CHANGE_CHAT_STATUS_FILTER', () => {
     it('should update chat status filter', () => {
       const state = {

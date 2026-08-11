@@ -250,3 +250,6 @@
 - name: conversation_return_to_bia
   display_name: Return Conversations to Bia
   enabled: false
+- name: conversation_operational_buckets
+  display_name: Canonical Conversation Operational Buckets
+  enabled: false

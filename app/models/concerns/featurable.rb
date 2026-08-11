@@ -15,7 +15,12 @@ module Featurable
     flag_query_mode: :bit_operator,
     check_for_column: false
   }.freeze
-  BOOLEAN_FEATURES = %w[technical_incidents conversation_send_to_human_queue conversation_return_to_bia].freeze
+  BOOLEAN_FEATURES = %w[
+    technical_incidents
+    conversation_send_to_human_queue
+    conversation_return_to_bia
+    conversation_operational_buckets
+  ].freeze
 
   FEATURE_LIST = YAML.safe_load(Rails.root.join('config/features.yml').read).freeze
 
