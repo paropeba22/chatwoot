@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_04_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_05_000001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -692,13 +692,45 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_04_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "expected_assignee_id"
+    t.integer "expected_session_generation"
     t.index ["account_id", "conversation_id", "action", "idempotency_key"], name: "idx_conversation_automation_transitions_idempotency", unique: true
     t.index ["account_id", "conversation_id", "created_at"], name: "idx_conversation_automation_transitions_audit"
     t.index ["actor_id"], name: "index_conversation_automation_transitions_on_actor_id"
     t.index ["audit_message_id"], name: "index_conversation_automation_transitions_on_audit_message_id"
     t.index ["conversation_id"], name: "index_conversation_automation_transitions_on_conversation_id"
     t.check_constraint "action::text = ANY (ARRAY['send_to_human_queue'::character varying, 'return_to_bia'::character varying]::text[])", name: "conversation_automation_transitions_action_allowlist"
+    t.check_constraint "expected_session_generation IS NULL OR expected_session_generation >= 0", name: "automation_transitions_expected_generation_non_negative"
     t.check_constraint "status::text = 'completed'::text", name: "conversation_automation_transitions_status_allowlist"
+  end
+
+  create_table "conversation_bia_session_operations", force: :cascade do |t|
+    t.integer "account_id", null: false
+    t.integer "conversation_id", null: false
+    t.integer "actor_id"
+    t.integer "source_message_id", null: false
+    t.integer "result_message_id"
+    t.string "operation", null: false
+    t.string "reset_profile"
+    t.integer "session_generation", null: false
+    t.string "idempotency_key", null: false
+    t.string "status", default: "completed", null: false
+    t.string "reason_code", null: false
+    t.jsonb "before_state", default: {}, null: false
+    t.jsonb "after_state", default: {}, null: false
+    t.integer "attributes_size_before"
+    t.integer "attributes_size_after"
+    t.datetime "completed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "conversation_id", "created_at"], name: "idx_bia_session_operations_audit"
+    t.index ["account_id", "conversation_id", "operation", "idempotency_key"], name: "idx_bia_session_operations_idempotency", unique: true
+    t.index ["actor_id"], name: "index_conversation_bia_session_operations_on_actor_id"
+    t.index ["conversation_id"], name: "index_conversation_bia_session_operations_on_conversation_id"
+    t.index ["result_message_id"], name: "index_conversation_bia_session_operations_on_result_message_id"
+    t.index ["source_message_id"], name: "index_conversation_bia_session_operations_on_source_message_id"
+    t.check_constraint "operation::text = ANY (ARRAY['reset_context'::character varying, 'create_message'::character varying]::text[])", name: "conversation_bia_session_operations_operation_allowlist"
+    t.check_constraint "session_generation >= 0", name: "conversation_bia_session_operations_generation_non_negative"
+    t.check_constraint "status::text = 'completed'::text", name: "conversation_bia_session_operations_status_allowlist"
   end
 
   create_table "conversation_participants", force: :cascade do |t|
@@ -1559,6 +1591,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_04_000001) do
   add_foreign_key "conversation_automation_transitions", "conversations", on_delete: :cascade
   add_foreign_key "conversation_automation_transitions", "messages", column: "audit_message_id", on_delete: :nullify
   add_foreign_key "conversation_automation_transitions", "users", column: "actor_id", on_delete: :nullify
+  add_foreign_key "conversation_bia_session_operations", "accounts", on_delete: :cascade
+  add_foreign_key "conversation_bia_session_operations", "conversations", on_delete: :cascade
+  add_foreign_key "conversation_bia_session_operations", "messages", column: "result_message_id", on_delete: :nullify
+  add_foreign_key "conversation_bia_session_operations", "messages", column: "source_message_id", on_delete: :cascade
+  add_foreign_key "conversation_bia_session_operations", "users", column: "actor_id", on_delete: :nullify
   add_foreign_key "inboxes", "portals"
   add_foreign_key "technical_incident_conversation_links", "accounts"
   add_foreign_key "technical_incident_conversation_links", "conversations"
