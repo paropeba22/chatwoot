@@ -195,6 +195,7 @@ describe('MoreActions send to human queue', () => {
       conversationId: 45,
       idempotencyKey: expect.stringMatching(/^queue-\d+-uuid-12345678$/),
       expectedLastMessageId: 123,
+      expectedSessionGeneration: 0,
     });
     expect(mocks.alert).toHaveBeenCalledWith(
       'CONVERSATION.SEND_TO_HUMAN_QUEUE.SUCCESS'
@@ -367,6 +368,7 @@ describe('MoreActions return to Bia', () => {
       idempotencyKey: expect.stringMatching(/^bia-\d+-uuid-12345678$/),
       expectedLastMessageId: 123,
       expectedAssigneeId: 7,
+      expectedSessionGeneration: 4,
     });
     expect(mocks.alert).toHaveBeenCalledWith(
       'CONVERSATION.RETURN_TO_BIA.SUCCESS'

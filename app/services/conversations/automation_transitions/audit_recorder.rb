@@ -10,7 +10,7 @@ class Conversations::AutomationTransitions::AuditRecorder
     audit_message = create_private_note!(conversation)
     conversation.automation_transitions.create!(
       account: account,
-      actor: actor,
+      actor: actor.is_a?(User) ? actor : nil,
       audit_message: audit_message,
       action: action,
       status: 'completed',
@@ -18,6 +18,7 @@ class Conversations::AutomationTransitions::AuditRecorder
       idempotency_key: attributes[:idempotency_key],
       expected_last_message_id: attributes[:expected_last_message_id],
       expected_assignee_id: attributes[:expected_assignee_id],
+      expected_session_generation: attributes[:expected_session_generation],
       before_state: before_state,
       after_state: after_state,
       completed_at: Time.current

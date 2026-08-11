@@ -21,7 +21,8 @@ RSpec.describe Conversations::AutomationTransitionService, :non_transactional do
         action: 'return_to_bia',
         idempotency_key: idempotency_key,
         expected_last_message_id: message.id,
-        expected_assignee_id: nil
+        expected_assignee_id: nil,
+        expected_session_generation: 7
       }
     ).call
   end

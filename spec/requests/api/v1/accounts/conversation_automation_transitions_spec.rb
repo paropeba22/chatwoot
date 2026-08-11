@@ -84,7 +84,8 @@ RSpec.describe 'Conversation automation transitions API', type: :request do
         action: 'return_to_bia',
         idempotency_key: "bia-#{SecureRandom.uuid}",
         expected_last_message_id: message.id,
-        expected_assignee_id: conversation.assignee_id
+        expected_assignee_id: conversation.assignee_id,
+        expected_session_generation: 2
       }
     end
 

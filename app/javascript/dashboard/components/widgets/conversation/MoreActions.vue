@@ -168,6 +168,9 @@ const sendToHumanQueue = async () => {
       conversationId: currentChat.value.id,
       idempotencyKey: `queue-${Date.now()}-${getUuid()}`,
       expectedLastMessageId: expectedLastMessageId(),
+      expectedSessionGeneration: Number(
+        currentChat.value?.custom_attributes?.bia_session_generation || 0
+      ),
     });
     useAlert(t('CONVERSATION.SEND_TO_HUMAN_QUEUE.SUCCESS'));
   } catch (error) {
@@ -194,6 +197,9 @@ const returnToBia = async () => {
       idempotencyKey: `bia-${Date.now()}-${getUuid()}`,
       expectedLastMessageId: expectedLastMessageId(),
       expectedAssigneeId: currentChat.value?.meta?.assignee?.id || null,
+      expectedSessionGeneration: Number(
+        currentChat.value?.custom_attributes?.bia_session_generation || 0
+      ),
     });
     useAlert(t('CONVERSATION.RETURN_TO_BIA.SUCCESS'));
   } catch (error) {

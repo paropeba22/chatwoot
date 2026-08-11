@@ -60,12 +60,14 @@ class Conversations::AutomationTransitionService
 
     normalized_expected_last_message_id
     normalized_expected_assignee_id
+    normalized_expected_session_generation
   end
 
   def validate_return_expectations!
     return unless action == 'return_to_bia'
     raise InvalidRequest, 'expected_last_message_id_required' unless attributes.key?(:expected_last_message_id)
     raise InvalidRequest, 'expected_assignee_id_required' unless attributes.key?(:expected_assignee_id)
+    raise InvalidRequest, 'expected_session_generation_required' unless attributes.key?(:expected_session_generation)
   end
 
   def configuration
@@ -93,6 +95,15 @@ class Conversations::AutomationTransitionService
     @normalized_expected_assignee_id = normalize_non_negative_integer(attributes[:expected_assignee_id])
   rescue ArgumentError, TypeError
     raise InvalidRequest, 'invalid_expected_assignee_id'
+  end
+
+  def normalized_expected_session_generation
+    return @normalized_expected_session_generation if defined?(@normalized_expected_session_generation)
+    return @normalized_expected_session_generation = :not_provided unless attributes.key?(:expected_session_generation)
+
+    @normalized_expected_session_generation = normalize_non_negative_integer(attributes[:expected_session_generation])
+  rescue ArgumentError, TypeError
+    raise InvalidRequest, 'invalid_expected_session_generation'
   end
 
   def normalize_non_negative_integer(value)
@@ -139,6 +150,7 @@ class Conversations::AutomationTransitionService
   def validate_concurrency!(conversation)
     validate_last_message!(conversation)
     validate_assignee!(conversation)
+    validate_session_generation!(conversation)
   end
 
   def validate_last_message!(conversation)
@@ -153,6 +165,17 @@ class Conversations::AutomationTransitionService
     return if normalized_expected_assignee_id == conversation.assignee_id
 
     raise Conflict.new('stale_assignee', conversation: conversation)
+  end
+
+  def validate_session_generation!(conversation)
+    return if normalized_expected_session_generation == :not_provided
+    return if normalized_expected_session_generation == current_session_generation(conversation)
+
+    raise Conflict.new('stale_session_generation', conversation: conversation)
+  end
+
+  def current_session_generation(conversation)
+    Conversations::AutomationTransitions::BiaSession.new(conversation).generation
   end
 
   def current_last_message_id(conversation)
@@ -185,7 +208,8 @@ class Conversations::AutomationTransitionService
       attributes: {
         idempotency_key: attributes[:idempotency_key],
         expected_last_message_id: normalized_expected_last_message_id,
-        expected_assignee_id: normalized_expected_assignee_id == :not_provided ? nil : normalized_expected_assignee_id
+        expected_assignee_id: normalized_expected_assignee_id == :not_provided ? nil : normalized_expected_assignee_id,
+        expected_session_generation: normalized_expected_session_generation == :not_provided ? nil : normalized_expected_session_generation
       }
     )
   end

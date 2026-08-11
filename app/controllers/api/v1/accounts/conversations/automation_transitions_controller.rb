@@ -27,7 +27,10 @@ class Api::V1::Accounts::Conversations::AutomationTransitionsController < Api::V
 
   def transition_params
     ActionController::Parameters.new(request.request_parameters)
-                                .permit(:action, :idempotency_key, :expected_last_message_id, :expected_assignee_id)
+                                .permit(
+                                  :action, :idempotency_key, :expected_last_message_id,
+                                  :expected_assignee_id, :expected_session_generation
+                                )
   end
 
   def render_feature_disabled
