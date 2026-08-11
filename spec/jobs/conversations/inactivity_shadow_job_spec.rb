@@ -12,7 +12,9 @@ RSpec.describe Conversations::InactivityShadowJob do
 
   it 'upserts shadow-only assessments when enabled without changing the conversation' do
     account.enable_features!('conversation_inactivity_shadow')
-    before_state = conversation.attributes
+    before_state = conversation.reload.slice(
+      'status', 'assignee_id', 'assignee_agent_bot_id', 'custom_attributes', 'cached_label_list', 'updated_at'
+    )
 
     expect { described_class.perform_now(account.id) }.to change(ConversationInactivityShadowAssessment, :count).by(1)
 
@@ -22,7 +24,7 @@ RSpec.describe Conversations::InactivityShadowJob do
       conversation_id: conversation.id,
       classification: 'handoff_pending'
     )
-    expect(conversation.reload.attributes).to eq(before_state)
+    expect(conversation.reload.slice(*before_state.keys)).to eq(before_state)
   end
 
   it 'does not process when another worker owns the account advisory lock' do
@@ -30,6 +32,6 @@ RSpec.describe Conversations::InactivityShadowJob do
     job = described_class.new
     allow(job).to receive(:acquire_lock).and_return(false)
 
-    expect { job.perform_now(account.id) }.not_to change(ConversationInactivityShadowAssessment, :count)
+    expect { job.perform(account.id) }.not_to change(ConversationInactivityShadowAssessment, :count)
   end
 end

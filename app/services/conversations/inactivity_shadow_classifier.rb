@@ -71,19 +71,25 @@ class Conversations::InactivityShadowClassifier
   def last_public_message
     return message_snapshot[:last_public_message] if message_snapshot
 
-    @last_public_message ||= conversation.messages.where(private: false).where.not(message_type: :activity).order(id: :desc).first
+    @last_public_message ||= latest_public(
+      conversation.messages.where(private: false).where.not(message_type: :activity)
+    )
   end
 
   def last_public_incoming
     return message_snapshot[:last_public_incoming] if message_snapshot
 
-    @last_public_incoming ||= conversation.messages.incoming.where(private: false).order(id: :desc).first
+    @last_public_incoming ||= latest_public(conversation.messages.incoming.where(private: false))
   end
 
   def last_public_outgoing
     return message_snapshot[:last_public_outgoing] if message_snapshot
 
-    @last_public_outgoing ||= conversation.messages.outgoing.where(private: false).order(id: :desc).first
+    @last_public_outgoing ||= latest_public(conversation.messages.outgoing.where(private: false))
+  end
+
+  def latest_public(scope)
+    scope.order(created_at: :desc, id: :desc).first
   end
 
   def waiting_seconds(message)

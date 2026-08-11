@@ -67,7 +67,7 @@ class Conversations::InactivityShadowJob < ApplicationJob
   def latest_by_conversation(scope)
     scope
       .select('DISTINCT ON (messages.conversation_id) messages.*')
-      .reorder('messages.conversation_id, messages.id DESC')
+      .reorder('messages.conversation_id, messages.created_at DESC, messages.id DESC')
       .index_by(&:conversation_id)
   end
 
