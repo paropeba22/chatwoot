@@ -11,7 +11,6 @@ class TechnicalIncidentPolicy < ApplicationPolicy
     history?: 'technical_incident_audit',
     conversations?: 'technical_incident_view',
     evaluations?: 'technical_incident_audit',
-    options?: 'technical_incident_view',
     destroy?: 'technical_incident_archive'
   }.freeze
 
@@ -19,6 +18,13 @@ class TechnicalIncidentPolicy < ApplicationPolicy
     define_method(method_name) do
       account_user&.administrator? || account_user&.permissions&.include?(permission)
     end
+  end
+
+  def options?
+    return true if account_user&.administrator?
+
+    permissions = account_user&.permissions || []
+    permissions.intersect?(%w[technical_incident_view technical_incident_create technical_incident_update])
   end
 
   class Scope < ApplicationPolicy::Scope

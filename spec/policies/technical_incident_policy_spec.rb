@@ -16,9 +16,21 @@ RSpec.describe TechnicalIncidentPolicy, type: :policy do
     { user: user, account: account, account_user: account_user }
   end
 
-  permissions :index?, :show?, :options? do
+  permissions :index?, :show? do
     it { expect(policy).to permit(context_for(:technical_incident_view), incident) }
     it { expect(policy).not_to permit(context_for(:technical_incident_create), incident) }
+  end
+
+  permissions :options? do
+    it 'allows every role that can use incident form metadata' do
+      %i[technical_incident_view technical_incident_create technical_incident_update].each do |permission|
+        expect(policy).to permit(context_for(permission), incident)
+      end
+    end
+
+    it 'rejects roles with only unrelated incident permissions' do
+      expect(policy).not_to permit(context_for(:technical_incident_audit), incident)
+    end
   end
 
   permissions :create? do

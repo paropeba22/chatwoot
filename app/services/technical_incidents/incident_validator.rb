@@ -7,6 +7,8 @@ class TechnicalIncidents::IncidentValidator
 
   def validate!
     @incident.validate
+    validate_scope
+    validate_template
     validate_operational_invariants if OPERATIONAL_STATUSES.include?(@incident.status)
     raise ActiveRecord::RecordInvalid, @incident if @incident.errors.any?
 
@@ -18,8 +20,6 @@ class TechnicalIncidents::IncidentValidator
   def validate_operational_invariants
     add_error(:expires_at, :blank) if @incident.expires_at.blank?
     validate_window
-    validate_scope
-    validate_template
   end
 
   def validate_window

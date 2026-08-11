@@ -1,5 +1,8 @@
 # Technical Incidents production controls
 
+The form catalog contract, root-cause analysis and UI-only rollout procedure are
+documented in `docs/technical_incident_form_catalogs.md`.
+
 This document covers only the hardened V1 implementation. The account feature
 and all server-side automation switches are disabled by default.
 

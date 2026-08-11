@@ -1,11 +1,29 @@
 import TechnicalIncidentsAPI from 'dashboard/api/technicalIncidents';
 
+let optionsRequestSequence = 0;
+
 export const state = {
   records: [],
   current: null,
-  options: {},
+  options: {
+    incident_types: [],
+    statuses: [],
+    severities: [],
+    problem_types: [],
+    affected_services: [],
+    actions: [],
+    scope_fields: [],
+    scope_operators: [],
+    template_variables: [],
+  },
   meta: {},
-  uiFlags: { fetching: false, saving: false, transitioning: false },
+  uiFlags: {
+    fetching: false,
+    fetchingOptions: false,
+    optionsError: null,
+    saving: false,
+    transitioning: false,
+  },
 };
 
 export const getters = {
@@ -39,9 +57,25 @@ export const actions = {
     }
   },
   async fetchOptions({ commit }) {
-    const { data } = await TechnicalIncidentsAPI.options();
-    commit('SET_OPTIONS', data);
-    return data;
+    optionsRequestSequence += 1;
+    const requestId = optionsRequestSequence;
+    commit('SET_UI_FLAG', { fetchingOptions: true, optionsError: null });
+    try {
+      const { data } = await TechnicalIncidentsAPI.options();
+      if (requestId === optionsRequestSequence) commit('SET_OPTIONS', data);
+      return data;
+    } catch (error) {
+      if (requestId === optionsRequestSequence) {
+        commit('SET_UI_FLAG', {
+          optionsError: error?.response?.status || 'request_failed',
+        });
+      }
+      throw error;
+    } finally {
+      if (requestId === optionsRequestSequence) {
+        commit('SET_UI_FLAG', { fetchingOptions: false });
+      }
+    }
   },
   async create({ commit }, payload) {
     commit('SET_UI_FLAG', { saving: true });

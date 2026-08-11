@@ -59,9 +59,123 @@
       "ADD_GROUP": "Add OR group",
       "ADD_CRITERION": "Add AND criterion",
       "GROUP": "Group {number}",
-      "SCOPE_VALUES": "Scope values as JSON",
+      "SCOPE_VALUES": "Scope values",
+      "SCOPE_FIELD": "Scope field",
+      "SCOPE_OPERATOR": "Matching rule",
+      "SCOPE_VALUES_PLACEHOLDER": "Enter one value per line",
+      "SCOPE_VALUES_HELP": "Use one value per line. JSON is not required.",
+      "GENERAL_SCOPE_HELP": "This criterion applies to every compatible contract; no value is required.",
+      "ADD_SCOPE_VALUE": "Add value",
+      "REMOVE_GROUP": "Remove group",
+      "REMOVE_CRITERION": "Remove criterion",
+      "NO_SCOPE_GROUPS": "Add at least one OR scope group.",
+      "NO_SCOPE_CRITERIA": "This group needs at least one criterion.",
+      "SEARCH_OPTIONS": "Search options",
+      "NO_SEARCH_RESULTS": "No matching options.",
+      "NONE_SELECTED": "No options selected.",
+      "UNKNOWN_LEGACY_VALUE": "Legacy value unavailable in the current catalog: {value}",
+      "LOADING_OPTIONS": "Loading incident options…",
+      "OPTIONS_ERROR": "Incident options could not be loaded.",
+      "INCIDENT_LOAD_ERROR": "The incident could not be loaded. Try again before editing.",
+      "OPTIONS_EMPTY": "No options are configured for this account.",
+      "RETRY": "Try again",
+      "METADATA_REQUIRED": "Load the incident options before saving.",
+      "VALIDATION_SUMMARY": "Review the fields below:",
       "UNKNOWN_VARIABLE": "The message contains an unsupported template variable.",
-      "CONFLICT": "This incident was changed by another user. Reload before saving."
+      "CONFLICT": "This incident was changed by another user. Reload before saving.",
+      "VALIDATION": {
+        "TITLE_REQUIRED": "Enter a title.",
+        "TYPE_REQUIRED": "Select a valid incident type.",
+        "SEVERITY_REQUIRED": "Select a valid severity.",
+        "ACTION_REQUIRED": "Select a valid action after match.",
+        "PRIORITY_INVALID": "Priority must be a whole number from 0 to 100.",
+        "PROBLEM_TYPES_REQUIRED": "Select at least one problem type.",
+        "SERVICES_REQUIRED": "Select at least one affected service.",
+        "MESSAGE_REQUIRED": "Enter the literal customer message for this action.",
+        "INVALID_EXPIRATION": "Expiration must be after the start time.",
+        "INVALID_DATE": "Enter valid dates and times.",
+        "INVALID_REVIEW": "Review time cannot be after expiration.",
+        "SCOPE_GROUP_REQUIRED": "Add at least one scope group.",
+        "SCOPE_CRITERION_REQUIRED": "Every scope group needs a criterion.",
+        "DUPLICATE_SCOPE_FIELD": "A scope field cannot be repeated inside the same group.",
+        "SCOPE_FIELD_REQUIRED": "Select a valid scope field.",
+        "SCOPE_OPERATOR_INVALID": "The matching rule is not valid for this field.",
+        "SCOPE_VALUE_REQUIRED": "Enter a valid value for every non-general criterion."
+      }
+    },
+    "CATALOG": {
+      "INCIDENT_TYPES": {
+        "UNPLANNED_OUTAGE": "Unplanned outage",
+        "DEGRADATION": "Service degradation",
+        "SCHEDULED_MAINTENANCE": "Scheduled maintenance",
+        "EXTERNAL_PROVIDER": "External provider",
+        "COMPANY_APPLICATION": "Company application",
+        "OTHER": "Other"
+      },
+      "STATUSES": {
+        "DRAFT": "Draft",
+        "SCHEDULED": "Scheduled",
+        "ACTIVE": "Active",
+        "MONITORING": "Monitoring",
+        "RESOLVED": "Resolved",
+        "EXPIRED": "Expired",
+        "CANCELLED": "Cancelled"
+      },
+      "SEVERITIES": {
+        "INFORMATIONAL": "Informational",
+        "MINOR": "Minor",
+        "MAJOR": "Major",
+        "CRITICAL": "Critical"
+      },
+      "PROBLEM_TYPES": {
+        "INTERNET_CONNECTIVITY": "Internet connectivity",
+        "PHYSICAL_FIBER": "Physical fiber damage",
+        "OPTICAL_ALARM": "Optical alarm",
+        "DNS": "DNS",
+        "EXTERNAL_SERVICE": "External service",
+        "COMPANY_APPLICATION": "Grupo Telecom application",
+        "IPTV": "IPTV",
+        "TELEPHONY": "Telephony",
+        "OTHER": "Other",
+        "UNIDENTIFIED": "Unidentified"
+      },
+      "SERVICES": {
+        "INTERNET": "Internet",
+        "DNS": "DNS",
+        "GOOGLE": "Google",
+        "YOUTUBE": "YouTube",
+        "GRUPO_TELECOM_APP": "Grupo Telecom application",
+        "IPTV": "IPTV",
+        "TELEPHONY": "Telephony",
+        "OTHER": "Other"
+      },
+      "ACTIONS": {
+        "MESSAGE_AND_HANDOFF": "Send message and hand off",
+        "MESSAGE_ONLY": "Send message only",
+        "HANDOFF_ONLY": "Hand off only"
+      },
+      "ACTION_DESCRIPTIONS": {
+        "MESSAGE_AND_HANDOFF": "Creates the literal message and then places the conversation in human handoff.",
+        "MESSAGE_ONLY": "Creates only the literal customer message; it does not hand off the conversation.",
+        "HANDOFF_ONLY": "Places the conversation in human handoff without creating an incident message."
+      },
+      "SCOPE_FIELDS": {
+        "GENERAL": "General",
+        "SERVICE_SPECIFIC": "Specific service",
+        "CONTRACT_ID": "Contract ID",
+        "POP_ID": "POP ID",
+        "POSTAL_CODE": "Postal code",
+        "CITY_NEIGHBORHOOD": "City and neighborhood",
+        "CITY_STREET": "City and street"
+      },
+      "SCOPE_OPERATORS": {
+        "IN": "Matches any listed value"
+      },
+      "VALUE_FIELDS": {
+        "CITY": "City",
+        "NEIGHBORHOOD": "Neighborhood",
+        "STREET": "Street"
+      }
     },
     "ACTIONS": {
       "ACTIVATE": "Activate",

@@ -59,9 +59,123 @@
       "ADD_GROUP": "Adicionar grupo OU",
       "ADD_CRITERION": "Adicionar critério E",
       "GROUP": "Grupo {number}",
-      "SCOPE_VALUES": "Valores do critério em JSON",
+      "SCOPE_VALUES": "Valores do critério",
+      "SCOPE_FIELD": "Campo de abrangência",
+      "SCOPE_OPERATOR": "Regra de correspondência",
+      "SCOPE_VALUES_PLACEHOLDER": "Informe um valor por linha",
+      "SCOPE_VALUES_HELP": "Use um valor por linha. Não é necessário informar JSON.",
+      "GENERAL_SCOPE_HELP": "Este critério vale para todos os contratos compatíveis; nenhum valor é necessário.",
+      "ADD_SCOPE_VALUE": "Adicionar valor",
+      "REMOVE_GROUP": "Remover grupo",
+      "REMOVE_CRITERION": "Remover critério",
+      "NO_SCOPE_GROUPS": "Adicione pelo menos um grupo de abrangência OU.",
+      "NO_SCOPE_CRITERIA": "Este grupo precisa de pelo menos um critério.",
+      "SEARCH_OPTIONS": "Buscar opções",
+      "NO_SEARCH_RESULTS": "Nenhuma opção correspondente.",
+      "NONE_SELECTED": "Nenhuma opção selecionada.",
+      "UNKNOWN_LEGACY_VALUE": "Valor legado indisponível no catálogo atual: {value}",
+      "LOADING_OPTIONS": "Carregando opções do incidente…",
+      "OPTIONS_ERROR": "Não foi possível carregar as opções.",
+      "INCIDENT_LOAD_ERROR": "Não foi possível carregar o incidente. Tente novamente antes de editar.",
+      "OPTIONS_EMPTY": "Nenhuma opção configurada para esta conta.",
+      "RETRY": "Tentar novamente",
+      "METADATA_REQUIRED": "Carregue as opções do incidente antes de salvar.",
+      "VALIDATION_SUMMARY": "Revise os campos abaixo:",
       "UNKNOWN_VARIABLE": "A mensagem contém uma variável de template não permitida.",
-      "CONFLICT": "Outra pessoa alterou este incidente. Recarregue antes de salvar."
+      "CONFLICT": "Outra pessoa alterou este incidente. Recarregue antes de salvar.",
+      "VALIDATION": {
+        "TITLE_REQUIRED": "Informe um título.",
+        "TYPE_REQUIRED": "Selecione um tipo de incidente válido.",
+        "SEVERITY_REQUIRED": "Selecione uma severidade válida.",
+        "ACTION_REQUIRED": "Selecione uma ação após correspondência válida.",
+        "PRIORITY_INVALID": "A prioridade deve ser um número inteiro entre 0 e 100.",
+        "PROBLEM_TYPES_REQUIRED": "Selecione pelo menos um tipo de problema.",
+        "SERVICES_REQUIRED": "Selecione pelo menos um serviço afetado.",
+        "MESSAGE_REQUIRED": "Informe a mensagem literal ao cliente para esta ação.",
+        "INVALID_EXPIRATION": "A expiração deve ser posterior ao início.",
+        "INVALID_DATE": "Informe datas e horários válidos.",
+        "INVALID_REVIEW": "A revisão não pode ser posterior à expiração.",
+        "SCOPE_GROUP_REQUIRED": "Adicione pelo menos um grupo de abrangência.",
+        "SCOPE_CRITERION_REQUIRED": "Cada grupo precisa de pelo menos um critério.",
+        "DUPLICATE_SCOPE_FIELD": "Um campo de abrangência não pode se repetir no mesmo grupo.",
+        "SCOPE_FIELD_REQUIRED": "Selecione um campo de abrangência válido.",
+        "SCOPE_OPERATOR_INVALID": "A regra de correspondência não é válida para este campo.",
+        "SCOPE_VALUE_REQUIRED": "Informe um valor válido para cada critério que não seja geral."
+      }
+    },
+    "CATALOG": {
+      "INCIDENT_TYPES": {
+        "UNPLANNED_OUTAGE": "Falha não planejada",
+        "DEGRADATION": "Degradação do serviço",
+        "SCHEDULED_MAINTENANCE": "Manutenção programada",
+        "EXTERNAL_PROVIDER": "Provedor externo",
+        "COMPANY_APPLICATION": "Aplicativo da empresa",
+        "OTHER": "Outro"
+      },
+      "STATUSES": {
+        "DRAFT": "Rascunho",
+        "SCHEDULED": "Programado",
+        "ACTIVE": "Ativo",
+        "MONITORING": "Monitoramento",
+        "RESOLVED": "Resolvido",
+        "EXPIRED": "Expirado",
+        "CANCELLED": "Cancelado"
+      },
+      "SEVERITIES": {
+        "INFORMATIONAL": "Informativa",
+        "MINOR": "Baixa",
+        "MAJOR": "Alta",
+        "CRITICAL": "Crítica"
+      },
+      "PROBLEM_TYPES": {
+        "INTERNET_CONNECTIVITY": "Conectividade de internet",
+        "PHYSICAL_FIBER": "Dano físico em fibra",
+        "OPTICAL_ALARM": "Alarme óptico",
+        "DNS": "DNS",
+        "EXTERNAL_SERVICE": "Serviço externo",
+        "COMPANY_APPLICATION": "Aplicativo da Grupo Telecom",
+        "IPTV": "IPTV",
+        "TELEPHONY": "Telefonia",
+        "OTHER": "Outro",
+        "UNIDENTIFIED": "Não identificado"
+      },
+      "SERVICES": {
+        "INTERNET": "Internet",
+        "DNS": "DNS",
+        "GOOGLE": "Google",
+        "YOUTUBE": "YouTube",
+        "GRUPO_TELECOM_APP": "Aplicativo da Grupo Telecom",
+        "IPTV": "IPTV",
+        "TELEPHONY": "Telefonia",
+        "OTHER": "Outro"
+      },
+      "ACTIONS": {
+        "MESSAGE_AND_HANDOFF": "Enviar mensagem e encaminhar",
+        "MESSAGE_ONLY": "Somente enviar mensagem",
+        "HANDOFF_ONLY": "Somente encaminhar"
+      },
+      "ACTION_DESCRIPTIONS": {
+        "MESSAGE_AND_HANDOFF": "Cria a mensagem literal e depois coloca a conversa em atendimento humano.",
+        "MESSAGE_ONLY": "Cria somente a mensagem literal ao cliente; não encaminha a conversa.",
+        "HANDOFF_ONLY": "Coloca a conversa em atendimento humano sem criar mensagem do incidente."
+      },
+      "SCOPE_FIELDS": {
+        "GENERAL": "Geral",
+        "SERVICE_SPECIFIC": "Serviço específico",
+        "CONTRACT_ID": "ID do contrato",
+        "POP_ID": "ID do POP",
+        "POSTAL_CODE": "CEP",
+        "CITY_NEIGHBORHOOD": "Cidade e bairro",
+        "CITY_STREET": "Cidade e rua"
+      },
+      "SCOPE_OPERATORS": {
+        "IN": "Corresponde a qualquer valor listado"
+      },
+      "VALUE_FIELDS": {
+        "CITY": "Cidade",
+        "NEIGHBORHOOD": "Bairro",
+        "STREET": "Rua"
+      }
     },
     "ACTIONS": {
       "ACTIVATE": "Ativar",

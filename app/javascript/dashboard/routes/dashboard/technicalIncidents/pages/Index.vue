@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { usePolicy } from 'dashboard/composables/usePolicy';
+import { catalogLabel } from '../helpers/formCatalog';
 
 const store = useStore();
 const router = useRouter();
@@ -42,10 +43,20 @@ const openIncident = incident =>
     name: 'technical_incidents_show',
     params: { incidentId: incident.id },
   });
+const bucketLabel = bucket => {
+  const labels = {
+    active: t('TECHNICAL_INCIDENTS.BUCKETS.ACTIVE'),
+    scheduled: t('TECHNICAL_INCIDENTS.BUCKETS.SCHEDULED'),
+    history: t('TECHNICAL_INCIDENTS.BUCKETS.HISTORY'),
+  };
+  return labels[bucket];
+};
 
 onMounted(async () => {
-  await store.dispatch('technicalIncidents/fetchOptions');
-  await fetchRecords();
+  await Promise.allSettled([
+    store.dispatch('technicalIncidents/fetchOptions'),
+    fetchRecords(),
+  ]);
 });
 </script>
 
@@ -89,7 +100,7 @@ onMounted(async () => {
           fetchRecords();
         "
       >
-        {{ t(`TECHNICAL_INCIDENTS.BUCKETS.${bucket.toUpperCase()}`) }}
+        {{ bucketLabel(bucket) }}
       </button>
     </nav>
 
@@ -110,10 +121,10 @@ onMounted(async () => {
         <option value="">{{ t('TECHNICAL_INCIDENTS.ALL_STATUSES') }}</option>
         <option
           v-for="status in options.statuses"
-          :key="status"
-          :value="status"
+          :key="status.value"
+          :value="status.value"
         >
-          {{ status }}
+          {{ catalogLabel(status, t) }}
         </option>
       </select>
       <select
@@ -123,10 +134,10 @@ onMounted(async () => {
         <option value="">{{ t('TECHNICAL_INCIDENTS.ALL_SEVERITIES') }}</option>
         <option
           v-for="severity in options.severities"
-          :key="severity"
-          :value="severity"
+          :key="severity.value"
+          :value="severity.value"
         >
-          {{ severity }}
+          {{ catalogLabel(severity, t) }}
         </option>
       </select>
       <select
@@ -136,10 +147,10 @@ onMounted(async () => {
         <option value="">{{ t('TECHNICAL_INCIDENTS.ALL_CATEGORIES') }}</option>
         <option
           v-for="category in options.incident_types"
-          :key="category"
-          :value="category"
+          :key="category.value"
+          :value="category.value"
         >
-          {{ category }}
+          {{ catalogLabel(category, t) }}
         </option>
       </select>
       <select
@@ -148,11 +159,11 @@ onMounted(async () => {
       >
         <option value="">{{ t('TECHNICAL_INCIDENTS.ALL_SCOPES') }}</option>
         <option
-          v-for="scope in options.scope_types"
-          :key="scope"
-          :value="scope"
+          v-for="scope in options.scope_fields"
+          :key="scope.value"
+          :value="scope.value"
         >
-          {{ scope }}
+          {{ catalogLabel(scope, t) }}
         </option>
       </select>
       <button
