@@ -1010,6 +1010,10 @@ export default {
       };
       return file && this.onFileUpload(autoRecordedFile);
     },
+    onAudioRecordingError() {
+      this.resetAudioRecorderInput();
+      useAlert(this.$t('CONVERSATION.REPLYBOX.AUDIO_RECORDING_ERROR'));
+    },
     toggleTyping(status) {
       const conversationId = this.currentChat.id;
       const isPrivate = this.isPrivate;
@@ -1284,6 +1288,7 @@ export default {
           :audio-record-format="audioRecordFormat"
           @recorder-progress-changed="onRecordProgressChanged"
           @finish-record="onFinishRecorder"
+          @recording-error="onAudioRecordingError"
           @play="recordingAudioState = 'playing'"
           @pause="recordingAudioState = 'paused'"
         />

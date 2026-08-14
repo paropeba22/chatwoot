@@ -1,5 +1,3 @@
-import lamejs from '@breezystack/lamejs';
-
 const writeString = (view, offset, string) => {
   // eslint-disable-next-line no-plusplus
   for (let i = 0; i < string.length; i++) {
@@ -50,9 +48,12 @@ const bufferToWav = async (buffer, numChannels, sampleRate) => {
 
 const decodeAudioData = async audioBlob => {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const arrayBuffer = await audioBlob.arrayBuffer();
-  const audioData = await audioContext.decodeAudioData(arrayBuffer);
-  return audioData;
+  try {
+    const arrayBuffer = await audioBlob.arrayBuffer();
+    return await audioContext.decodeAudioData(arrayBuffer);
+  } finally {
+    await audioContext.close();
+  }
 };
 
 export const convertToWav = async audioBlob => {
@@ -64,36 +65,47 @@ export const convertToWav = async audioBlob => {
   );
 };
 
-/**
- * Encodes audio samples to MP3 format.
- * @param {number} channels - Number of audio channels.
- * @param {number} sampleRate - Sample rate in Hz.
- * @param {Int16Array} samples - Audio samples to be encoded.
- * @param {number} bitrate - MP3 bitrate (default: 128)
- * @returns {Blob} - The MP3 encoded audio as a Blob.
- */
-export const encodeToMP3 = (channels, sampleRate, samples, bitrate = 128) => {
-  const outputBuffer = [];
-  const encoder = new lamejs.Mp3Encoder(channels, sampleRate, bitrate);
-  const maxSamplesPerFrame = 1152;
+const encodeToMP3InWorker = ({ channelData, sampleRate, bitrate }) =>
+  new Promise((resolve, reject) => {
+    const worker = new Worker(
+      new URL('./mp3Encoder.worker.js', import.meta.url),
+      {
+        type: 'module',
+      }
+    );
 
-  for (let offset = 0; offset < samples.length; offset += maxSamplesPerFrame) {
-    const sliceEnd = Math.min(offset + maxSamplesPerFrame, samples.length);
-    const sampleSlice = samples.subarray(offset, sliceEnd);
-    const mp3Buffer = encoder.encodeBuffer(sampleSlice);
+    const cleanup = () => worker.terminate();
 
-    if (mp3Buffer.length > 0) {
-      outputBuffer.push(new Int8Array(mp3Buffer));
+    worker.onmessage = ({ data }) => {
+      cleanup();
+      if (data.error || !(data.mp3Buffer instanceof ArrayBuffer)) {
+        reject(new Error(data.error));
+        return;
+      }
+
+      resolve(new Blob([data.mp3Buffer], { type: 'audio/mp3' }));
+    };
+
+    worker.onerror = () => {
+      cleanup();
+      reject(new Error('MP3 worker failed.'));
+    };
+
+    const channelBuffers = channelData.map(channel => channel.buffer);
+    try {
+      worker.postMessage(
+        {
+          channelBuffers,
+          sampleRate,
+          bitrate,
+        },
+        channelBuffers
+      );
+    } catch (error) {
+      cleanup();
+      reject(error);
     }
-  }
-
-  const remainingData = encoder.flush();
-  if (remainingData.length > 0) {
-    outputBuffer.push(new Int8Array(remainingData));
-  }
-
-  return new Blob(outputBuffer, { type: 'audio/mp3' });
-};
+  });
 
 /**
  * Converts an audio Blob to an MP3 format Blob.
@@ -104,32 +116,18 @@ export const encodeToMP3 = (channels, sampleRate, samples, bitrate = 128) => {
 export const convertToMp3 = async (audioBlob, bitrate = 128) => {
   try {
     const audioBuffer = await decodeAudioData(audioBlob);
-    const samples = new Int16Array(
-      audioBuffer.length * audioBuffer.numberOfChannels
+    const channelData = Array.from(
+      { length: audioBuffer.numberOfChannels },
+      (_, channel) => audioBuffer.getChannelData(channel).slice()
     );
-    let offset = 0;
-    for (let i = 0; i < audioBuffer.length; i += 1) {
-      for (
-        let channel = 0;
-        channel < audioBuffer.numberOfChannels;
-        channel += 1
-      ) {
-        const sample = Math.max(
-          -1,
-          Math.min(1, audioBuffer.getChannelData(channel)[i])
-        );
-        samples[offset] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-        offset += 1;
-      }
-    }
-    return encodeToMP3(
-      audioBuffer.numberOfChannels,
-      audioBuffer.sampleRate,
-      samples,
-      bitrate
-    );
+
+    return await encodeToMP3InWorker({
+      channelData,
+      sampleRate: audioBuffer.sampleRate,
+      bitrate,
+    });
   } catch (error) {
-    throw new Error('Conversion to MP3 failed.');
+    throw new Error('Conversion to MP3 failed.', { cause: error });
   }
 };
 
