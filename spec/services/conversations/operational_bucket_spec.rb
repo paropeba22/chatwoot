@@ -32,6 +32,16 @@ RSpec.describe Conversations::OperationalBucket do
     expect(result).to have_attributes(bucket: 'mine', reason: 'human_assignee_precedence', inconsistent: true)
   end
 
+  it 'moves a Bia-labeled conversation exclusively to mine when the current user is assigned' do
+    conversation = build_conversation(assignee: user, label_list: ['bot-bia'])
+    relation = account.conversations.where(id: conversation.id)
+
+    expect(described_class.new(conversation, current_user: user).call.bucket).to eq('mine')
+    expect(described_class.scope(relation, bucket: 'mine', current_user: user)).to contain_exactly(conversation)
+    expect(described_class.scope(relation, bucket: 'bia', current_user: user)).to be_empty
+    expect(described_class.scope(relation, bucket: 'human_queue', current_user: user)).to be_empty
+  end
+
   it 'keeps a native AgentBot assignment out of all three buckets' do
     conversation = build_conversation(assignee_agent_bot: create(:agent_bot, account: account), label_list: ['bot-bia'])
 

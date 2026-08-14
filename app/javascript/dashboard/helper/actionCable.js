@@ -4,6 +4,7 @@ import DashboardAudioNotificationHelper from './AudioAlerts/DashboardAudioNotifi
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { emitter } from 'shared/helpers/mitt';
 import { useImpersonation } from 'dashboard/composables/useImpersonation';
+import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 
 const { isImpersonating } = useImpersonation();
 
@@ -76,13 +77,17 @@ class ActionCableConnector extends BaseActionCableConnector {
   onAssigneeChanged = payload => {
     const { id } = payload;
     if (id) {
-      this.app.$store.dispatch('updateConversation', payload);
+      this.syncConversationProjection(payload);
     }
     this.fetchConversationStats();
   };
 
   onConversationCreated = data => {
-    this.app.$store.dispatch('addConversation', data);
+    if (this.canonicalOperationalBucketsEnabled) {
+      this.syncConversationProjection(data);
+    } else {
+      this.app.$store.dispatch('addConversation', data);
+    }
     this.fetchConversationStats();
   };
 
@@ -110,13 +115,35 @@ class ActionCableConnector extends BaseActionCableConnector {
   onReload = () => window.location.reload();
 
   onStatusChange = data => {
-    this.app.$store.dispatch('updateConversation', data);
+    this.syncConversationProjection(data);
     this.fetchConversationStats();
   };
 
   onConversationUpdated = data => {
-    this.app.$store.dispatch('updateConversation', data);
+    this.syncConversationProjection(data);
     this.fetchConversationStats();
+  };
+
+  get canonicalOperationalBucketsEnabled() {
+    const isFeatureEnabled =
+      this.app.$store.getters['accounts/isFeatureEnabledonAccount'];
+    const accountId = this.app.$store.getters.getCurrentAccountId;
+
+    return Boolean(
+      isFeatureEnabled?.(
+        accountId,
+        FEATURE_FLAGS.CONVERSATION_OPERATIONAL_BUCKETS
+      )
+    );
+  }
+
+  syncConversationProjection = conversation => {
+    if (this.canonicalOperationalBucketsEnabled) {
+      this.app.$store.dispatch('getConversation', conversation.id);
+      return;
+    }
+
+    this.app.$store.dispatch('updateConversation', conversation);
   };
 
   onTypingOn = ({ conversation, user }) => {

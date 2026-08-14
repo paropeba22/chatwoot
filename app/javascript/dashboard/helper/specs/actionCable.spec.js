@@ -1,5 +1,6 @@
 import { describe, it, beforeEach, expect, vi } from 'vitest';
 import ActionCableConnector from '../actionCable';
+import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 
 vi.mock('shared/helpers/mitt', () => ({
   emitter: {
@@ -17,19 +18,22 @@ global.chatwootConfig = {
   websocketURL: 'wss://test.chatwoot.com',
 };
 
-describe('ActionCableConnector - Copilot Tests', () => {
+describe('ActionCableConnector', () => {
   let store;
   let actionCable;
   let mockDispatch;
+  let featureEnabled;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockDispatch = vi.fn();
+    featureEnabled = vi.fn(() => false);
     store = {
       $store: {
         dispatch: mockDispatch,
         getters: {
           getCurrentAccountId: 1,
+          'accounts/isFeatureEnabledonAccount': featureEnabled,
         },
       },
     };
@@ -62,6 +66,60 @@ describe('ActionCableConnector - Copilot Tests', () => {
         'copilotMessages/upsert',
         copilotData
       );
+    });
+  });
+
+  describe('canonical operational bucket events', () => {
+    const conversation = {
+      id: 42,
+      account_id: 1,
+      operational_bucket: 'bia',
+    };
+
+    it('reloads the authoritative projection after an assignee change', () => {
+      featureEnabled.mockReturnValue(true);
+
+      actionCable.onAssigneeChanged(conversation);
+
+      expect(featureEnabled).toHaveBeenCalledWith(
+        1,
+        FEATURE_FLAGS.CONVERSATION_OPERATIONAL_BUCKETS
+      );
+      expect(mockDispatch).toHaveBeenCalledWith('getConversation', 42);
+      expect(mockDispatch).not.toHaveBeenCalledWith(
+        'updateConversation',
+        conversation
+      );
+    });
+
+    it('reloads the authoritative projection for conversation updates', () => {
+      featureEnabled.mockReturnValue(true);
+
+      actionCable.onConversationUpdated(conversation);
+
+      expect(mockDispatch).toHaveBeenCalledWith('getConversation', 42);
+    });
+
+    it('loads new conversations with their authoritative projection', () => {
+      featureEnabled.mockReturnValue(true);
+
+      actionCable.onConversationCreated(conversation);
+
+      expect(mockDispatch).toHaveBeenCalledWith('getConversation', 42);
+      expect(mockDispatch).not.toHaveBeenCalledWith(
+        'addConversation',
+        conversation
+      );
+    });
+
+    it('preserves the legacy realtime path when the account flag is off', () => {
+      actionCable.onAssigneeChanged(conversation);
+
+      expect(mockDispatch).toHaveBeenCalledWith(
+        'updateConversation',
+        conversation
+      );
+      expect(mockDispatch).not.toHaveBeenCalledWith('getConversation', 42);
     });
   });
 });
