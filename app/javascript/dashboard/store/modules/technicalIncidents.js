@@ -61,7 +61,7 @@ export const actions = {
     const requestId = optionsRequestSequence;
     commit('SET_UI_FLAG', { fetchingOptions: true, optionsError: null });
     try {
-      const { data } = await TechnicalIncidentsAPI.options();
+      const { data } = await TechnicalIncidentsAPI.fetchOptions();
       if (requestId === optionsRequestSequence) commit('SET_OPTIONS', data);
       return data;
     } catch (error) {

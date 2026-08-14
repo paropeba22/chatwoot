@@ -1,5 +1,13 @@
 <script setup>
-import { ref, unref, provide, computed, watch, onMounted } from 'vue';
+import {
+  ref,
+  unref,
+  provide,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+} from 'vue';
 import { useStore } from 'vuex';
 import { useRoute, useRouter } from 'vue-router';
 import {
@@ -55,6 +63,10 @@ import {
   normalizeAssigneeView,
   normalizeConversationStatus,
 } from 'dashboard/helper/conversationFilterQueryHelper';
+import {
+  createConversationStatsRefresher,
+  loadConversationStats,
+} from 'dashboard/helper/conversationStatsRefresh';
 
 const props = defineProps({
   conversationInbox: { type: [String, Number], default: 0 },
@@ -719,8 +731,6 @@ function updateAssigneeTab(selectedTab) {
   resetAndFetchData();
   // eslint-disable-next-line no-use-before-define
   redirectToConversationList(selectedTab, activeStatus.value);
-  // eslint-disable-next-line no-use-before-define
-  fetchConversationStats();
 }
 
 function onBasicFilterChange(value, type) {
@@ -924,7 +934,7 @@ function toggleSelectAll(check) {
   selectAllConversations(check, conversationList);
 }
 
-function fetchConversationStats() {
+async function performConversationStatsRefresh() {
   if (hasAppliedFiltersOrActiveFolders.value) return;
   const statsFilters = {
     inboxId: props.conversationInbox || undefined,
@@ -933,67 +943,32 @@ function fetchConversationStats() {
     conversationType: props.conversationType || undefined,
     labels: props.label ? [props.label] : undefined,
   };
-  store.dispatch('conversationStats/get', statsFilters);
-  // eslint-disable-next-line no-use-before-define
-  fetchBotTabCounts(statsFilters);
-}
-
-async function fetchBotTabCounts(baseFilters = {}) {
-  if (hasAppliedFiltersOrActiveFolders.value || props.label) {
-    botTabCounts.value = { total: 0, unassigned: 0 };
-    return;
-  }
 
   tabStatsRequestSequence += 1;
   const requestSequence = tabStatsRequestSequence;
   tabStatsError.value = false;
   try {
-    const sharedFilters = {
-      inboxId: baseFilters.inboxId,
-      status: baseFilters.status,
-      teamId: baseFilters.teamId,
-      conversationType: baseFilters.conversationType,
-      labels: ['bot-bia'],
-    };
-
-    if (canonicalBucketsEnabled.value) {
-      const response = await ConversationApi.meta({
-        ...sharedFilters,
-        labels: undefined,
-        assigneeType: wootConstants.ASSIGNEE_TYPE.ALL,
-      });
-      if (requestSequence !== tabStatsRequestSequence) return;
-
-      const buckets = response?.data?.meta?.operational_buckets;
-      if (!buckets) throw new Error('operational_bucket_counts_missing');
-      botTabCounts.value = {
-        total: Number(buckets.bia || 0),
-        unassigned: 0,
-        mine: Number(buckets.mine || 0),
-        humanQueue: Number(buckets.human_queue || 0),
-      };
-      return;
-    }
-
-    const [allBotResponse, unassignedBotResponse] = await Promise.all([
-      ConversationApi.meta({
-        ...sharedFilters,
-        assigneeType: wootConstants.ASSIGNEE_TYPE.ALL,
-      }),
-      ConversationApi.meta({
-        ...sharedFilters,
-        assigneeType: wootConstants.ASSIGNEE_TYPE.UNASSIGNED,
-      }),
-    ]);
-
-    const total = allBotResponse?.data?.meta?.all_count || 0;
-    const unassigned = unassignedBotResponse?.data?.meta?.unassigned_count || 0;
+    const result = await loadConversationStats({
+      canonicalBucketsEnabled: canonicalBucketsEnabled.value,
+      filters: statsFilters,
+      includeBotCounts: !props.label,
+      requestMeta: filters => ConversationApi.meta(filters),
+    });
 
     if (requestSequence !== tabStatsRequestSequence) return;
-    botTabCounts.value = { total, unassigned };
+    store.dispatch('conversationStats/set', result.meta);
+    botTabCounts.value = result.botTabCounts;
   } catch {
     if (requestSequence === tabStatsRequestSequence) tabStatsError.value = true;
   }
+}
+
+const conversationStatsRefresher = createConversationStatsRefresher(
+  performConversationStatsRefresh
+);
+
+function fetchConversationStats() {
+  conversationStatsRefresher.schedule();
 }
 
 useEmitter('fetch_conversation_stats', fetchConversationStats);
@@ -1004,10 +979,14 @@ onMounted(() => {
   store.dispatch('setChatStatusFilter', activeStatus.value);
   store.dispatch('setChatSortFilter', activeSortBy.value);
   resetAndFetchData();
-  fetchConversationStats();
   if (hasActiveFolders.value) {
     store.dispatch('campaigns/get');
   }
+});
+
+onBeforeUnmount(() => {
+  tabStatsRequestSequence += 1;
+  conversationStatsRefresher.cancel();
 });
 
 const deleteConversationDialogRef = ref(null);

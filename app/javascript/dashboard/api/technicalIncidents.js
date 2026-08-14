@@ -11,7 +11,7 @@ class TechnicalIncidentsAPI extends ApiClient {
     return axios.get(this.url, { params });
   }
 
-  options() {
+  fetchOptions() {
     return axios.get(`${this.url}/options`);
   }
 

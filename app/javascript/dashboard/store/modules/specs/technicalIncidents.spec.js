@@ -6,7 +6,7 @@ vi.mock('dashboard/api/technicalIncidents', () => ({
   default: {
     list: vi.fn(),
     show: vi.fn(),
-    options: vi.fn(),
+    fetchOptions: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     transition: vi.fn(),
@@ -76,7 +76,7 @@ describe('technicalIncidents store', () => {
   });
 
   it('exposes loading and a sanitized error instead of converting metadata failures into empty success', async () => {
-    TechnicalIncidentsAPI.options.mockRejectedValue({
+    TechnicalIncidentsAPI.fetchOptions.mockRejectedValue({
       response: { status: 403, data: { secret: 'must-not-be-exposed' } },
     });
 
@@ -95,7 +95,7 @@ describe('technicalIncidents store', () => {
 
   it('commits only the latest metadata response when requests finish out of order', async () => {
     let resolveFirst;
-    TechnicalIncidentsAPI.options
+    TechnicalIncidentsAPI.fetchOptions
       .mockReturnValueOnce(
         new Promise(resolve => {
           resolveFirst = resolve;
@@ -112,6 +112,22 @@ describe('technicalIncidents store', () => {
     expect(commit).toHaveBeenCalledWith('SET_OPTIONS', { metadata_version: 2 });
     expect(commit).not.toHaveBeenCalledWith('SET_OPTIONS', {
       metadata_version: 1,
+    });
+  });
+
+  it('retries metadata through a new API request after a failure', async () => {
+    TechnicalIncidentsAPI.fetchOptions
+      .mockRejectedValueOnce({ response: { status: 500 } })
+      .mockResolvedValueOnce({ data: { metadata_version: 2 } });
+
+    await expect(actions.fetchOptions({ commit })).rejects.toBeTruthy();
+    await expect(actions.fetchOptions({ commit })).resolves.toEqual({
+      metadata_version: 2,
+    });
+
+    expect(TechnicalIncidentsAPI.fetchOptions).toHaveBeenCalledTimes(2);
+    expect(commit).toHaveBeenCalledWith('SET_OPTIONS', {
+      metadata_version: 2,
     });
   });
 });

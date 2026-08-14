@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - 'app/**/technical_incident*'
+      - 'app/javascript/dashboard/api/technicalIncidents.js'
+      - 'app/javascript/dashboard/api/specs/technicalIncidents.spec.js'
+      - 'app/javascript/dashboard/store/modules/technicalIncidents.js'
+      - 'app/javascript/dashboard/store/modules/specs/technicalIncidents.spec.js'
       - 'app/services/technical_incidents/**'
       - 'app/jobs/technical_incidents/**'
       - 'app/javascript/dashboard/**/technicalIncidents/**'
@@ -260,6 +264,7 @@ jobs:
       - name: Technical incidents Vitest
         run: >-
           pnpm exec vitest run
+          app/javascript/dashboard/api/specs/technicalIncidents.spec.js
           app/javascript/dashboard/routes/dashboard/technicalIncidents/specs
           app/javascript/dashboard/store/modules/specs/technicalIncidents.spec.js
           --pool=forks --maxWorkers=1 --no-file-parallelism

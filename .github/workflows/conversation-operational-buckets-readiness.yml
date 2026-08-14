@@ -5,8 +5,12 @@ on:
     paths:
       - 'app/finders/conversation_finder.rb'
       - 'app/services/conversations/operational_bucket.rb'
+      - 'app/models/conversation.rb'
+      - 'app/jobs/conversations/resolution_job.rb'
       - 'app/views/api/v1/**/conversation*.jbuilder'
       - 'app/javascript/dashboard/components/ChatList.vue'
+      - 'app/javascript/dashboard/helper/conversationStatsRefresh.js'
+      - 'app/javascript/dashboard/helper/specs/conversationStatsRefresh.spec.js'
       - 'app/javascript/dashboard/api/inbox/conversation.js'
       - 'app/javascript/dashboard/store/**'
       - 'app/javascript/dashboard/featureFlags.js'
@@ -14,6 +18,7 @@ on:
       - 'db/migrate/20260806000001_add_operational_buckets_to_accounts.rb'
       - 'spec/finders/conversation_finder_spec.rb'
       - 'spec/services/conversations/operational_bucket_spec.rb'
+      - 'spec/jobs/conversations/resolution_job_spec.rb'
       - 'docs/chatwoot_realtime_tabs_counters_phase3.md'
       - '.github/workflows/conversation-operational-buckets-readiness.yml'
   workflow_dispatch:
@@ -62,11 +67,12 @@ jobs:
         with:
           bundler-cache: true
       - run: bundle exec rails db:create db:schema:load db:migrate
-      - run: bundle exec rspec spec/services/conversations/operational_bucket_spec.rb spec/finders/conversation_finder_spec.rb spec/models/concerns/technical_incidents_featurable_spec.rb
+      - run: bundle exec rspec spec/services/conversations/operational_bucket_spec.rb spec/finders/conversation_finder_spec.rb spec/jobs/conversations/resolution_job_spec.rb spec/models/concerns/technical_incidents_featurable_spec.rb
       - name: RuboCop changed Ruby
         shell: bash
         run: |
-          base_sha="$(git merge-base HEAD origin/agent/chatwoot-bia-session-atomic-gate)"
+          git fetch --no-tags origin develop
+          base_sha="$(git merge-base HEAD origin/develop)"
           mapfile -d '' files < <(git diff --name-only --diff-filter=ACMR -z "$base_sha"...HEAD -- '*.rb' ':!db/schema.rb')
           bundle exec rubocop --parallel -- "${files[@]}"
       - run: bundle exec rails db:migrate:down VERSION=20260806000001
@@ -89,5 +95,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec eslint app/javascript/dashboard/components/ChatList.vue app/javascript/dashboard/api/inbox/conversation.js app/javascript/dashboard/store/modules/conversations app/javascript/dashboard/store/mutation-types.js
-      - run: pnpm exec vitest run app/javascript/dashboard/api/specs/inbox/conversation.spec.js app/javascript/dashboard/store/modules/specs/conversations/actions.spec.js app/javascript/dashboard/store/modules/specs/conversations/getters.spec.js app/javascript/dashboard/store/modules/specs/conversations/mutations.spec.js --pool=forks --maxWorkers=1 --no-file-parallelism
+      - run: pnpm exec vitest run app/javascript/dashboard/helper/specs/conversationStatsRefresh.spec.js app/javascript/dashboard/helper/specs/actionCable.spec.js app/javascript/dashboard/api/specs/inbox/conversation.spec.js app/javascript/dashboard/store/modules/specs/conversations/actions.spec.js app/javascript/dashboard/store/modules/specs/conversations/getters.spec.js app/javascript/dashboard/store/modules/specs/conversations/mutations.spec.js --pool=forks --maxWorkers=1 --no-file-parallelism
       - run: pnpm exec vite build

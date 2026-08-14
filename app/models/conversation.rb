@@ -79,15 +79,25 @@ class Conversation < ApplicationRecord
   scope :assigned, -> { where.not(assignee_id: nil) }
   scope :assigned_to, ->(agent) { where(assignee_id: agent.id) }
   scope :unattended, -> { where(first_reply_created_at: nil).or(where.not(waiting_since: nil)) }
+  scope :not_human_managed, lambda {
+    human_queue_ids = Conversation.tagged_with('aguardando-humano').reselect(:id)
+
+    where(assignee_id: nil)
+      .where.not(id: human_queue_ids)
+      .where("COALESCE(conversations.custom_attributes ->> 'bia_automation_state', '') <> 'paused_human'")
+  }
   scope :resolvable_not_waiting, lambda { |auto_resolve_after|
     return none if auto_resolve_after.to_i.zero?
 
-    open.where('last_activity_at < ? AND waiting_since IS NULL', Time.now.utc - auto_resolve_after.minutes)
+    open.not_human_managed.where(
+      'last_activity_at < ? AND waiting_since IS NULL',
+      Time.now.utc - auto_resolve_after.minutes
+    )
   }
   scope :resolvable_all, lambda { |auto_resolve_after|
     return none if auto_resolve_after.to_i.zero?
 
-    open.where('last_activity_at < ?', Time.now.utc - auto_resolve_after.minutes)
+    open.not_human_managed.where('last_activity_at < ?', Time.now.utc - auto_resolve_after.minutes)
   }
 
   scope :last_user_message_at, lambda {
