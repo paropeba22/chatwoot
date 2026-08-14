@@ -235,6 +235,8 @@
       "DRAG_DROP": "Drag and drop here to attach",
       "START_AUDIO_RECORDING": "Start audio recording",
       "STOP_AUDIO_RECORDING": "Stop audio recording",
+      "PROCESSING_AUDIO_RECORDING": "Processing audio recording",
+      "AUDIO_RECORDING_ERROR": "Could not process the audio recording. Please try again.",
       "COPILOT_THINKING": "Copilot is thinking",
       "EMAIL_HEAD": {
         "TO": "TO",
