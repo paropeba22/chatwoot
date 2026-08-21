@@ -196,7 +196,7 @@ export default {
 
 <template>
   <section
-    class="conversation-workspace flex w-full h-full min-w-0 bg-n-background"
+    class="conversation-workspace flex w-full h-full min-w-0 bg-[rgb(var(--gt-console-canvas))]"
   >
     <ChatList
       :show-conversation-list="showConversationList"
@@ -219,13 +219,3 @@ export default {
     <CmdBarConversationSnooze />
   </section>
 </template>
-
-<style scoped>
-.conversation-workspace {
-  background-image: radial-gradient(
-    ellipse at top right,
-    rgba(29, 161, 255, 0.09) 0%,
-    transparent 52%
-  );
-}
-</style>

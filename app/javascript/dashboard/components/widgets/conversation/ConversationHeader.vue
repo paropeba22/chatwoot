@@ -14,6 +14,7 @@ import { buildConversationFilterQuery } from 'dashboard/helper/conversationFilte
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useInbox } from 'dashboard/composables/useInbox';
 import { useI18n } from 'vue-i18n';
+import { getConversationSignal } from 'dashboard/helper/conversationSignal';
 
 const props = defineProps({
   chat: {
@@ -97,17 +98,49 @@ const inbox = computed(() => {
 const hasMultipleInboxes = computed(
   () => store.getters['inboxes/getInboxes'].length > 1
 );
-
 const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
+const signalState = computed(() => getConversationSignal(props.chat));
+const signalLabel = computed(
+  () =>
+    ({
+      human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
+      bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA'),
+      queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
+      neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
+    })[signalState.value]
+);
+const assigneeName = computed(() => props.chat?.meta?.assignee?.name);
+const contactPhone = computed(() => currentContact.value?.phone_number);
+
+const signalPillClass = computed(
+  () =>
+    ({
+      human: 'bg-n-blue-3/70 text-n-blue-11 border-n-blue-8/30',
+      bia: 'bg-n-teal-3/70 text-n-teal-11 border-n-teal-8/30',
+      queue: 'bg-n-amber-3/70 text-n-amber-11 border-n-amber-8/30',
+      neutral: 'bg-n-slate-3/70 text-n-slate-11 border-n-weak',
+    })[signalState.value]
+);
+
+const signalIcon = computed(
+  () =>
+    ({
+      human: 'i-lucide-headset',
+      bia: 'i-lucide-bot',
+      queue: 'i-lucide-clock-3',
+      neutral: 'i-lucide-message-circle',
+    })[signalState.value]
+);
 </script>
 
 <template>
   <div
     ref="conversationHeader"
-    class="gt-conversation-header relative z-30 overflow-visible flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-14 border-b border-n-weak/70 bg-n-surface-2/70 backdrop-blur-[1px]"
+    class="gt-conversation-header relative z-30 overflow-visible flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 lg:flex-row px-4 py-3 min-h-[4.5rem] border-b border-n-weak/70 bg-n-surface-2/85"
+    :data-signal="signalState"
   >
     <div
-      class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1"
+      class="flex items-center justify-start w-full lg:w-auto max-w-full min-w-0 lg:flex-1"
     >
       <BackButton
         v-if="showBackButton"
@@ -117,17 +150,17 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
       <Avatar
         :name="currentContact.name"
         :src="currentContact.thumbnail"
-        :size="32"
+        :size="36"
         :status="currentContact.availability_status"
         hide-offline-status
         rounded-full
       />
       <div
-        class="flex flex-col items-start min-w-0 ml-2 overflow-hidden rtl:ml-0 rtl:mr-2"
+        class="flex flex-col items-start min-w-0 ml-3 overflow-hidden rtl:ml-0 rtl:mr-3"
       >
         <div class="flex flex-row items-center max-w-full gap-1 p-0 m-0">
           <span
-            class="text-sm font-medium truncate leading-tight text-n-slate-12"
+            class="text-base font-semibold truncate leading-tight text-n-slate-12 tracking-[-0.01em]"
           >
             {{ currentContact.name }}
           </span>
@@ -141,9 +174,24 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
         </div>
 
         <div
-          class="flex items-center gap-2 overflow-hidden text-xs conversation--header--actions text-ellipsis whitespace-nowrap"
+          class="flex items-center gap-2 mt-1 overflow-hidden text-[11px] conversation--header--actions text-ellipsis whitespace-nowrap text-n-slate-10"
         >
           <InboxName v-if="hasMultipleInboxes" :inbox="inbox" class="!mx-0" />
+          <span aria-hidden="true" class="size-0.5 rounded-full bg-n-slate-8" />
+          <span class="truncate">
+            {{
+              $t('CONVERSATION.OPERATIONS.REFERENCE', {
+                id: currentChat.id,
+              })
+            }}
+          </span>
+          <template v-if="contactPhone">
+            <span
+              aria-hidden="true"
+              class="hidden sm:inline-block size-0.5 rounded-full bg-n-slate-8"
+            />
+            <span class="hidden sm:inline truncate">{{ contactPhone }}</span>
+          </template>
           <span v-if="isSnoozed" class="font-medium text-n-amber-10">
             {{ snoozedDisplayText }}
           </span>
@@ -151,8 +199,23 @@ const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
       </div>
     </div>
     <div
-      class="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap [&_button]:rounded-xl [&_button]:transition-colors"
+      class="flex flex-row items-center justify-between lg:justify-end flex-shrink-0 gap-2 w-full lg:w-auto header-actions-wrap [&_button]:rounded-[10px] [&_button]:transition-colors"
     >
+      <div class="flex items-center gap-2 min-w-0">
+        <span
+          class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-semibold whitespace-nowrap"
+          :class="signalPillClass"
+        >
+          <span class="size-3.5" :class="signalIcon" />
+          {{ signalLabel }}
+        </span>
+        <span
+          v-if="assigneeName"
+          class="hidden 2xl:inline text-xs text-n-slate-10 truncate max-w-36"
+        >
+          {{ assigneeName }}
+        </span>
+      </div>
       <SLACardLabel
         v-if="hasSlaPolicyId"
         :chat="chat"

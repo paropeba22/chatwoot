@@ -1,5 +1,6 @@
 {
   "CHAT_LIST": {
+    "OPERATIONS_SUBTITLE": "Operação de atendimentos",
     "LOADING": "Buscando conversas",
     "LOAD_MORE_CONVERSATIONS": "Carregar mais conversas",
     "EOF": "Tudo em dia por aqui. Voce chegou ao fim desta fila.",

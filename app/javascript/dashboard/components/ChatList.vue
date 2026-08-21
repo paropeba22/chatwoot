@@ -1084,7 +1084,7 @@ watch(conversationFilters, (newVal, oldVal) => {
     class="gt-conversation-rail flex flex-col flex-shrink-0 conversations-list-wrap bg-n-surface-1 border-r border-n-weak/70"
     :class="[
       { hidden: !showConversationList },
-      isOnExpandedLayout ? 'basis-full' : 'w-[360px] 2xl:w-[404px]',
+      isOnExpandedLayout ? 'basis-full' : 'w-[372px] 2xl:w-[420px]',
     ]"
   >
     <slot />
@@ -1126,7 +1126,7 @@ watch(conversationFilters, (newVal, oldVal) => {
 
     <div
       v-if="!hasAppliedFiltersOrActiveFolders"
-      class="gt-assignee-tabs px-2 pt-2 pb-1 border-b border-n-weak/70"
+      class="gt-assignee-tabs px-2 pt-2 pb-2 border-b border-n-weak/70 bg-n-surface-1"
     >
       <ChatTypeTabs
         :items="assigneeTabItems"
@@ -1152,7 +1152,7 @@ watch(conversationFilters, (newVal, oldVal) => {
     </div>
 
     <div
-      class="resolved-view-toggle mx-2 mt-2 mb-1 px-3 py-2 text-sm font-medium flex justify-between items-center rounded-xl border border-n-weak/70 cursor-pointer hover:bg-n-alpha-1/70 transition-colors"
+      class="resolved-view-toggle mx-3 mt-2 mb-1 px-3 py-2 text-xs font-medium flex justify-between items-center rounded-[10px] border border-n-weak/70 cursor-pointer hover:bg-n-alpha-1/70 transition-colors duration-150"
       :class="isViewingResolved ? 'text-amber-400' : 'text-n-slate-11'"
       @click="toggleResolvedView"
     >
@@ -1175,7 +1175,7 @@ watch(conversationFilters, (newVal, oldVal) => {
 
     <p
       v-if="!chatListLoading && !conversationList.length"
-      class="flex overflow-auto justify-center items-center p-4 mx-3 my-4 rounded-2xl border border-dashed border-n-weak/80 bg-n-surface-2/45 text-n-slate-11 text-center"
+      class="flex overflow-auto justify-center items-center p-5 mx-3 my-4 rounded-[14px] border border-dashed border-n-weak/80 bg-n-surface-2/55 text-n-slate-10 text-center text-sm"
     >
       {{ $t('CHAT_LIST.LIST.404') }}
     </p>

@@ -11,6 +11,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  showScrollButtons: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['change']);
@@ -70,7 +74,7 @@ watch(
     :class="[border && 'border-b border-b-n-weak']"
   >
     <button
-      v-if="hasScroll"
+      v-if="hasScroll && showScrollButtons"
       class="items-center rounded-none cursor-pointer flex h-auto justify-center min-w-8"
       @click="onScrollClick('left')"
     >
@@ -79,14 +83,17 @@ watch(
     <ul
       ref="tabsList"
       class="border-r-0 border-l-0 border-t-0 flex min-w-[6.25rem] py-0 px-4 list-none mb-0"
-      :class="
-        hasScroll ? 'overflow-hidden py-0 px-1 max-w-[calc(100%-64px)]' : ''
-      "
+      :class="[
+        hasScroll && showScrollButtons
+          ? 'overflow-hidden py-0 px-1 max-w-[calc(100%-64px)]'
+          : '',
+        hasScroll && !showScrollButtons ? 'overflow-x-auto no-scrollbar' : '',
+      ]"
     >
       <slot />
     </ul>
     <button
-      v-if="hasScroll"
+      v-if="hasScroll && showScrollButtons"
       class="items-center rounded-none cursor-pointer flex h-auto justify-center min-w-8"
       @click="onScrollClick('right')"
     >

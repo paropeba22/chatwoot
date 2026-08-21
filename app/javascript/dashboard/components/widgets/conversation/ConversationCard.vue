@@ -11,6 +11,11 @@ import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard
 import SLACardLabel from './components/SLACardLabel.vue';
 import VoiceCallStatus from './VoiceCallStatus.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
+import { useI18n } from 'vue-i18n';
+import {
+  getConversationSignal,
+  visibleConversationLabels,
+} from 'dashboard/helper/conversationSignal';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -32,11 +37,44 @@ const emit = defineEmits([
   'deSelectConversation',
 ]);
 
+const { t } = useI18n();
+
 const hovered = ref(false);
 
 const unreadCount = computed(() => props.chat.unread_count);
 const hasUnread = computed(() => unreadCount.value > 0);
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
+const signalState = computed(() => getConversationSignal(props.chat));
+const visibleLabels = computed(() => visibleConversationLabels(props.chat));
+const signalLabel = computed(
+  () =>
+    ({
+      human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
+      bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA'),
+      queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
+      neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
+    })[signalState.value]
+);
+
+const signalPillClass = computed(
+  () =>
+    ({
+      human: 'bg-n-blue-3/70 text-n-blue-11 border-n-blue-8/30',
+      bia: 'bg-n-teal-3/70 text-n-teal-11 border-n-teal-8/30',
+      queue: 'bg-n-amber-3/70 text-n-amber-11 border-n-amber-8/30',
+      neutral: 'bg-n-slate-3/70 text-n-slate-11 border-n-weak',
+    })[signalState.value]
+);
+
+const signalIcon = computed(
+  () =>
+    ({
+      human: 'i-lucide-headset',
+      bia: 'i-lucide-bot',
+      queue: 'i-lucide-clock-3',
+      neutral: 'i-lucide-message-circle',
+    })[signalState.value]
+);
 
 const voiceCallData = computed(() => ({
   status: props.chat.additional_attributes?.call_status,
@@ -53,9 +91,9 @@ const showMetaSection = computed(() => {
 
 const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
 
-const showLabelsSection = computed(() => {
-  return props.chat.labels?.length > 0 || hasSlaPolicyId.value;
-});
+const showLabelsSection = computed(
+  () => visibleLabels.value.length > 0 || hasSlaPolicyId.value
+);
 
 const messagePreviewClass = computed(() => {
   return [
@@ -96,9 +134,10 @@ watch(
 
 <template>
   <div
-    class="gt-conversation-card relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 my-1.5 cursor-pointer conversation border border-n-weak/75 rounded-2xl bg-n-surface-2/55 shadow-[0_2px_10px_rgba(2,8,20,0.22)] hover:border-n-blue-8/45 hover:bg-n-alpha-1/75 group hover:z-[1] transition-all duration-150"
+    class="gt-conversation-card relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 my-1 cursor-pointer conversation border border-n-weak/75 rounded-[14px] bg-n-surface-2/70 shadow-[0_2px_8px_rgba(2,8,20,0.18)] hover:border-n-blue-8/40 hover:bg-n-alpha-1/75 group hover:z-[1] transition-[background-color,border-color,box-shadow] duration-150"
+    :data-signal="signalState"
     :class="{
-      'active animate-card-select bg-n-surface-active/80 !border-n-blue-8/45 shadow-[0_8px_20px_rgba(2,8,20,0.34)]':
+      'active animate-card-select bg-n-surface-active/90 !border-n-blue-8/50 shadow-[0_8px_20px_rgba(2,8,20,0.28)]':
         isActiveChat,
       'selected bg-n-slate-2/75 !border-n-blue-8/45': selected,
       'px-0': compact,
@@ -133,7 +172,7 @@ watch(
         </template>
       </Avatar>
     </div>
-    <div class="px-0 py-3 flex-1 min-w-0 border-line">
+    <div class="px-0 py-2.5 flex-1 min-w-0 border-line">
       <div
         v-if="showMetaSection"
         class="flex items-center min-w-0 gap-1"
@@ -163,7 +202,7 @@ watch(
         </div>
       </div>
       <h4
-        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12"
+        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12 tracking-[-0.01em]"
         :class="hasUnread ? 'font-semibold' : 'font-medium'"
       >
         {{ currentContact.name }}
@@ -216,13 +255,28 @@ watch(
       </div>
       <CardLabels
         v-if="showLabelsSection"
-        :conversation-labels="chat.labels"
-        class="mt-0.5 mx-2 mb-0"
+        :conversation-labels="visibleLabels"
+        class="mt-1 mx-2 mb-0"
       >
         <template v-if="hasSlaPolicyId" #before>
           <SLACardLabel :chat="chat" class="ltr:mr-1 rtl:ml-1" />
         </template>
       </CardLabels>
+      <div class="flex items-center gap-1.5 mx-2 mt-1.5 min-w-0">
+        <span
+          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10px] font-semibold leading-4 truncate"
+          :class="signalPillClass"
+        >
+          <span class="size-3 flex-shrink-0" :class="signalIcon" />
+          {{ signalLabel }}
+        </span>
+        <span
+          v-if="showAssignee && assignee.name"
+          class="text-[10px] text-n-slate-10 truncate"
+        >
+          {{ assignee.name }}
+        </span>
+      </div>
     </div>
   </div>
 </template>

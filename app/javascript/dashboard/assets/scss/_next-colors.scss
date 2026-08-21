@@ -154,6 +154,13 @@
     --gt-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.24);
     --gt-shadow-md: 0 10px 24px rgba(0, 0, 0, 0.28);
     --gt-focus-ring: 29, 161, 255, 0.24;
+    --gt-console-canvas: 244 247 251;
+    --gt-console-panel: 255 255 255;
+    --gt-console-raised: 248 250 253;
+    --gt-signal-human: 29 129 246;
+    --gt-signal-bia: 18 165 148;
+    --gt-signal-queue: 226 163 54;
+    --gt-signal-error: 220 59 93;
   }
 
   .dark {
@@ -304,6 +311,13 @@
     --gt-shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.26);
     --gt-shadow-md: 0 14px 30px rgba(0, 0, 0, 0.32);
     --gt-focus-ring: 29, 161, 255, 0.32;
+    --gt-console-canvas: 5 10 19;
+    --gt-console-panel: 12 20 34;
+    --gt-console-raised: 17 28 47;
+    --gt-signal-human: 29 161 255;
+    --gt-signal-bia: 46 211 255;
+    --gt-signal-queue: 255 197 61;
+    --gt-signal-error: 229 70 102;
   }
 }
 // NEXT COLORS END

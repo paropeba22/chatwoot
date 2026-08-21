@@ -21,13 +21,13 @@ const { t } = useI18n();
 
 const varaintBaseMap = {
   [MESSAGE_VARIANTS.AGENT]:
-    'bg-n-blue-4/70 dark:bg-n-blue-5/55 text-n-slate-12 border border-n-blue-8/25',
+    'bg-n-blue-4/65 dark:bg-n-blue-5/50 text-n-slate-12 border border-n-blue-8/25',
   [MESSAGE_VARIANTS.PRIVATE]:
-    'bg-n-amber-4/65 dark:bg-n-amber-5/45 text-n-amber-12 border border-n-amber-8/30 [&_.prosemirror-mention-node]:font-semibold',
+    'bg-n-amber-4/70 dark:bg-n-amber-5/45 text-n-amber-12 border border-n-amber-8/45 shadow-[inset_3px_0_0_rgba(255,197,61,0.65)] [&_.prosemirror-mention-node]:font-semibold',
   [MESSAGE_VARIANTS.USER]:
-    'bg-n-slate-3/85 dark:bg-n-slate-4/70 text-n-slate-12 border border-n-weak/60',
+    'bg-n-surface-2 text-n-slate-12 border border-n-weak/80',
   [MESSAGE_VARIANTS.ACTIVITY]:
-    'bg-n-alpha-1/85 text-n-slate-11 text-sm border border-n-weak/50',
+    'bg-n-alpha-1/55 text-n-slate-10 text-xs border border-n-weak/40',
   [MESSAGE_VARIANTS.BOT]:
     'bg-n-teal-4/50 dark:bg-n-teal-5/40 text-n-slate-12 border border-n-teal-8/35',
   [MESSAGE_VARIANTS.TEMPLATE]:
@@ -40,9 +40,9 @@ const varaintBaseMap = {
 
 const orientationMap = {
   [ORIENTATION.LEFT]:
-    'left-bubble rounded-2xl ltr:rounded-bl-md rtl:rounded-br-md shadow-[0_4px_14px_rgba(2,8,20,0.18)]',
+    'left-bubble rounded-[14px] ltr:rounded-bl-md rtl:rounded-br-md shadow-[0_3px_12px_rgba(2,8,20,0.16)]',
   [ORIENTATION.RIGHT]:
-    'right-bubble rounded-2xl ltr:rounded-br-md rtl:rounded-bl-md shadow-[0_6px_16px_rgba(2,8,20,0.2)]',
+    'right-bubble rounded-[14px] ltr:rounded-br-md rtl:rounded-bl-md shadow-[0_4px_14px_rgba(2,8,20,0.18)]',
   [ORIENTATION.CENTER]: 'rounded-md',
 };
 

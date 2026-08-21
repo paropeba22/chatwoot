@@ -641,16 +641,36 @@ const menuItems = computed(() => {
           />
         </template>
         <template v-else>
-          <div class="grid flex-shrink-0 place-content-center size-6">
-            <img :src="brandLogoUrl" class="size-4" alt="Grupo Telecom" />
+          <div
+            class="grid flex-shrink-0 place-content-center size-9 rounded-xl border border-n-blue-8/30 bg-n-blue-9/10 shadow-[0_6px_16px_rgba(2,8,20,0.22)]"
+          >
+            <img :src="brandLogoUrl" class="size-5" alt="Grupo Telecom" />
           </div>
-          <div class="flex-shrink-0 w-px h-3 bg-n-strong" />
-          <SidebarAccountSwitcher
-            class="flex-grow -mx-1 min-w-0"
-            @show-create-account-modal="emit('showCreateAccountModal')"
-          />
+          <div class="flex flex-col flex-grow min-w-0 leading-tight">
+            <span
+              class="text-[10px] font-semibold uppercase tracking-[0.14em] text-n-blue-11 truncate"
+            >
+              {{ t('SIDEBAR.OPERATIONS_CENTER') }}
+            </span>
+            <span class="mt-0.5 text-sm font-semibold text-n-slate-12 truncate">
+              {{ t('SIDEBAR.PRODUCT_NAME') }}
+            </span>
+            <span
+              class="flex items-center gap-1.5 mt-1 text-[10px] text-n-teal-11"
+            >
+              <span
+                class="size-1.5 rounded-full bg-n-teal-9 shadow-[0_0_0_3px_rgba(46,211,255,0.08)]"
+              />
+              {{ t('SIDEBAR.OPERATION_ONLINE') }}
+            </span>
+          </div>
         </template>
       </div>
+      <SidebarAccountSwitcher
+        v-if="!isEffectivelyCollapsed"
+        class="mx-2 min-w-0 rounded-xl border border-n-weak/70 bg-n-alpha-1/70"
+        @show-create-account-modal="emit('showCreateAccountModal')"
+      />
       <div
         class="flex gap-2"
         :class="isEffectivelyCollapsed ? 'flex-col items-center' : 'px-2'"
@@ -707,11 +727,21 @@ const menuItems = computed(() => {
         class="flex flex-col gap-1 m-0 list-none min-w-0"
         :class="{ 'items-center': isEffectivelyCollapsed }"
       >
-        <SidebarGroup
-          v-for="item in menuItems"
-          :key="item.name"
-          v-bind="item"
-        />
+        <template v-for="item in menuItems" :key="item.name">
+          <li
+            v-if="!isEffectivelyCollapsed && item.name === 'Inbox'"
+            class="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-n-slate-9 cursor-default"
+          >
+            {{ t('SIDEBAR.OPERATION_SECTION') }}
+          </li>
+          <li
+            v-if="!isEffectivelyCollapsed && item.name === 'Settings'"
+            class="px-2 pt-4 pb-1 mt-1 border-t border-n-weak/60 text-[10px] font-semibold uppercase tracking-[0.16em] text-n-slate-9 cursor-default"
+          >
+            {{ t('SIDEBAR.ADMINISTRATION_SECTION') }}
+          </li>
+          <SidebarGroup v-bind="item" />
+        </template>
       </ul>
     </nav>
     <section
@@ -758,18 +788,3 @@ const menuItems = computed(() => {
     </div>
   </aside>
 </template>
-
-<style scoped>
-.neo-sidebar {
-  background-image: radial-gradient(
-      ellipse at top left,
-      rgba(var(--blue-9), 0.1) 0%,
-      transparent 45%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(var(--surface-1), 0.98),
-      rgba(var(--surface-1), 0.98)
-    );
-}
-</style>

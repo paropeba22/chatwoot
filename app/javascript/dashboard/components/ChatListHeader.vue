@@ -78,33 +78,40 @@ const toggleConversationLayout = () => {
 
 <template>
   <div
-    class="gt-rail-header flex items-center justify-between gap-2 px-3 h-[3.5rem] border-b border-n-weak/60 bg-n-surface-2/45 backdrop-blur-[1px]"
+    class="gt-rail-header flex items-center justify-between gap-3 px-4 min-h-16 border-b border-n-weak/60 bg-n-surface-2/45"
     :class="{
       'border-b border-n-strong/70': hasAppliedFiltersOrActiveFolders,
     }"
   >
-    <div class="flex items-center justify-center min-w-0">
-      <h1
-        class="text-base font-medium truncate text-n-slate-12"
-        :title="pageTitle"
+    <div class="flex flex-col justify-center min-w-0">
+      <p
+        class="text-[10px] font-semibold uppercase tracking-[0.15em] text-n-blue-11 truncate"
       >
-        {{ pageTitle }}
-      </h1>
-      <span
-        v-if="
-          allCount > 0 && hasAppliedFiltersOrActiveFolders && !isListLoading
-        "
-        class="px-2 py-1 my-0.5 mx-1 rounded-md capitalize bg-n-slate-3 text-xxs text-n-slate-12 shrink-0"
-        :title="allCount"
-      >
-        {{ formattedAllCount }}
-      </span>
-      <span
-        v-if="!hasAppliedFiltersOrActiveFolders"
-        class="px-2 py-1 my-0.5 mx-1 rounded-lg capitalize bg-n-slate-3/80 text-xxs text-n-slate-12 shrink-0 outline outline-1 outline-n-weak/70"
-      >
-        {{ $t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${activeStatus}.TEXT`) }}
-      </span>
+        {{ $t('CHAT_LIST.OPERATIONS_SUBTITLE') }}
+      </p>
+      <div class="flex items-center min-w-0 mt-0.5">
+        <h1
+          class="text-base font-semibold truncate text-n-slate-12"
+          :title="pageTitle"
+        >
+          {{ pageTitle }}
+        </h1>
+        <span
+          v-if="
+            allCount > 0 && hasAppliedFiltersOrActiveFolders && !isListLoading
+          "
+          class="px-2 py-1 my-0.5 mx-1 rounded-md capitalize bg-n-slate-3 text-xxs text-n-slate-12 shrink-0"
+          :title="allCount"
+        >
+          {{ formattedAllCount }}
+        </span>
+        <span
+          v-if="!hasAppliedFiltersOrActiveFolders"
+          class="px-2 py-1 my-0.5 mx-1 rounded-lg capitalize bg-n-slate-3/80 text-xxs text-n-slate-12 shrink-0 outline outline-1 outline-n-weak/70"
+        >
+          {{ $t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${activeStatus}.TEXT`) }}
+        </span>
+      </div>
     </div>
     <div class="flex items-center gap-1">
       <template v-if="hasAppliedFilters && !hasActiveFolders">

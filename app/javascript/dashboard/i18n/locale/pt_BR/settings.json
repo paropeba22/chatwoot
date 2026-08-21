@@ -296,6 +296,11 @@
     }
   },
   "SIDEBAR": {
+    "PRODUCT_NAME": "Grupo Telecom",
+    "OPERATIONS_CENTER": "ISP Operations Console",
+    "OPERATION_ONLINE": "Operação online",
+    "OPERATION_SECTION": "Operação",
+    "ADMINISTRATION_SECTION": "Administração",
     "NO_ITEMS": "Nenhum item",
     "CURRENTLY_VIEWING_ACCOUNT": "Visualização atual:",
     "SWITCH": "Trocar",

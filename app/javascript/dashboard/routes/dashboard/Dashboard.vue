@@ -164,7 +164,9 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-grow overflow-hidden text-n-slate-12 relative">
+  <div
+    class="flex flex-grow overflow-hidden text-n-slate-12 relative bg-[rgb(var(--gt-console-canvas))]"
+  >
     <div
       class="flex-shrink-0 transition-all duration-300 ease-in-out overflow-hidden"
       :class="{ 'w-0 min-w-0': isFocusMode }"
@@ -181,7 +183,7 @@ export default {
     </div>
 
     <main
-      class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1 transition-all duration-300 ease-in-out"
+      class="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-transparent transition-all duration-200 ease-in-out"
     >
       <router-view />
       <CommandBar />

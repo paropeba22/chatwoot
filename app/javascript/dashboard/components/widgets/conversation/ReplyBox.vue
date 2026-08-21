@@ -1229,7 +1229,7 @@ export default {
 
 <template>
   <ReplyBoxBanner :message="message" :is-on-private-note="isOnPrivateNote" />
-  <div ref="replyEditor" class="reply-box" :class="replyBoxClass">
+  <div ref="replyEditor" class="gt-reply-box reply-box" :class="replyBoxClass">
     <ReplyTopPanel
       :mode="replyType"
       :conversation-id="conversationId"
@@ -1255,10 +1255,10 @@ export default {
     />
     <Transition
       mode="out-in"
-      enter-active-class="transition-all duration-300 ease-out"
+      enter-active-class="transition-all duration-150 ease-out"
       enter-from-class="opacity-0 translate-y-2 scale-[0.98]"
       enter-to-class="opacity-100 translate-y-0 scale-100"
-      leave-active-class="transition-all duration-200 ease-in"
+      leave-active-class="transition-all duration-150 ease-in"
       leave-from-class="opacity-100 translate-y-0 scale-100"
       leave-to-class="opacity-0 translate-y-2 scale-[0.98]"
     >
@@ -1366,10 +1366,10 @@ export default {
 
     <Transition
       mode="out-in"
-      enter-active-class="transition-all duration-300 ease-out"
+      enter-active-class="transition-all duration-150 ease-out"
       enter-from-class="opacity-0 translate-y-2 scale-[0.98]"
       enter-to-class="opacity-100 translate-y-0 scale-100"
-      leave-active-class="transition-all duration-200 ease-in"
+      leave-active-class="transition-all duration-150 ease-in"
       leave-from-class="opacity-100 translate-y-0 scale-100"
       leave-to-class="opacity-0 translate-y-2 scale-[0.98]"
     >
@@ -1447,10 +1447,10 @@ export default {
 }
 
 .reply-box {
-  @apply relative mb-2 mx-2 border border-n-weak/80 rounded-2xl bg-n-solid-1 shadow-[0_10px_24px_rgba(2,8,20,0.26)] overflow-hidden;
+  @apply relative mb-3 mx-3 border border-n-strong/80 rounded-[14px] bg-n-solid-1 shadow-[0_10px_24px_rgba(2,8,20,0.22)] overflow-hidden;
 
   &.is-private {
-    @apply bg-n-solid-amber/90 dark:border-n-amber-3/20 border-n-amber-12/15;
+    @apply bg-n-solid-amber/90 dark:border-n-amber-7/30 border-n-amber-8/40 shadow-[inset_3px_0_0_rgba(255,197,61,0.7),0_10px_24px_rgba(2,8,20,0.2)];
   }
 
   &.is-focused {
@@ -1465,7 +1465,7 @@ export default {
 }
 
 .reply-box__top {
-  @apply relative py-1 px-3 -mt-px;
+  @apply relative py-1 px-4 -mt-px;
 }
 
 .emoji-dialog {

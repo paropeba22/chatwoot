@@ -307,12 +307,29 @@
         "CANCEL": "Cancel"
       }
     },
+    "OPERATIONS": {
+      "REFERENCE": "Conversation #{id}",
+      "UNASSIGNED": "Unassigned",
+      "SIGNAL": {
+        "HUMAN": "Human service",
+        "BIA": "Bia automation",
+        "QUEUE": "Human queue",
+        "NEUTRAL": "Open conversation"
+      }
+    },
     "SIDEBAR": {
       "CONTACT": "Contact",
       "COPILOT": "Copilot"
     },
     "SGP": {
       "TITLE": "Customer 360 · SGP",
+      "SUBTITLE": "Subscriber operational context",
+      "SECTIONS": {
+        "CONNECTION": "Connection",
+        "FINANCIAL": "Financial",
+        "REGISTRATION": "Registration",
+        "ACTIONS": "Available actions"
+      },
       "UPDATED_AT": "Updated at {value}",
       "NOT_INFORMED": "Not informed",
       "DOCUMENT_PLACEHOLDER": "CPF or CNPJ",

@@ -48,7 +48,8 @@ useKeyboardEvents(keyboardEvents);
 <template>
   <woot-tabs
     :index="activeTabIndex"
-    class="chat-type-tabs w-full px-2 py-0.5 h-11 [&_ul]:m-0 [&_ul]:p-1 [&_ul]:rounded-[var(--gt-radius-pill)] [&_ul]:outline [&_ul]:outline-1 [&_ul]:outline-n-weak/80 [&_ul]:bg-n-solid-2/75 [&_ul]:md:grid [&_ul]:md:grid-cols-3 [&_ul]:md:gap-1 [&_ul]:md:max-w-full [&_li]:mx-1 [&_li]:md:mx-0 [&_li]:md:min-w-0 [&_a]:rounded-[var(--gt-radius-pill)] [&_a]:transition-all [&_a]:duration-150 [&_a]:ease-out [&_a:hover]:bg-n-alpha-2/70 [&_a]:px-2 [&_a]:h-8 [&_a]:justify-center [&_a]:gap-1 [&_a]:md:text-[0.78rem] [&_a]:md:leading-tight [&_.is-active>a]:bg-n-blue-9/20 [&_.is-active>a]:outline [&_.is-active>a]:outline-1 [&_.is-active>a]:outline-n-blue-8/50 [&_.is-active>a]:text-n-slate-12"
+    :show-scroll-buttons="false"
+    class="chat-type-tabs w-full min-w-0 max-w-full overflow-x-auto px-2 py-1 min-h-12 [&_ul]:m-0 [&_ul]:w-full [&_ul]:min-w-0 [&_ul]:max-w-full [&_ul]:flex-1 [&_ul]:overflow-x-auto [&_ul]:p-1 [&_ul]:rounded-xl [&_ul]:border [&_ul]:border-n-weak/80 [&_ul]:bg-n-solid-2/70 [&_ul]:md:grid [&_ul]:md:grid-cols-3 [&_ul]:md:gap-1 [&_ul]:md:overflow-visible [&_li]:mx-0.5 [&_li]:min-w-[8.5rem] [&_li]:shrink-0 [&_li]:md:mx-0 [&_li]:md:min-w-0 [&_li]:md:shrink [&_a]:rounded-lg [&_a]:transition-colors [&_a]:duration-150 [&_a]:ease-out [&_a:hover]:bg-n-alpha-2/70 [&_a]:px-2 [&_a]:h-8 [&_a]:justify-center [&_a]:gap-1.5 [&_a]:text-xs [&_a]:font-semibold [&_.is-active>a]:bg-n-blue-9/15 [&_.is-active>a]:shadow-[inset_0_0_0_1px_rgba(29,161,255,0.4)] [&_.is-active>a]:text-n-blue-11"
     @change="onTabChange"
   >
     <woot-tabs-item

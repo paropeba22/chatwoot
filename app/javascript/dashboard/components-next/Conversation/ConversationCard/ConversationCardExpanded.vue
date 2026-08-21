@@ -12,6 +12,11 @@ import SLACardLabel from 'dashboard/components-next/Conversation/Sla/SLACardLabe
 import CardStatusIcon from './CardStatusIcon.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import { useI18n } from 'vue-i18n';
+import {
+  getConversationSignal,
+  visibleConversationLabels,
+} from 'dashboard/helper/conversationSignal';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -32,8 +37,31 @@ const emit = defineEmits([
   'contextmenu',
 ]);
 
+const { t } = useI18n();
+
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
-const showLabelsSection = computed(() => props.chat.labels?.length > 0);
+const signalState = computed(() => getConversationSignal(props.chat));
+const signalLabel = computed(
+  () =>
+    ({
+      human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
+      bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA'),
+      queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
+      neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
+    })[signalState.value]
+);
+const visibleLabels = computed(() => visibleConversationLabels(props.chat));
+const showLabelsSection = computed(() => visibleLabels.value.length > 0);
+
+const signalPillClass = computed(
+  () =>
+    ({
+      human: 'bg-n-blue-3/70 text-n-blue-11 border-n-blue-8/30',
+      bia: 'bg-n-teal-3/70 text-n-teal-11 border-n-teal-8/30',
+      queue: 'bg-n-amber-3/70 text-n-amber-11 border-n-amber-8/30',
+      neutral: 'bg-n-slate-3/70 text-n-slate-11 border-n-weak',
+    })[signalState.value]
+);
 
 const voiceCallData = computed(() => ({
   status: props.chat.additional_attributes?.call_status,
@@ -62,7 +90,8 @@ const selectedModel = computed({
 
 <template>
   <div
-    class="gt-conversation-card conversation relative cursor-pointer group grid gap-4 items-center px-3 h-12 my-1.5 mx-2 rounded-2xl border border-n-weak/75 bg-n-surface-2/55 shadow-[0_2px_10px_rgba(2,8,20,0.22)] hover:border-n-blue-8/45 hover:bg-n-alpha-1/70 transition-all duration-150"
+    class="gt-conversation-card conversation relative cursor-pointer group grid gap-3 items-center px-3 h-14 my-1 mx-2 rounded-[14px] border border-n-weak/75 bg-n-surface-2/70 shadow-[0_2px_8px_rgba(2,8,20,0.18)] hover:border-n-blue-8/40 hover:bg-n-alpha-1/70 transition-[background-color,border-color,box-shadow] duration-150"
+    :data-signal="signalState"
     :class="{
       'active animate-card-select bg-n-surface-active/80 !border-n-blue-8/45 shadow-[0_8px_20px_rgba(2,8,20,0.34)]':
         isActiveChat,
@@ -122,22 +151,6 @@ const selectedModel = computed({
         class="w-px h-3 bg-n-slate-6 flex-shrink-0"
       />
 
-      <div
-        v-tooltip.top="{
-          content: chat.id,
-          delay: { show: 500, hide: 0 },
-        }"
-        class="h-6 flex items-center gap-1 max-w-20 w-full min-w-0 flex-shrink-0"
-      >
-        <Icon
-          icon="i-woot-hash"
-          class="size-3.5 text-n-slate-10 flex-shrink-0"
-        />
-        <span class="text-body-main text-n-slate-11 truncate">
-          {{ chat.id }}
-        </span>
-      </div>
-
       <CardAvatar
         :contact="currentContact"
         :selected="false"
@@ -146,10 +159,17 @@ const selectedModel = computed({
       />
 
       <h4
-        class="text-heading-3 my-0 capitalize truncate text-n-slate-12 font-medium w-32 flex-shrink-0"
+        class="text-heading-3 my-0 capitalize truncate text-n-slate-12 font-semibold w-40 flex-shrink-0"
       >
         {{ currentContact.name }}
       </h4>
+
+      <span
+        class="hidden lg:inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-semibold whitespace-nowrap"
+        :class="signalPillClass"
+      >
+        {{ signalLabel }}
+      </span>
 
       <CardContent
         :last-message="lastMessageInChat"
@@ -164,7 +184,7 @@ const selectedModel = computed({
     <div class="flex items-center justify-end gap-1.5 flex-shrink-0">
       <div v-if="showLabelsSection" class="min-w-0 w-full">
         <CardLabels
-          :labels="chat.labels"
+          :labels="visibleLabels"
           disable-toggle
           class="my-0 [&>div]:justify-end justify-end"
         />

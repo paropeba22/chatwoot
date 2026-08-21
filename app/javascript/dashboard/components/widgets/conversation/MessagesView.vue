@@ -451,7 +451,7 @@ export default {
 <template>
   <div
     ref="messagesViewRef"
-    class="flex flex-col justify-between flex-grow h-full min-w-0 m-0 bg-n-surface-1"
+    class="gt-message-timeline flex flex-col justify-between flex-grow h-full min-w-0 m-0 bg-n-background/35"
   >
     <div ref="topBannerRef">
       <Banner
@@ -471,7 +471,7 @@ export default {
     </div>
     <MessageList
       ref="conversationPanelRef"
-      class="conversation-panel flex-shrink flex-grow basis-px flex flex-col overflow-y-auto relative h-full m-0 pb-4 px-2"
+      class="conversation-panel flex-shrink flex-grow basis-px flex flex-col overflow-y-auto relative h-full m-0 pb-5 px-1 sm:px-3"
       :current-user-id="currentUserId"
       :first-unread-id="unReadMessages[0]?.id"
       :is-an-email-channel="isAnEmailChannel"
@@ -510,7 +510,9 @@ export default {
         />
       </template>
     </MessageList>
-    <div class="flex relative flex-col bg-n-surface-1 border-t border-n-weak/70">
+    <div
+      class="flex relative flex-col bg-n-surface-1/95 border-t border-n-weak/70 shadow-[0_-8px_22px_rgba(2,8,20,0.08)]"
+    >
       <div
         v-if="isAnyoneTyping"
         class="absolute flex items-center w-full h-0 -top-7"

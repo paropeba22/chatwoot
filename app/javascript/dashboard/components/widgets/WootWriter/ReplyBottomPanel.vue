@@ -284,7 +284,10 @@ export default {
 </script>
 
 <template>
-  <div class="flex justify-between p-3" :class="wrapClass">
+  <div
+    class="flex justify-between items-center gap-3 px-3 py-2.5 border-t border-n-weak/60 bg-n-alpha-1/25"
+    :class="wrapClass"
+  >
     <div class="left-wrap">
       <NextButton
         v-if="!isEditorDisabled"
@@ -411,7 +414,7 @@ export default {
         sm
         :color="isNote ? 'amber' : 'blue'"
         :disabled="isSendDisabled"
-        class="flex-shrink-0"
+        class="flex-shrink-0 !rounded-[10px] !px-4"
         @click="onSend"
       />
     </div>

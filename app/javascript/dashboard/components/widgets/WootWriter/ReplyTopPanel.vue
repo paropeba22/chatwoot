@@ -8,14 +8,12 @@ import { REPLY_EDITOR_MODES, CHAR_LENGTH_WARNING } from './constants';
 import { CAPTAIN_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import EditorModeToggle from './EditorModeToggle.vue';
-import CopilotMenuBar from './CopilotMenuBar.vue';
 
 export default {
   name: 'ReplyTopPanel',
   components: {
     NextButton,
     EditorModeToggle,
-    CopilotMenuBar,
   },
   directives: {
     OnClickOutside: vOnClickOutside,
@@ -146,7 +144,7 @@ export default {
 
 <template>
   <div
-    class="flex justify-between gap-2 h-[3.25rem] items-center ltr:pl-3 ltr:pr-2 rtl:pr-3 rtl:pl-2"
+    class="flex justify-between gap-2 h-11 items-center ltr:pl-4 ltr:pr-2 rtl:pr-4 rtl:pl-2 border-b border-n-weak/60 bg-n-alpha-1/35"
   >
     <EditorModeToggle
       :mode="mode"

@@ -313,20 +313,29 @@ watch(
 
 <template>
   <section
-    class="gt-customer-360 px-4 py-4 border-b border-n-weak bg-gradient-to-br from-n-blue-2/70 via-transparent to-n-teal-2/30"
+    class="gt-customer-360 px-4 py-4 border-b border-n-weak bg-n-surface-2"
     data-testid="sgp-panel"
   >
-    <div class="flex items-start justify-between gap-3 mb-3">
+    <div
+      class="flex items-start justify-between gap-3 pb-4 border-b border-n-weak/70"
+    >
       <div class="min-w-0">
         <h3
-          class="flex items-center gap-2 text-sm font-semibold tracking-tight text-n-slate-12"
+          class="flex items-center gap-2.5 text-sm font-semibold tracking-tight text-n-slate-12"
         >
           <span
-            class="grid place-items-center size-7 rounded-lg bg-n-blue-9/15 border border-n-blue-8/30"
+            class="grid place-items-center size-8 rounded-[10px] bg-n-teal-9/10 border border-n-teal-8/30"
           >
-            <span class="i-lucide-shield-check size-4 text-n-blue-10" />
+            <span class="i-lucide-user-round-check size-4 text-n-teal-11" />
           </span>
-          {{ t('CONVERSATION.SGP.TITLE') }}
+          <span class="min-w-0">
+            <span class="block truncate">{{
+              t('CONVERSATION.SGP.TITLE')
+            }}</span>
+            <span class="block mt-0.5 text-[10px] font-normal text-n-slate-10">
+              {{ t('CONVERSATION.SGP.SUBTITLE') }}
+            </span>
+          </span>
         </h3>
         <p v-if="sgpData.updatedAt" class="mt-1 text-[11px] text-n-slate-10">
           {{ t('CONVERSATION.SGP.UPDATED_AT', { value: sgpData.updatedAt }) }}
@@ -338,154 +347,9 @@ watch(
       />
     </div>
 
-    <div class="grid grid-cols-2 gap-2 mb-3">
-      <div
-        class="sgp-metric-card p-3 rounded-xl border border-n-weak bg-n-alpha-1"
-      >
-        <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
-          {{ t('CONVERSATION.SGP.FIELDS.CONTRACT') }}
-        </p>
-        <p class="mt-1 text-sm font-semibold text-n-slate-12 truncate">
-          {{ sgpData.contract || sgpData.contractStatus || 'N/A' }}
-        </p>
-        <p
-          v-if="sgpData.contract && sgpData.contractStatus"
-          class="text-[11px] text-n-slate-10"
-        >
-          {{ sgpData.contractStatus }}
-        </p>
-      </div>
-      <div
-        class="sgp-metric-card p-3 rounded-xl border border-n-weak bg-n-alpha-1"
-      >
-        <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
-          {{ t('CONVERSATION.SGP.FIELDS.ONU') }}
-        </p>
-        <p class="mt-1 text-sm font-semibold truncate" :class="onuStatusClass">
-          {{ sgpData.onuStatus || sgpData.onu || 'N/A' }}
-        </p>
-        <p
-          v-if="sgpData.onu && sgpData.onuStatus"
-          class="text-[11px] text-n-slate-10 truncate"
-        >
-          {{ sgpData.onu }}
-        </p>
-      </div>
-      <div
-        class="sgp-metric-card p-3 rounded-xl border border-n-weak bg-n-alpha-1"
-      >
-        <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
-          {{ t('CONVERSATION.SGP.FIELDS.PLAN') }}
-        </p>
-        <p class="mt-1 text-sm font-semibold text-n-slate-12 truncate">
-          {{ sgpData.plan || 'N/A' }}
-        </p>
-      </div>
-      <div
-        class="sgp-metric-card p-3 rounded-xl border border-n-weak bg-n-alpha-1"
-      >
-        <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
-          {{ t('CONVERSATION.SGP.FIELDS.INVOICE') }}
-        </p>
-        <div v-if="previewInvoices.length" class="mt-1 space-y-1">
-          <p
-            v-for="invoice in previewInvoices"
-            :key="invoice.id"
-            class="text-[11px] leading-tight text-n-slate-11"
-          >
-            {{
-              t('CONVERSATION.SGP.INVOICE_SUMMARY', {
-                date: formatDate(invoice.dueDate),
-                value: formatMoney(invoice.value),
-              })
-            }}
-          </p>
-          <p v-if="remainingInvoiceCount" class="text-[10px] text-n-slate-9">
-            {{
-              t('CONVERSATION.SGP.MORE_INVOICES', {
-                count: remainingInvoiceCount,
-              })
-            }}
-          </p>
-        </div>
-        <template v-else>
-          <p class="mt-1 text-sm font-semibold text-n-slate-12 truncate">
-            {{ sgpData.invoiceValue || 'N/A' }}
-          </p>
-          <p class="text-[11px] text-n-slate-10 truncate">
-            {{ sgpData.invoiceDueDate || sgpData.invoiceStatus || '-' }}
-          </p>
-        </template>
-      </div>
-    </div>
-
-    <div
-      v-if="sgpData.holderName"
-      class="sgp-detail-card p-3 mb-2 rounded-xl border border-n-weak bg-n-alpha-1"
-    >
-      <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
-        {{ t('CONVERSATION.SGP.FIELDS.HOLDER') }}
-      </p>
-      <p class="mt-1 text-sm font-semibold text-n-slate-12 truncate">
-        {{ sgpData.holderName }}
-      </p>
-    </div>
-
-    <div
-      class="sgp-detail-card flex items-center justify-between p-3 mb-3 rounded-xl border border-n-weak bg-n-alpha-1"
-    >
-      <div class="flex-1 min-w-0 mr-2">
-        <p class="text-[11px] uppercase tracking-wide text-n-slate-10">
-          {{ t('CONVERSATION.SGP.FIELDS.DOCUMENT') }}
-        </p>
-        <p
-          v-if="!isEditingDocument"
-          class="mt-1 text-sm font-semibold text-n-slate-12 truncate"
-        >
-          {{ sgpData.cpfCnpj || t('CONVERSATION.SGP.NOT_INFORMED') }}
-        </p>
-        <input
-          v-else
-          v-model="documentValue"
-          type="text"
-          inputmode="numeric"
-          autocomplete="off"
-          maxlength="18"
-          class="w-full px-2.5 py-1 mt-1 text-sm outline-none rounded-lg bg-n-background border border-n-strong focus:border-n-blue-9"
-          :placeholder="t('CONVERSATION.SGP.DOCUMENT_PLACEHOLDER')"
-          :disabled="isLoading"
-          data-testid="sgp-document-input"
-        />
-      </div>
-      <button
-        v-if="!isEditingDocument"
-        class="text-xs font-medium text-n-blue-11 hover:text-n-blue-10"
-        :disabled="isLoading"
-        @click="startEditDocument"
-      >
-        {{ t('CONVERSATION.SGP.CHANGE') }}
-      </button>
-      <div v-else class="flex items-center gap-2">
-        <button
-          class="px-2.5 py-1 text-xs font-medium rounded-lg bg-n-teal-3 text-n-teal-11 disabled:opacity-50"
-          :disabled="isLoading"
-          @click="saveDocument"
-        >
-          {{ t('CONVERSATION.SGP.SAVE_AND_CONSULT') }}
-        </button>
-        <button
-          class="text-xs text-n-slate-10 hover:text-n-slate-12"
-          :disabled="isLoading"
-          @click="isEditingDocument = false"
-        >
-          {{ t('CONVERSATION.SGP.CANCEL') }}
-        </button>
-      </div>
-    </div>
-
     <p
       v-if="statusMessage"
-      class="sgp-status-message p-2.5 mb-3 text-xs rounded-xl border"
+      class="sgp-status-message p-2.5 mt-3 text-xs rounded-[10px] border"
       :class="
         statusType === 'success'
           ? 'bg-n-teal-3 text-n-teal-11 border-n-teal-7/30'
@@ -496,9 +360,201 @@ watch(
       {{ statusMessage }}
     </p>
 
+    <div class="pt-4">
+      <h4
+        class="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
+      >
+        {{ t('CONVERSATION.SGP.SECTIONS.REGISTRATION') }}
+      </h4>
+      <div
+        class="rounded-xl border border-n-weak/70 bg-n-alpha-1/45 divide-y divide-n-weak/60"
+      >
+        <div v-if="sgpData.holderName" class="px-3 py-2.5">
+          <p class="text-[10px] uppercase tracking-wide text-n-slate-9">
+            {{ t('CONVERSATION.SGP.FIELDS.HOLDER') }}
+          </p>
+          <p class="mt-0.5 text-sm font-medium text-n-slate-12 truncate">
+            {{ sgpData.holderName }}
+          </p>
+        </div>
+        <div class="flex items-center justify-between gap-3 px-3 py-2.5">
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] uppercase tracking-wide text-n-slate-9">
+              {{ t('CONVERSATION.SGP.FIELDS.DOCUMENT') }}
+            </p>
+            <p
+              v-if="!isEditingDocument"
+              class="mt-0.5 text-sm font-medium text-n-slate-12 truncate"
+            >
+              {{ sgpData.cpfCnpj || t('CONVERSATION.SGP.NOT_INFORMED') }}
+            </p>
+            <input
+              v-else
+              v-model="documentValue"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="18"
+              class="w-full px-2.5 py-1.5 mt-1 text-sm outline-none rounded-lg bg-n-background border border-n-strong focus:border-n-blue-9"
+              :placeholder="t('CONVERSATION.SGP.DOCUMENT_PLACEHOLDER')"
+              :disabled="isLoading"
+              data-testid="sgp-document-input"
+            />
+          </div>
+          <button
+            v-if="!isEditingDocument"
+            class="px-2 py-1 text-xs font-medium rounded-lg text-n-blue-11 hover:bg-n-blue-3/60"
+            :disabled="isLoading"
+            @click="startEditDocument"
+          >
+            {{ t('CONVERSATION.SGP.CHANGE') }}
+          </button>
+          <div v-else class="flex items-center gap-2">
+            <button
+              class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-n-teal-3 text-n-teal-11 disabled:opacity-50"
+              :disabled="isLoading"
+              @click="saveDocument"
+            >
+              {{ t('CONVERSATION.SGP.SAVE_AND_CONSULT') }}
+            </button>
+            <button
+              class="text-xs text-n-slate-10 hover:text-n-slate-12"
+              :disabled="isLoading"
+              @click="isEditingDocument = false"
+            >
+              {{ t('CONVERSATION.SGP.CANCEL') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pt-4">
+      <h4
+        class="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
+      >
+        {{ t('CONVERSATION.SGP.SECTIONS.CONNECTION') }}
+      </h4>
+      <div
+        class="rounded-xl border border-n-weak/70 bg-n-alpha-1/45 divide-y divide-n-weak/60"
+      >
+        <div class="grid grid-cols-2 gap-3 px-3 py-2.5">
+          <div class="min-w-0">
+            <p class="text-[10px] uppercase tracking-wide text-n-slate-9">
+              {{ t('CONVERSATION.SGP.FIELDS.CONTRACT') }}
+            </p>
+            <p class="mt-0.5 text-sm font-medium text-n-slate-12 truncate">
+              {{
+                sgpData.contract ||
+                sgpData.contractStatus ||
+                t('CONVERSATION.SGP.NOT_INFORMED')
+              }}
+            </p>
+            <p
+              v-if="sgpData.contract && sgpData.contractStatus"
+              class="text-[10px] text-n-slate-10 truncate"
+            >
+              {{ sgpData.contractStatus }}
+            </p>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[10px] uppercase tracking-wide text-n-slate-9">
+              {{ t('CONVERSATION.SGP.FIELDS.PLAN') }}
+            </p>
+            <p class="mt-0.5 text-sm font-medium text-n-slate-12 truncate">
+              {{ sgpData.plan || t('CONVERSATION.SGP.NOT_INFORMED') }}
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between gap-3 px-3 py-2.5">
+          <div class="min-w-0">
+            <p class="text-[10px] uppercase tracking-wide text-n-slate-9">
+              {{ t('CONVERSATION.SGP.FIELDS.ONU') }}
+            </p>
+            <p
+              class="mt-0.5 text-sm font-medium truncate"
+              :class="onuStatusClass"
+            >
+              {{
+                sgpData.onuStatus ||
+                sgpData.onu ||
+                t('CONVERSATION.SGP.NOT_INFORMED')
+              }}
+            </p>
+            <p
+              v-if="sgpData.onu && sgpData.onuStatus"
+              class="text-[10px] text-n-slate-10 truncate"
+            >
+              {{ sgpData.onu }}
+            </p>
+          </div>
+          <button
+            class="sgp-action-button px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border border-n-weak bg-n-surface-2 text-n-slate-12 hover:bg-n-blue-3/50 hover:border-n-blue-8/40 disabled:opacity-50 transition-colors duration-150"
+            :disabled="isLoading || !sgpData.cpfCnpj"
+            @click="consultOnu"
+          >
+            <span
+              class="size-3.5 inline-block align-text-bottom mr-1"
+              :class="
+                activeAction === 'consultar_status_onu'
+                  ? 'i-lucide-loader-circle animate-spin'
+                  : 'i-lucide-radio-tower'
+              "
+            />
+            {{ t('CONVERSATION.SGP.ACTIONS.ONU') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pt-4">
+      <h4
+        class="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
+      >
+        {{ t('CONVERSATION.SGP.SECTIONS.FINANCIAL') }}
+      </h4>
+      <div
+        class="rounded-xl border border-n-weak/70 bg-n-alpha-1/45 px-3 py-2.5"
+      >
+        <div v-if="previewInvoices.length" class="space-y-1.5">
+          <div
+            v-for="invoice in previewInvoices"
+            :key="invoice.id"
+            class="flex items-center justify-between gap-2 text-[11px]"
+          >
+            <span class="text-n-slate-10">{{
+              formatDate(invoice.dueDate)
+            }}</span>
+            <span class="font-medium text-n-slate-12">{{
+              formatMoney(invoice.value)
+            }}</span>
+          </div>
+          <p v-if="remainingInvoiceCount" class="text-[10px] text-n-slate-9">
+            {{
+              t('CONVERSATION.SGP.MORE_INVOICES', {
+                count: remainingInvoiceCount,
+              })
+            }}
+          </p>
+        </div>
+        <div v-else class="flex items-center justify-between gap-2">
+          <span class="text-[11px] text-n-slate-10">
+            {{
+              sgpData.invoiceDueDate ||
+              sgpData.invoiceStatus ||
+              t('CONVERSATION.SGP.NOT_INFORMED')
+            }}
+          </span>
+          <span class="text-sm font-medium text-n-slate-12">
+            {{ sgpData.invoiceValue || t('CONVERSATION.SGP.NOT_INFORMED') }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div
       v-if="pendingFinancialAction"
-      class="p-3 mb-3 rounded-xl border border-n-strong bg-n-alpha-2"
+      class="p-3 mt-3 rounded-xl border border-n-strong bg-n-alpha-2"
       data-testid="sgp-invoice-selector"
     >
       <p class="text-xs font-semibold text-n-slate-12">
@@ -551,7 +607,7 @@ watch(
 
     <div
       v-if="showPromiseConfirmation"
-      class="p-3 mb-3 rounded-xl border border-n-strong bg-n-alpha-2"
+      class="p-3 mt-3 rounded-xl border border-n-strong bg-n-alpha-2"
       data-testid="sgp-promise-confirmation"
     >
       <p class="text-xs font-semibold text-n-slate-12">
@@ -576,84 +632,50 @@ watch(
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-2">
-      <button
-        class="sgp-action-button py-2.5 px-2 rounded-xl text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-50"
-        :disabled="isLoading || !sgpData.cpfCnpj"
-        @click="consultOnu"
+    <div class="pt-4">
+      <h4
+        class="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
       >
-        <span
-          class="size-3.5 inline-block align-text-bottom mr-1"
-          :class="
-            activeAction === 'consultar_status_onu'
-              ? 'i-lucide-loader-circle animate-spin'
-              : 'i-lucide-radio-tower'
+        {{ t('CONVERSATION.SGP.SECTIONS.ACTIONS') }}
+      </h4>
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          v-for="action in financialActions"
+          :key="action.key"
+          class="sgp-action-button py-2.5 px-2 rounded-[10px] text-[11px] font-semibold border border-n-weak bg-n-surface-2 text-n-slate-12 hover:bg-n-blue-3/50 hover:border-n-blue-8/40 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+          :disabled="
+            isLoading || !sgpData.cpfCnpj || !isFinancialActionAvailable(action)
           "
-        />
-        {{ t('CONVERSATION.SGP.ACTIONS.ONU') }}
-      </button>
-      <button
-        v-for="action in financialActions"
-        :key="action.key"
-        class="sgp-action-button py-2.5 px-2 rounded-xl text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-40 disabled:cursor-not-allowed"
-        :disabled="
-          isLoading || !sgpData.cpfCnpj || !isFinancialActionAvailable(action)
-        "
-        :data-testid="`sgp-action-${action.key}`"
-        @click="requestFinancialAction(action)"
-      >
-        <span
-          class="size-3.5 inline-block align-text-bottom mr-1"
-          :class="
-            activeAction === action.action
-              ? 'i-lucide-loader-circle animate-spin'
-              : action.icon
-          "
-        />
-        {{ action.label }}
-      </button>
-      <button
-        class="sgp-action-button col-span-2 py-2.5 px-2 rounded-xl text-[11px] font-semibold border border-n-weak bg-n-alpha-1 text-n-slate-12 disabled:opacity-50"
-        :disabled="isLoading || !sgpData.cpfCnpj"
-        data-testid="sgp-action-payment-promise"
-        @click="requestPaymentPromise"
-      >
-        <span
-          class="size-3.5 inline-block align-text-bottom mr-1"
-          :class="
-            activeAction === 'liberar_promessa_2_dias'
-              ? 'i-lucide-loader-circle animate-spin'
-              : 'i-lucide-calendar-clock'
-          "
-        />
-        {{ t('CONVERSATION.SGP.ACTIONS.PAYMENT_PROMISE') }}
-      </button>
+          :data-testid="`sgp-action-${action.key}`"
+          @click="requestFinancialAction(action)"
+        >
+          <span
+            class="size-3.5 inline-block align-text-bottom mr-1"
+            :class="
+              activeAction === action.action
+                ? 'i-lucide-loader-circle animate-spin'
+                : action.icon
+            "
+          />
+          {{ action.label }}
+        </button>
+        <button
+          class="sgp-action-button col-span-2 py-2.5 px-2 rounded-[10px] text-[11px] font-semibold border border-n-weak bg-n-surface-2 text-n-slate-12 hover:bg-n-amber-3/40 hover:border-n-amber-8/35 disabled:opacity-50 transition-colors duration-150"
+          :disabled="isLoading || !sgpData.cpfCnpj"
+          data-testid="sgp-action-payment-promise"
+          @click="requestPaymentPromise"
+        >
+          <span
+            class="size-3.5 inline-block align-text-bottom mr-1"
+            :class="
+              activeAction === 'liberar_promessa_2_dias'
+                ? 'i-lucide-loader-circle animate-spin'
+                : 'i-lucide-calendar-clock'
+            "
+          />
+          {{ t('CONVERSATION.SGP.ACTIONS.PAYMENT_PROMISE') }}
+        </button>
+      </div>
     </div>
   </section>
 </template>
-
-<style scoped>
-.sgp-metric-card,
-.sgp-detail-card,
-.sgp-action-button {
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    transform 160ms ease;
-}
-
-.sgp-metric-card:hover,
-.sgp-detail-card:hover {
-  border-color: rgba(var(--blue-8), 0.42);
-}
-
-.sgp-action-button:not(:disabled):hover {
-  background: rgba(var(--blue-9), 0.12);
-  border-color: rgba(var(--blue-8), 0.5);
-  transform: translateY(-1px);
-}
-
-.sgp-action-button:not(:disabled):active {
-  transform: translateY(0);
-}
-</style>

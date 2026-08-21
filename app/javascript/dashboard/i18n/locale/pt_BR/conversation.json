@@ -304,12 +304,29 @@
         "CANCEL": "Cancelar"
       }
     },
+    "OPERATIONS": {
+      "REFERENCE": "Conversa #{id}",
+      "UNASSIGNED": "Não atribuído",
+      "SIGNAL": {
+        "HUMAN": "Atendimento humano",
+        "BIA": "Com IA · Bia",
+        "QUEUE": "Em fila",
+        "NEUTRAL": "Conversa aberta"
+      }
+    },
     "SIDEBAR": {
       "CONTACT": "Contatos",
       "COPILOT": "Copiloto"
     },
     "SGP": {
       "TITLE": "Cliente 360 · SGP",
+      "SUBTITLE": "Contexto operacional do assinante",
+      "SECTIONS": {
+        "CONNECTION": "Conexão",
+        "FINANCIAL": "Financeiro",
+        "REGISTRATION": "Cadastro",
+        "ACTIONS": "Ações disponíveis"
+      },
       "UPDATED_AT": "Atualizado em {value}",
       "NOT_INFORMED": "Não informado",
       "DOCUMENT_PLACEHOLDER": "CPF ou CNPJ",
