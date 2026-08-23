@@ -39,6 +39,51 @@ RSpec.describe AgentBuilder, type: :model do
       it 'returns a user' do
         expect(agent_builder.perform).to be_a(User)
       end
+
+      it 'creates credentials that can authenticate' do
+        user = agent_builder.perform
+        expect(user.valid_password?(password)).to be(true)
+      end
+
+      it 'accepts a simple password that meets the Devise length policy' do
+        simple_password = 'simplepass'
+        builder = described_class.new(
+          params.merge(password: simple_password, password_confirmation: simple_password)
+        )
+
+        user = builder.perform
+
+        expect(user.valid_password?(simple_password)).to be(true)
+      end
+
+      it 'builds the internal confirmation when the administrative form sends one password' do
+        builder = described_class.new(params.merge(password_confirmation: nil))
+
+        expect(builder.perform.valid_password?(password)).to be(true)
+      end
+
+      it 'rejects a password below the configured security requirements' do
+        builder = described_class.new(params.merge(password: 'T1!', password_confirmation: 'T1!'))
+        expect { builder.perform }.to raise_error(ActiveRecord::RecordInvalid)
+      end
+
+      it 'rejects a mismatched password confirmation' do
+        builder = described_class.new(params.merge(password_confirmation: 'OtherPass1!'))
+        expect { builder.perform }.to raise_error(ActiveRecord::RecordInvalid)
+      end
+
+      it 'restores the regular content policy after administrative creation' do
+        user = agent_builder.perform
+        user.password = 'anotherplainpassword'
+        user.password_confirmation = 'anotherplainpassword'
+
+        expect(user).not_to be_valid
+      end
+
+      it 'rejects an invalid email' do
+        builder = described_class.new(params.merge(email: 'invalid-email'))
+        expect { builder.perform }.to raise_error(ActiveRecord::RecordInvalid)
+      end
     end
 
     context 'when user exists' do
@@ -57,6 +102,14 @@ RSpec.describe AgentBuilder, type: :model do
       it 'does not override password for existing users' do
         agent_builder.perform
         expect(existing_user.reload.valid_password?('ExistingPass1!')).to be(true)
+      end
+    end
+
+    context 'when the user already belongs to the account' do
+      let(:email) { current_user.email }
+
+      it 'preserves the existing duplicate-membership validation' do
+        expect { agent_builder.perform }.to raise_error(ActiveRecord::RecordInvalid)
       end
     end
 
@@ -98,10 +151,12 @@ RSpec.describe AgentBuilder, type: :model do
         end
       end
 
-      it 'requires password for newly created users' do
+      it 'creates a confirmed user with a generated secure password when omitted' do
         with_modified_env AGENT_AUTO_CONFIRM_ON_CREATE: 'true' do
           builder = described_class.new(params.merge(password: nil, password_confirmation: nil))
-          expect { builder.perform }.to raise_error(ActiveRecord::RecordInvalid)
+          user = builder.perform
+          expect(user.reload).to be_confirmed
+          expect(user.encrypted_password).not_to be_empty
         end
       end
     end

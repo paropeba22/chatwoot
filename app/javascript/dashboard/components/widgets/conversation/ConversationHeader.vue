@@ -14,7 +14,11 @@ import { buildConversationFilterQuery } from 'dashboard/helper/conversationFilte
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useInbox } from 'dashboard/composables/useInbox';
 import { useI18n } from 'vue-i18n';
-import { getConversationSignal } from 'dashboard/helper/conversationSignal';
+import {
+  getConversationSignal,
+  getConversationPresentationSignal,
+} from 'dashboard/helper/conversationSignal';
+import { useOperationsBranding } from 'shared/composables/useOperationsBranding';
 
 const props = defineProps({
   chat: {
@@ -28,6 +32,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const operationsBranding = useOperationsBranding();
 const store = useStore();
 const route = useRoute();
 const conversationHeader = ref(null);
@@ -100,14 +105,19 @@ const hasMultipleInboxes = computed(
 );
 const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
 const signalState = computed(() => getConversationSignal(props.chat));
-const signalLabel = computed(
-  () =>
-    ({
-      human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
-      bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA'),
-      queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
-      neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
-    })[signalState.value]
+const presentationSignal = computed(() =>
+  getConversationPresentationSignal(props.chat)
+);
+const signalLabel = computed(() =>
+  ({
+    human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
+    bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA', {
+      aiName: operationsBranding.value.aiDisplayName,
+    }),
+    queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
+    neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
+    resolved: t('CONVERSATION.OPERATIONS.SIGNAL.RESOLVED'),
+  })[presentationSignal.value]
 );
 const assigneeName = computed(() => props.chat?.meta?.assignee?.name);
 const contactPhone = computed(() => currentContact.value?.phone_number);

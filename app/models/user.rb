@@ -171,6 +171,25 @@ class User < ApplicationRecord
     find_by(email: email&.downcase)
   end
 
+  def save_with_admin_creation_password_policy!
+    @skip_password_content_validation_for_admin_creation = true
+    save!
+  ensure
+    @skip_password_content_validation_for_admin_creation = false
+  end
+
+  def validate_password_content
+    return true if @skip_password_content_validation_for_admin_creation
+
+    super
+  end
+
+  def validate_password_confirmation_content
+    return true if @skip_password_content_validation_for_admin_creation
+
+    super
+  end
+
   # 2FA/MFA Methods
   # Delegated to Mfa::ManagementService for better separation of concerns
   def mfa_service

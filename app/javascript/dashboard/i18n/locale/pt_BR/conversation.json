@@ -309,9 +309,10 @@
       "UNASSIGNED": "Não atribuído",
       "SIGNAL": {
         "HUMAN": "Atendimento humano",
-        "BIA": "Com IA · Bia",
+        "BIA": "Com IA · {aiName}",
         "QUEUE": "Em fila",
-        "NEUTRAL": "Conversa aberta"
+        "NEUTRAL": "Conversa aberta",
+        "RESOLVED": "Finalizada"
       }
     },
     "SIDEBAR": {

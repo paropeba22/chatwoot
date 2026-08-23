@@ -60,13 +60,17 @@ import { CONVERSATION_EVENTS } from '../helper/AnalyticsHelper/events';
 import ConversationApi from 'dashboard/api/inbox/conversation';
 import {
   buildConversationFilterQuery,
-  normalizeAssigneeView,
   normalizeConversationStatus,
+  resolveAssigneeViewForStatus,
 } from 'dashboard/helper/conversationFilterQueryHelper';
 import {
   createConversationStatsRefresher,
   loadConversationStats,
 } from 'dashboard/helper/conversationStatsRefresh';
+import {
+  filterByCanonicalOperationalView,
+  getCanonicalBucketForView,
+} from 'dashboard/helper/operationalConversationView';
 
 const props = defineProps({
   conversationInbox: { type: [String, Number], default: 0 },
@@ -92,12 +96,7 @@ const initialStatus =
   normalizeConversationStatus(route.query.status) ||
   wootConstants.STATUS_TYPE.OPEN;
 const activeAssigneeTab = ref(
-  normalizeAssigneeView(
-    route.query.view,
-    initialStatus === wootConstants.STATUS_TYPE.RESOLVED
-      ? wootConstants.ASSIGNEE_TYPE.ALL
-      : wootConstants.ASSIGNEE_TYPE.ME
-  )
+  resolveAssigneeViewForStatus(route.query.view, initialStatus)
 );
 const activeStatus = ref(initialStatus);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
@@ -327,11 +326,7 @@ const conversationFilters = computed(() => {
     teamId: props.teamId || undefined,
     conversationType: props.conversationType || undefined,
     operationalBucket: canonicalBucketsEnabled.value
-      ? {
-          me: 'mine',
-          unassigned: 'human_queue',
-          bot: 'bia',
-        }[activeAssigneeTab.value]
+      ? getCanonicalBucketForView(activeAssigneeTab.value)
       : undefined,
   };
 });
@@ -375,13 +370,9 @@ const pageTitle = computed(() => {
 
 function filterByAssigneeTab(conversations) {
   if (canonicalBucketsEnabled.value) {
-    const expectedBucket = {
-      me: 'mine',
-      unassigned: 'human_queue',
-      bot: 'bia',
-    }[activeAssigneeTab.value];
-    return conversations.filter(
-      conversation => conversation.operational_bucket === expectedBucket
+    return filterByCanonicalOperationalView(
+      conversations,
+      activeAssigneeTab.value
     );
   }
 
@@ -463,7 +454,7 @@ function setFiltersFromUISettings() {
     normalizeConversationStatus(status) ||
     wootConstants.STATUS_TYPE.OPEN;
   activeStatus.value = nextStatus;
-  if (nextStatus === wootConstants.STATUS_TYPE.RESOLVED && !route.query.view) {
+  if (nextStatus === wootConstants.STATUS_TYPE.RESOLVED) {
     activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ALL;
   } else if (
     nextStatus !== wootConstants.STATUS_TYPE.RESOLVED &&
@@ -1042,12 +1033,7 @@ watch(
   ([view, status]) => {
     const nextStatus =
       normalizeConversationStatus(status) || wootConstants.STATUS_TYPE.OPEN;
-    const nextView = normalizeAssigneeView(
-      view,
-      nextStatus === wootConstants.STATUS_TYPE.RESOLVED
-        ? wootConstants.ASSIGNEE_TYPE.ALL
-        : wootConstants.ASSIGNEE_TYPE.ME
-    );
+    const nextView = resolveAssigneeViewForStatus(view, nextStatus);
     const didViewChange = activeAssigneeTab.value !== nextView;
     const didStatusChange = activeStatus.value !== nextStatus;
 
@@ -1125,7 +1111,7 @@ watch(conversationFilters, (newVal, oldVal) => {
     />
 
     <div
-      v-if="!hasAppliedFiltersOrActiveFolders"
+      v-if="!hasAppliedFiltersOrActiveFolders && !isViewingResolved"
       class="gt-assignee-tabs px-2 pt-2 pb-2 border-b border-n-weak/70 bg-n-surface-1"
     >
       <ChatTypeTabs

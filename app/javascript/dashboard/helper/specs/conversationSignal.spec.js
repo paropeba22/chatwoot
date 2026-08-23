@@ -1,5 +1,6 @@
 import {
   getConversationSignal,
+  getConversationPresentationSignal,
   visibleConversationLabels,
 } from '../conversationSignal';
 
@@ -105,5 +106,17 @@ describe('conversationSignal', () => {
         labels: ['financeiro', 'bot-bia', 'aguardando-humano'],
       })
     ).toEqual(['financeiro']);
+  });
+
+  it('uses a finalized label for resolved conversations', () => {
+    expect(getConversationPresentationSignal({ status: 'resolved' })).toBe(
+      'resolved'
+    );
+  });
+
+  it('restores the open label after a conversation is reopened', () => {
+    expect(getConversationPresentationSignal({ status: 'open' })).toBe(
+      'neutral'
+    );
   });
 });

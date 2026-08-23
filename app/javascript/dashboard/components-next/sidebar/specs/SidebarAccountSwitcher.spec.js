@@ -12,12 +12,12 @@ describe('SidebarAccountSwitcher', () => {
     );
 
     expect(source).toContain("!name.includes('@')");
-    expect(source).toContain("name : 'Grupo Telecom'");
+    expect(source).toContain('operationsBranding.value.providerName');
     expect(source).not.toContain('{{ currentAccount.name }}');
     expect(source).not.toContain('{{ account.name }}');
     expect(source).not.toContain(':title="currentAccount.name"');
     expect(source).not.toContain(':title="account.name"');
-    expect(source).toContain('/brand-assets/logo_thumbnail.png');
+    expect(source).toContain('operationsBranding.logoThumbnail');
     expect(source).not.toContain("import Logo from 'next/icon/Logo.vue'");
   });
 });

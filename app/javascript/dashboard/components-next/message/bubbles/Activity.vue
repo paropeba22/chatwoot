@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { messageTimestamp } from 'shared/helpers/timeHelper';
+import { messageStamp, messageTimestamp } from 'shared/helpers/timeHelper';
 import BaseBubble from './Base.vue';
 import { useMessageContext } from '../provider.js';
 
@@ -9,6 +9,7 @@ const { content, createdAt } = useMessageContext();
 const readableTime = computed(() =>
   messageTimestamp(createdAt.value, 'LLL d, h:mm a')
 );
+const shortTime = computed(() => messageStamp(createdAt.value));
 </script>
 
 <template>
@@ -18,5 +19,10 @@ const readableTime = computed(() =>
     data-bubble-name="activity"
   >
     <span v-dompurify-html="content" :title="content" />
+    <time
+      class="flex-shrink-0 text-xxs text-n-slate-10 before:mr-2 before:text-n-slate-8 before:content-['·']"
+    >
+      {{ shortTime }}
+    </time>
   </BaseBubble>
 </template>

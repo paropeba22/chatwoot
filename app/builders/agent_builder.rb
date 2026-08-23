@@ -40,23 +40,18 @@ class AgentBuilder
     user = User.from_email(email)
     return user if user
 
-    creation_password = if auto_confirm_on_create_enabled?
-                          password.presence
-                        else
-                          password.presence || generated_temp_password
-                        end
-    creation_password_confirmation = if auto_confirm_on_create_enabled?
-                                       password_confirmation.presence
-                                     else
-                                       password_confirmation.presence || creation_password
-                                     end
+    creation_password = password.presence || generated_temp_password
+    creation_password_confirmation = password_confirmation.presence || creation_password
 
-    User.create!(
+    user = User.new(
       email: email,
       name: name,
       password: creation_password,
       password_confirmation: creation_password_confirmation
     )
+    user.save_with_admin_creation_password_policy!
+
+    user
   end
 
   def generated_temp_password

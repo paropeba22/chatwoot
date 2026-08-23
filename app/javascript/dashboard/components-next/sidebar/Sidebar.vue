@@ -21,6 +21,7 @@ import ChannelIcon from 'next/icon/ChannelIcon.vue';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import { getInboxDisplayName } from 'dashboard/helper/inboxPresentationHelper';
+import { useOperationsBranding } from 'shared/composables/useOperationsBranding';
 
 const props = defineProps({
   isMobileSidebarOpen: {
@@ -40,7 +41,7 @@ const { accountScopedRoute, isOnChatwootCloud } = useAccount();
 const store = useStore();
 const searchShortcut = useKbd([`$mod`, 'k']);
 const { t } = useI18n();
-const brandLogoUrl = '/brand-assets/logo_thumbnail.png';
+const operationsBranding = useOperationsBranding();
 
 const isACustomBrandedInstance = useMapGetter(
   'globalConfig/isACustomBrandedInstance'
@@ -259,7 +260,7 @@ const menuItems = computed(() => {
           name: 'All',
           label: t('SIDEBAR.ALL_CONVERSATIONS'),
           activeOn: ['inbox_conversation'],
-          to: conversationViewRoute('me'),
+          to: conversationViewRoute('all'),
         },
         {
           name: 'Mentions',
@@ -644,16 +645,20 @@ const menuItems = computed(() => {
           <div
             class="grid flex-shrink-0 place-content-center size-9 rounded-xl border border-n-blue-8/30 bg-n-blue-9/10 shadow-[0_6px_16px_rgba(2,8,20,0.22)]"
           >
-            <img :src="brandLogoUrl" class="size-5" alt="Grupo Telecom" />
+            <img
+              :src="operationsBranding.logoThumbnail"
+              class="size-5"
+              :alt="operationsBranding.providerName"
+            />
           </div>
           <div class="flex flex-col flex-grow min-w-0 leading-tight">
             <span
               class="text-[10px] font-semibold uppercase tracking-[0.14em] text-n-blue-11 truncate"
             >
-              {{ t('SIDEBAR.OPERATIONS_CENTER') }}
+              {{ operationsBranding.consoleTitle }}
             </span>
             <span class="mt-0.5 text-sm font-semibold text-n-slate-12 truncate">
-              {{ t('SIDEBAR.PRODUCT_NAME') }}
+              {{ operationsBranding.providerName }}
             </span>
             <span
               class="flex items-center gap-1.5 mt-1 text-[10px] text-n-teal-11"
@@ -661,7 +666,7 @@ const menuItems = computed(() => {
               <span
                 class="size-1.5 rounded-full bg-n-teal-9 shadow-[0_0_0_3px_rgba(46,211,255,0.08)]"
               />
-              {{ t('SIDEBAR.OPERATION_ONLINE') }}
+              {{ operationsBranding.statusText }}
             </span>
           </div>
         </template>

@@ -8,6 +8,7 @@ import { useVuelidate } from '@vuelidate/core';
 import { SESSION_STORAGE_KEYS } from 'dashboard/constants/sessionStorage';
 import SessionStorage from 'shared/helpers/sessionStorage';
 import { useBranding } from 'shared/composables/useBranding';
+import { resolveOperationsBranding } from 'shared/composables/useOperationsBranding';
 
 // components
 import SimpleDivider from '../../components/Divider/SimpleDivider.vue';
@@ -94,6 +95,9 @@ export default {
     },
     showSamlLogin() {
       return this.allowedLoginMethods.includes('saml');
+    },
+    operationsBranding() {
+      return resolveOperationsBranding(this.globalConfig);
     },
   },
   created() {
@@ -218,8 +222,8 @@ export default {
   <main class="flex flex-col w-full min-h-screen py-20 bg-[#0B0E14] bg-[radial-gradient(circle_at_center,rgba(0,82,255,0.1)_0%,transparent_50%)] sm:px-6 lg:px-8">
     <section class="max-w-5xl mx-auto">
       <img
-        :src="'/brand-assets/logo_dark.png'"
-        alt="Logo Grupo Telecom"
+        :src="operationsBranding.logo"
+        :alt="operationsBranding.providerName"
         class="block w-auto h-16 mx-auto"
       />
       <h2 class="mt-6 text-3xl font-medium text-center text-white">

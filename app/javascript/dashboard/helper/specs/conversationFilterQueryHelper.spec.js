@@ -3,6 +3,7 @@ import {
   buildConversationFilterQuery,
   normalizeAssigneeView,
   normalizeConversationStatus,
+  resolveAssigneeViewForStatus,
 } from '../conversationFilterQueryHelper';
 
 describe('conversationFilterQueryHelper', () => {
@@ -48,6 +49,18 @@ describe('conversationFilterQueryHelper', () => {
       expect(
         buildConversationFilterQuery({ view: 'me', status: 'open' })
       ).toEqual({ view: 'me' });
+    });
+  });
+
+  describe('#resolveAssigneeViewForStatus', () => {
+    it('forces finalized history to the authorized all view', () => {
+      expect(resolveAssigneeViewForStatus('me', 'resolved')).toBe('all');
+      expect(resolveAssigneeViewForStatus('bot', 'resolved')).toBe('all');
+    });
+
+    it('keeps operational views strict for open conversations', () => {
+      expect(resolveAssigneeViewForStatus('me', 'open')).toBe('me');
+      expect(resolveAssigneeViewForStatus('bot', 'open')).toBe('bot');
     });
   });
 });

@@ -28,6 +28,11 @@ export const normalizeConversationStatus = status => {
     : null;
 };
 
+export const resolveAssigneeViewForStatus = (view, status) =>
+  status === wootConstants.STATUS_TYPE.RESOLVED
+    ? wootConstants.ASSIGNEE_TYPE.ALL
+    : normalizeAssigneeView(view, wootConstants.ASSIGNEE_TYPE.ME);
+
 export const buildConversationFilterQuery = ({ view, status } = {}) => {
   const query = {};
   const normalizedView = normalizeAssigneeView(view, null);

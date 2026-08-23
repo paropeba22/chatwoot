@@ -43,7 +43,7 @@
         "PASSWORD": {
           "LABEL": "Senha temporária",
           "PLACEHOLDER": "Por favor, informe uma senha temporária",
-          "ERROR": "A senha temporária é obrigatória"
+          "ERROR": "Use uma senha de 6 a 128 caracteres"
         },
         "PASSWORD_CONFIRMATION": {
           "LABEL": "Confirmar senha temporária",

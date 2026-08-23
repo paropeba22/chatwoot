@@ -81,6 +81,15 @@ class DashboardController < ActionController::Base
       GT_UI_V2_ENABLED: ActiveModel::Type::Boolean.new.cast(
         ENV.fetch('GT_UI_V2_ENABLED', 'true')
       ),
+      OPERATIONS_CONSOLE_TITLE: GlobalConfigService.load(
+        'OPERATIONS_CONSOLE_TITLE', 'ISP Operations Console'
+      ),
+      OPERATIONS_STATUS_TEXT: GlobalConfigService.load(
+        'OPERATIONS_STATUS_TEXT', 'Operação online'
+      ),
+      OPERATIONS_AI_DISPLAY_NAME: GlobalConfigService.load(
+        'OPERATIONS_AI_DISPLAY_NAME', 'Bia'
+      ),
       AZURE_APP_ID: GlobalConfigService.load('AZURE_APP_ID', ''),
       GIT_SHA: GIT_HASH,
       ALLOWED_LOGIN_METHODS: allowed_login_methods

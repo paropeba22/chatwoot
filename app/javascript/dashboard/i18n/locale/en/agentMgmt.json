@@ -43,7 +43,7 @@
         "PASSWORD": {
           "LABEL": "Temporary Password",
           "PLACEHOLDER": "Please enter a temporary password",
-          "ERROR": "Temporary password is required"
+          "ERROR": "Use a password between 6 and 128 characters"
         },
         "PASSWORD_CONFIRMATION": {
           "LABEL": "Confirm Temporary Password",

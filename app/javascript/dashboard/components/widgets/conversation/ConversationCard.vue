@@ -14,8 +14,10 @@ import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import { useI18n } from 'vue-i18n';
 import {
   getConversationSignal,
+  getConversationPresentationSignal,
   visibleConversationLabels,
 } from 'dashboard/helper/conversationSignal';
+import { useOperationsBranding } from 'shared/composables/useOperationsBranding';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -38,6 +40,7 @@ const emit = defineEmits([
 ]);
 
 const { t } = useI18n();
+const operationsBranding = useOperationsBranding();
 
 const hovered = ref(false);
 
@@ -45,15 +48,21 @@ const unreadCount = computed(() => props.chat.unread_count);
 const hasUnread = computed(() => unreadCount.value > 0);
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
 const signalState = computed(() => getConversationSignal(props.chat));
+const presentationSignal = computed(() =>
+  getConversationPresentationSignal(props.chat)
+);
 const visibleLabels = computed(() => visibleConversationLabels(props.chat));
 const signalLabel = computed(
   () =>
     ({
       human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
-      bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA'),
+      bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA', {
+        aiName: operationsBranding.value.aiDisplayName,
+      }),
       queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
       neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
-    })[signalState.value]
+      resolved: t('CONVERSATION.OPERATIONS.SIGNAL.RESOLVED'),
+    })[presentationSignal.value]
 );
 
 const signalPillClass = computed(

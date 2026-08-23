@@ -312,9 +312,10 @@
       "UNASSIGNED": "Unassigned",
       "SIGNAL": {
         "HUMAN": "Human service",
-        "BIA": "Bia automation",
+        "BIA": "{aiName} automation",
         "QUEUE": "Human queue",
-        "NEUTRAL": "Open conversation"
+        "NEUTRAL": "Open conversation",
+        "RESOLVED": "Resolved"
       }
     },
     "SIDEBAR": {

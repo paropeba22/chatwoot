@@ -107,6 +107,30 @@ describe ConversationFinder do
         )
         expect(result[:conversations]).not_to include(mine, queue)
       end
+
+      it 'does not apply an operational bucket filter to the admin all view' do
+        mine = create(:conversation, account: account, inbox: inbox, assignee: user_1)
+        queue = create(:conversation, account: account, inbox: inbox, label_list: ['aguardando-humano'])
+        bia = create(:conversation, account: account, inbox: inbox, label_list: ['bot-bia'])
+        outside_buckets = create(
+          :conversation,
+          account: account,
+          inbox: inbox,
+          label_list: ['bot-bia'],
+          assignee: user_2
+        )
+        unassigned = create(:conversation, account: account, inbox: inbox)
+
+        result = described_class.new(admin, { status: 'open', assignee_type: 'all' }).perform
+
+        expect(result[:conversations]).to include(
+          mine,
+          queue,
+          bia,
+          outside_buckets,
+          unassigned
+        )
+      end
     end
 
     context 'with status all' do

@@ -15,8 +15,10 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { useI18n } from 'vue-i18n';
 import {
   getConversationSignal,
+  getConversationPresentationSignal,
   visibleConversationLabels,
 } from 'dashboard/helper/conversationSignal';
+import { useOperationsBranding } from 'shared/composables/useOperationsBranding';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -38,17 +40,23 @@ const emit = defineEmits([
 ]);
 
 const { t } = useI18n();
+const operationsBranding = useOperationsBranding();
 
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
 const signalState = computed(() => getConversationSignal(props.chat));
-const signalLabel = computed(
-  () =>
-    ({
-      human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
-      bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA'),
-      queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
-      neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
-    })[signalState.value]
+const presentationSignal = computed(() =>
+  getConversationPresentationSignal(props.chat)
+);
+const signalLabel = computed(() =>
+  ({
+    human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
+    bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA', {
+      aiName: operationsBranding.value.aiDisplayName,
+    }),
+    queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
+    neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
+    resolved: t('CONVERSATION.OPERATIONS.SIGNAL.RESOLVED'),
+  })[presentationSignal.value]
 );
 const visibleLabels = computed(() => visibleConversationLabels(props.chat));
 const showLabelsSection = computed(() => visibleLabels.value.length > 0);

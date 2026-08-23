@@ -53,6 +53,11 @@ export const getConversationSignal = conversation => {
   return 'neutral';
 };
 
+export const getConversationPresentationSignal = conversation =>
+  conversation?.status === 'resolved'
+    ? 'resolved'
+    : getConversationSignal(conversation);
+
 export const visibleConversationLabels = conversation =>
   (conversation?.labels || []).filter(label => {
     const name = typeof label === 'string' ? label : label?.title;
