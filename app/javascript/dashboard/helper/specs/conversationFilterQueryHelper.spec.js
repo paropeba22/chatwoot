@@ -4,6 +4,7 @@ import {
   normalizeAssigneeView,
   normalizeConversationStatus,
   resolveAssigneeViewForStatus,
+  resolveConversationFilterState,
 } from '../conversationFilterQueryHelper';
 
 describe('conversationFilterQueryHelper', () => {
@@ -33,23 +34,34 @@ describe('conversationFilterQueryHelper', () => {
   });
 
   describe('#buildConversationFilterQuery', () => {
-    it('preserves the bot tab and resolved status', () => {
-      expect(
-        buildConversationFilterQuery({ view: 'bot', status: 'resolved' })
-      ).toEqual({ view: 'bot', status: 'resolved' });
+    it.each(['bot', 'me', 'unassigned', 'all'])(
+      'canonicalizes the %s view to all for finalized history',
+      view => {
+        expect(
+          buildConversationFilterQuery({ view, status: 'resolved' })
+        ).toEqual({ view: 'all', status: 'resolved' });
+      }
+    );
+
+    it('keeps an already canonical resolved query unchanged', () => {
+      const canonicalQuery = buildConversationFilterQuery({
+        view: 'bot',
+        status: 'resolved',
+      });
+
+      expect(buildConversationFilterQuery(canonicalQuery)).toEqual(
+        canonicalQuery
+      );
     });
 
-    it('keeps the all view for finalized history', () => {
-      expect(
-        buildConversationFilterQuery({ view: 'all', status: 'resolved' })
-      ).toEqual({ view: 'all', status: 'resolved' });
-    });
-
-    it('omits default open status from the URL query', () => {
-      expect(
-        buildConversationFilterQuery({ view: 'me', status: 'open' })
-      ).toEqual({ view: 'me' });
-    });
+    it.each(['bot', 'me', 'unassigned', 'all'])(
+      'preserves the explicit %s view for open conversations',
+      view => {
+        expect(buildConversationFilterQuery({ view, status: 'open' })).toEqual({
+          view,
+        });
+      }
+    );
   });
 
   describe('#resolveAssigneeViewForStatus', () => {
@@ -61,6 +73,30 @@ describe('conversationFilterQueryHelper', () => {
     it('keeps operational views strict for open conversations', () => {
       expect(resolveAssigneeViewForStatus('me', 'open')).toBe('me');
       expect(resolveAssigneeViewForStatus('bot', 'open')).toBe('bot');
+    });
+  });
+
+  describe('#resolveConversationFilterState', () => {
+    it('keeps an explicitly requested all view on open and hard refresh', () => {
+      expect(
+        resolveConversationFilterState({ view: 'all', status: 'open' })
+      ).toEqual({ view: 'all', status: 'open' });
+    });
+
+    it('defaults an open URL without a view to mine', () => {
+      expect(resolveConversationFilterState({ status: 'open' })).toEqual({
+        view: 'me',
+        status: 'open',
+      });
+    });
+
+    it('forces resolved to all and permits an explicit me after reopening', () => {
+      expect(
+        resolveConversationFilterState({ view: 'bot', status: 'resolved' })
+      ).toEqual({ view: 'all', status: 'resolved' });
+      expect(
+        resolveConversationFilterState({ view: 'me', status: 'open' })
+      ).toEqual({ view: 'me', status: 'open' });
     });
   });
 });

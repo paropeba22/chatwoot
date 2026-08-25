@@ -60,8 +60,7 @@ import { CONVERSATION_EVENTS } from '../helper/AnalyticsHelper/events';
 import ConversationApi from 'dashboard/api/inbox/conversation';
 import {
   buildConversationFilterQuery,
-  normalizeConversationStatus,
-  resolveAssigneeViewForStatus,
+  resolveConversationFilterState,
 } from 'dashboard/helper/conversationFilterQueryHelper';
 import {
   createConversationStatsRefresher,
@@ -69,7 +68,7 @@ import {
 } from 'dashboard/helper/conversationStatsRefresh';
 import {
   filterByCanonicalOperationalView,
-  getCanonicalBucketForView,
+  getConversationViewRequestFilters,
 } from 'dashboard/helper/operationalConversationView';
 
 const props = defineProps({
@@ -92,13 +91,12 @@ const { isFeatureFlagEnabled } = usePolicy();
 
 const resolveAttributesModalRef = ref(null);
 
-const initialStatus =
-  normalizeConversationStatus(route.query.status) ||
-  wootConstants.STATUS_TYPE.OPEN;
-const activeAssigneeTab = ref(
-  resolveAssigneeViewForStatus(route.query.view, initialStatus)
-);
-const activeStatus = ref(initialStatus);
+const initialFilterState = resolveConversationFilterState({
+  view: route.query.view,
+  status: route.query.status,
+});
+const activeAssigneeTab = ref(initialFilterState.view);
+const activeStatus = ref(initialFilterState.status);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const showAdvancedFilters = ref(false);
 // chatsOnView is to store the chats that are currently visible on the screen,
@@ -315,10 +313,13 @@ const conversationFilters = computed(() => {
     filterLabels = [props.label];
   }
 
+  const viewRequestFilters = getConversationViewRequestFilters(
+    activeAssigneeTab.value
+  );
+
   return {
     inboxId: props.conversationInbox ? props.conversationInbox : undefined,
-    assigneeType:
-      activeAssigneeTab.value === 'bot' ? 'all' : activeAssigneeTab.value,
+    assigneeType: viewRequestFilters.assigneeType,
     status: activeStatus.value,
     sortBy: activeSortBy.value,
     page: conversationListPagination.value,
@@ -326,7 +327,7 @@ const conversationFilters = computed(() => {
     teamId: props.teamId || undefined,
     conversationType: props.conversationType || undefined,
     operationalBucket: canonicalBucketsEnabled.value
-      ? getCanonicalBucketForView(activeAssigneeTab.value)
+      ? viewRequestFilters.operationalBucket
       : undefined,
   };
 });
@@ -446,22 +447,33 @@ const uniqueInboxes = computed(() => {
 });
 
 // ---------------------- Methods -----------------------
+function canonicalizeResolvedRoute({ view, status }) {
+  if (
+    status !== wootConstants.STATUS_TYPE.RESOLVED ||
+    route.query.view === view
+  ) {
+    return;
+  }
+
+  router.replace({
+    query: {
+      ...route.query,
+      ...buildConversationFilterQuery({ view, status }),
+    },
+  });
+}
+
 function setFiltersFromUISettings() {
   const { conversations_filter_by: filterBy = {} } = uiSettings.value;
   const { status, order_by: orderBy } = filterBy;
-  const nextStatus =
-    normalizeConversationStatus(route.query.status) ||
-    normalizeConversationStatus(status) ||
-    wootConstants.STATUS_TYPE.OPEN;
-  activeStatus.value = nextStatus;
-  if (nextStatus === wootConstants.STATUS_TYPE.RESOLVED) {
-    activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ALL;
-  } else if (
-    nextStatus !== wootConstants.STATUS_TYPE.RESOLVED &&
-    activeAssigneeTab.value === wootConstants.ASSIGNEE_TYPE.ALL
-  ) {
-    activeAssigneeTab.value = wootConstants.ASSIGNEE_TYPE.ME;
-  }
+  const nextFilterState = resolveConversationFilterState({
+    view: route.query.view,
+    status: route.query.status,
+    fallbackStatus: status,
+  });
+  activeStatus.value = nextFilterState.status;
+  activeAssigneeTab.value = nextFilterState.view;
+  canonicalizeResolvedRoute(nextFilterState);
   activeSortBy.value = Object.values(wootConstants.SORT_BY_TYPE).includes(
     orderBy
   )
@@ -1031,11 +1043,12 @@ watch(
 watch(
   () => [route.query.view, route.query.status],
   ([view, status]) => {
-    const nextStatus =
-      normalizeConversationStatus(status) || wootConstants.STATUS_TYPE.OPEN;
-    const nextView = resolveAssigneeViewForStatus(view, nextStatus);
+    const nextFilterState = resolveConversationFilterState({ view, status });
+    const { view: nextView, status: nextStatus } = nextFilterState;
     const didViewChange = activeAssigneeTab.value !== nextView;
     const didStatusChange = activeStatus.value !== nextStatus;
+
+    canonicalizeResolvedRoute(nextFilterState);
 
     if (!didViewChange && !didStatusChange) return;
 

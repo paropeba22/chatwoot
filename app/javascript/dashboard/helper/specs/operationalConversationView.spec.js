@@ -1,6 +1,7 @@
 import {
   filterByCanonicalOperationalView,
   getCanonicalBucketForView,
+  getConversationViewRequestFilters,
 } from '../operationalConversationView';
 
 const conversations = [
@@ -28,4 +29,19 @@ describe('operationalConversationView', () => {
       filterByCanonicalOperationalView(conversations, 'all').map(({ id }) => id)
     ).toEqual([1, 2, 3, 4, 5]);
   });
+
+  it.each([
+    ['me', 'me', 'mine'],
+    ['unassigned', 'unassigned', 'human_queue'],
+    ['bot', 'all', 'bia'],
+    ['all', 'all', undefined],
+  ])(
+    'builds the %s request without changing its operational scope',
+    (view, assigneeType, operationalBucket) => {
+      expect(getConversationViewRequestFilters(view)).toEqual({
+        assigneeType,
+        operationalBucket,
+      });
+    }
+  );
 });

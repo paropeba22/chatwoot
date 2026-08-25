@@ -33,10 +33,29 @@ export const resolveAssigneeViewForStatus = (view, status) =>
     ? wootConstants.ASSIGNEE_TYPE.ALL
     : normalizeAssigneeView(view, wootConstants.ASSIGNEE_TYPE.ME);
 
+export const resolveConversationFilterState = ({
+  view,
+  status,
+  fallbackStatus = wootConstants.STATUS_TYPE.OPEN,
+} = {}) => {
+  const normalizedStatus =
+    normalizeConversationStatus(status) ||
+    normalizeConversationStatus(fallbackStatus) ||
+    wootConstants.STATUS_TYPE.OPEN;
+
+  return {
+    view: resolveAssigneeViewForStatus(view, normalizedStatus),
+    status: normalizedStatus,
+  };
+};
+
 export const buildConversationFilterQuery = ({ view, status } = {}) => {
   const query = {};
-  const normalizedView = normalizeAssigneeView(view, null);
   const normalizedStatus = normalizeConversationStatus(status);
+  const normalizedView =
+    normalizedStatus === wootConstants.STATUS_TYPE.RESOLVED
+      ? wootConstants.ASSIGNEE_TYPE.ALL
+      : normalizeAssigneeView(view, null);
 
   if (normalizedView) {
     query.view = normalizedView;

@@ -151,12 +151,10 @@ RSpec.describe AgentBuilder, type: :model do
         end
       end
 
-      it 'creates a confirmed user with a generated secure password when omitted' do
+      it 'preserves the existing requirement for a password when auto-confirm is enabled' do
         with_modified_env AGENT_AUTO_CONFIRM_ON_CREATE: 'true' do
           builder = described_class.new(params.merge(password: nil, password_confirmation: nil))
-          user = builder.perform
-          expect(user.reload).to be_confirmed
-          expect(user.encrypted_password).not_to be_empty
+          expect { builder.perform }.to raise_error(ActiveRecord::RecordInvalid)
         end
       end
     end

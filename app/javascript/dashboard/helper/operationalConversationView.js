@@ -6,6 +6,11 @@ const CANONICAL_BUCKET_BY_VIEW = {
 
 export const getCanonicalBucketForView = view => CANONICAL_BUCKET_BY_VIEW[view];
 
+export const getConversationViewRequestFilters = view => ({
+  assigneeType: view === 'bot' ? 'all' : view,
+  operationalBucket: getCanonicalBucketForView(view),
+});
+
 export const filterByCanonicalOperationalView = (conversations, view) => {
   if (view === 'all') return [...conversations];
 
