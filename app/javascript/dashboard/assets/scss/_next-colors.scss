@@ -157,10 +157,15 @@
     --gt-console-canvas: 244 247 251;
     --gt-console-panel: 255 255 255;
     --gt-console-raised: 248 250 253;
+    --gt-console-subtle: 238 243 249;
+    --gt-console-active: 229 239 252;
+    --gt-console-border: 216 225 237;
+    --gt-console-border-strong: 188 203 222;
     --gt-signal-human: 29 129 246;
     --gt-signal-bia: 18 165 148;
     --gt-signal-queue: 226 163 54;
     --gt-signal-error: 220 59 93;
+    --gt-signal-resolved: 100 116 139;
   }
 
   .dark {
@@ -314,10 +319,15 @@
     --gt-console-canvas: 5 10 19;
     --gt-console-panel: 12 20 34;
     --gt-console-raised: 17 28 47;
+    --gt-console-subtle: 14 24 41;
+    --gt-console-active: 20 39 65;
+    --gt-console-border: 31 48 73;
+    --gt-console-border-strong: 45 68 101;
     --gt-signal-human: 29 161 255;
     --gt-signal-bia: 46 211 255;
     --gt-signal-queue: 255 197 61;
     --gt-signal-error: 229 70 102;
+    --gt-signal-resolved: 148 163 184;
   }
 }
 // NEXT COLORS END

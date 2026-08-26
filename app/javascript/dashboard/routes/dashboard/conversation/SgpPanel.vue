@@ -317,7 +317,7 @@ watch(
     data-testid="sgp-panel"
   >
     <div
-      class="flex items-start justify-between gap-3 pb-4 border-b border-n-weak/70"
+      class="gt-customer-360__header flex items-start justify-between gap-3 pb-4 border-b border-n-weak/70"
     >
       <div class="min-w-0">
         <h3
@@ -360,15 +360,13 @@ watch(
       {{ statusMessage }}
     </p>
 
-    <div class="pt-4">
+    <div class="sgp-section pt-4">
       <h4
-        class="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
+        class="sgp-section-heading mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
       >
         {{ t('CONVERSATION.SGP.SECTIONS.REGISTRATION') }}
       </h4>
-      <div
-        class="rounded-xl border border-n-weak/70 bg-n-alpha-1/45 divide-y divide-n-weak/60"
-      >
+      <div class="sgp-data-block rounded-xl border divide-y divide-n-weak/60">
         <div v-if="sgpData.holderName" class="px-3 py-2.5">
           <p class="text-[10px] uppercase tracking-wide text-n-slate-9">
             {{ t('CONVERSATION.SGP.FIELDS.HOLDER') }}
@@ -429,15 +427,13 @@ watch(
       </div>
     </div>
 
-    <div class="pt-4">
+    <div class="sgp-section pt-4">
       <h4
-        class="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
+        class="sgp-section-heading mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
       >
         {{ t('CONVERSATION.SGP.SECTIONS.CONNECTION') }}
       </h4>
-      <div
-        class="rounded-xl border border-n-weak/70 bg-n-alpha-1/45 divide-y divide-n-weak/60"
-      >
+      <div class="sgp-data-block rounded-xl border divide-y divide-n-weak/60">
         <div class="grid grid-cols-2 gap-3 px-3 py-2.5">
           <div class="min-w-0">
             <p class="text-[10px] uppercase tracking-wide text-n-slate-9">
@@ -507,15 +503,13 @@ watch(
       </div>
     </div>
 
-    <div class="pt-4">
+    <div class="sgp-section pt-4">
       <h4
-        class="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
+        class="sgp-section-heading mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
       >
         {{ t('CONVERSATION.SGP.SECTIONS.FINANCIAL') }}
       </h4>
-      <div
-        class="rounded-xl border border-n-weak/70 bg-n-alpha-1/45 px-3 py-2.5"
-      >
+      <div class="sgp-data-block rounded-xl border px-3 py-2.5">
         <div v-if="previewInvoices.length" class="space-y-1.5">
           <div
             v-for="invoice in previewInvoices"
@@ -632,9 +626,9 @@ watch(
       </div>
     </div>
 
-    <div class="pt-4">
+    <div class="sgp-section pt-4">
       <h4
-        class="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
+        class="sgp-section-heading mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-n-slate-9"
       >
         {{ t('CONVERSATION.SGP.SECTIONS.ACTIONS') }}
       </h4>

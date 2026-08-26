@@ -136,10 +136,14 @@ onMounted(() => {
       :title="$t('CONVERSATION.SIDEBAR.CONTACT')"
       @close="closeContactPanel"
     />
-    <ContactInfo :contact="contact" :channel-type="channelType" />
+    <ContactInfo
+      :contact="contact"
+      :channel-type="channelType"
+      class="gt-customer-identity"
+    />
     <SgpPanel :conversation-id="conversationId" :contact="contact" />
 
-    <div class="px-2 pb-8 list-group">
+    <div class="gt-customer-secondary px-2 pt-3 pb-8 list-group">
       <Draggable
         :list="conversationSidebarItems"
         animation="200"

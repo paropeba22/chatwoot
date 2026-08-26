@@ -209,9 +209,9 @@ body {
     }
 
     .gt-sidebar {
-      border-color: rgba(var(--blue-8), 0.14);
+      border-color: rgb(var(--gt-console-border));
       background: rgb(var(--gt-console-canvas));
-      box-shadow: 10px 0 28px rgba(var(--gt-ink), 0.14);
+      box-shadow: 6px 0 18px rgba(var(--gt-ink), 0.1);
     }
 
     .gt-sidebar-brand {
@@ -238,21 +238,91 @@ body {
       padding-top: 0.35rem;
     }
 
+    .gt-sidebar-section {
+      color: rgb(var(--slate-9));
+    }
+
+    .gt-sidebar-primary > :is(a, button),
+    .gt-sidebar-primary > div > :is(a, button) {
+      min-height: 2.35rem;
+    }
+
+    .gt-sidebar-primary:has(.active) {
+      border-radius: var(--gt-radius-md);
+      background: rgb(var(--gt-console-active) / 0.46);
+    }
+
+    .gt-sidebar-incident:has(.active) {
+      border-radius: var(--gt-radius-md);
+      background: rgb(var(--ruby-3) / 0.48);
+    }
+
     .gt-conversation-rail {
       position: relative;
+      border-color: rgb(var(--gt-console-border));
       background: rgb(var(--gt-console-panel));
-      box-shadow: 8px 0 24px rgba(var(--gt-ink), 0.1);
+      box-shadow: 5px 0 16px rgba(var(--gt-ink), 0.08);
     }
 
     .gt-rail-header {
-      background: rgb(var(--gt-console-raised) / 0.92);
+      background: rgb(var(--gt-console-raised) / 0.96);
+    }
+
+    .gt-operational-status {
+      display: inline-flex;
+      min-width: 0;
+      align-items: center;
+      border: 1px solid transparent;
+      border-radius: var(--gt-radius-sm);
+      font-weight: 650;
+      line-height: 1rem;
+      white-space: nowrap;
+    }
+
+    .gt-operational-status--default {
+      gap: 0.375rem;
+      padding: 0.3rem 0.55rem;
+      font-size: 0.6875rem;
+    }
+
+    .gt-operational-status--compact {
+      gap: 0.25rem;
+      max-width: 8.5rem;
+      padding: 0.15rem 0.4rem;
+      font-size: 0.625rem;
+    }
+
+    .gt-operational-status--human {
+      color: rgb(var(--blue-11));
+      border-color: rgb(var(--blue-8) / 0.34);
+      background: rgb(var(--blue-3) / 0.56);
+    }
+
+    .gt-operational-status--bia {
+      color: rgb(var(--teal-11));
+      border-color: rgb(var(--teal-8) / 0.34);
+      background: rgb(var(--teal-3) / 0.56);
+    }
+
+    .gt-operational-status--queue {
+      color: rgb(var(--amber-11));
+      border-color: rgb(var(--amber-8) / 0.34);
+      background: rgb(var(--amber-3) / 0.56);
+    }
+
+    .gt-operational-status--resolved,
+    .gt-operational-status--neutral {
+      color: rgb(var(--slate-11));
+      border-color: rgb(var(--gt-console-border-strong) / 0.7);
+      background: rgb(var(--gt-console-subtle) / 0.76);
     }
 
     .gt-conversation-card {
       position: relative;
       overflow: hidden;
-      animation: gt-card-enter 280ms ease both;
-      backdrop-filter: blur(10px);
+      animation: gt-card-enter 180ms ease both;
+      border-color: rgb(var(--gt-console-border) / 0.82);
+      background: rgb(var(--gt-console-panel) / 0.72);
 
       &::before {
         position: absolute;
@@ -285,25 +355,44 @@ body {
         background: rgb(var(--gt-signal-error));
       }
 
+      &[data-signal='resolved']::before {
+        background: rgb(var(--gt-signal-resolved));
+      }
+
       &:hover {
-        transform: translateX(2px);
-        box-shadow: 0 10px 24px rgba(var(--gt-ink), 0.3);
+        border-color: rgb(var(--gt-console-border-strong));
+        background: rgb(var(--gt-console-raised));
+        box-shadow: 0 4px 12px rgba(var(--gt-ink), 0.14);
       }
 
       &.active::before {
         opacity: 1;
         width: 3px;
       }
+
+      &.active {
+        border-color: rgb(var(--blue-8) / 0.55);
+        background: rgb(var(--gt-console-active) / 0.78);
+        box-shadow: inset 0 0 0 1px rgb(var(--blue-8) / 0.1);
+      }
+
+      &.selected:not(.active) {
+        border-color: rgb(var(--blue-8) / 0.4);
+        background: rgb(var(--gt-console-active) / 0.5);
+      }
     }
 
     .gt-conversation-stage {
       overflow: hidden;
+      border-color: rgb(var(--gt-console-border));
       background: rgb(var(--gt-console-panel));
+      box-shadow: 0 5px 16px rgba(var(--gt-ink), 0.12);
     }
 
     .gt-conversation-header {
-      background: rgb(var(--gt-console-raised) / 0.96);
-      box-shadow: 0 6px 18px rgba(var(--gt-ink), 0.08);
+      border-color: rgb(var(--gt-console-border));
+      background: rgb(var(--gt-console-raised) / 0.98);
+      box-shadow: 0 3px 10px rgba(var(--gt-ink), 0.07);
 
       &::before {
         position: absolute;
@@ -327,15 +416,87 @@ body {
       &[data-signal='queue']::before {
         background: rgb(var(--gt-signal-queue));
       }
+
+      &[data-signal='resolved']::before {
+        background: rgb(var(--gt-signal-resolved));
+      }
+    }
+
+    .gt-cockpit-context {
+      display: flex;
+      max-width: 100%;
+      align-items: center;
+      gap: 0.55rem;
+      margin-top: 0.3rem;
+      overflow: hidden;
+      color: rgb(var(--slate-10));
+      font-size: 0.6875rem;
+      line-height: 1rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .gt-message-timeline {
+      background-color: rgb(var(--gt-console-canvas));
+      background-image: linear-gradient(
+        180deg,
+        rgb(var(--gt-console-raised) / 0.3),
+        transparent 12rem
+      );
+    }
+
+    .gt-conversation-empty {
+      background-image: radial-gradient(
+        circle at center,
+        rgb(var(--blue-3) / 0.22),
+        transparent 15rem
+      );
+    }
+
+    .gt-activity-event {
+      border: 1px solid rgb(var(--gt-console-border) / 0.72);
+      background: rgb(var(--gt-console-subtle) / 0.72);
+      box-shadow: none;
+    }
+
+    .gt-reply-box {
+      border-color: rgb(var(--gt-console-border-strong) / 0.82);
+      background: rgb(var(--gt-console-raised));
+      box-shadow: 0 6px 18px rgba(var(--gt-ink), 0.16);
+    }
+
+    .gt-agent-dock-header,
+    .gt-agent-dock-tools {
+      border-color: rgb(var(--gt-console-border));
+      background: rgb(var(--gt-console-subtle) / 0.48);
+    }
+
+    .gt-editor-mode-toggle {
+      border-color: rgb(var(--gt-console-border-strong) / 0.72);
+      background: rgb(var(--gt-console-canvas) / 0.72);
+    }
+
+    .gt-editor-mode-indicator {
+      background: rgb(var(--gt-console-raised));
+      box-shadow:
+        inset 0 0 0 1px rgb(var(--gt-console-border)),
+        0 1px 3px rgba(var(--gt-ink), 0.14);
+    }
+
+    .gt-agent-dock-send {
+      min-width: 5.5rem;
+      box-shadow: 0 3px 9px rgba(var(--gt-ink), 0.15);
     }
 
     .gt-customer-sidebar {
+      border-color: rgb(var(--gt-console-border));
       background: rgb(var(--gt-console-panel));
-      box-shadow: -16px 0 38px rgba(var(--gt-ink), 0.2);
+      box-shadow: -8px 0 24px rgba(var(--gt-ink), 0.14);
     }
 
     .gt-customer-panel {
       min-height: 100%;
+      background: rgb(var(--gt-console-panel));
     }
 
     .gt-customer-360 {
@@ -343,11 +504,46 @@ body {
       overflow: hidden;
       background: rgb(var(--gt-console-panel));
 
+      .sgp-section-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .sgp-section-heading::before {
+        width: 0.35rem;
+        height: 0.35rem;
+        border-radius: 999px;
+        background: rgb(var(--gt-signal-bia));
+        content: '';
+      }
+
+      .sgp-data-block {
+        border-color: rgb(var(--gt-console-border));
+        background: rgb(var(--gt-console-subtle) / 0.58);
+      }
+
       .sgp-action-button {
+        border-color: rgb(var(--gt-console-border));
+        background: rgb(var(--gt-console-raised));
         box-shadow:
           inset 0 1px rgba(255, 255, 255, 0.035),
-          0 4px 12px rgba(var(--gt-ink), 0.1);
+          0 2px 7px rgba(var(--gt-ink), 0.08);
       }
+
+      .sgp-action-button:hover {
+        transform: translateY(-1px);
+      }
+    }
+
+    .gt-customer-identity {
+      border-bottom: 1px solid rgb(var(--gt-console-border));
+      background: rgb(var(--gt-console-raised) / 0.76);
+    }
+
+    .gt-customer-secondary {
+      border-top: 1px solid rgb(var(--gt-console-border));
+      background: rgb(var(--gt-console-canvas) / 0.44);
     }
   }
 }

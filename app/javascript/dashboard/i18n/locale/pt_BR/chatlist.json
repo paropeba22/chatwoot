@@ -5,7 +5,9 @@
     "LOAD_MORE_CONVERSATIONS": "Carregar mais conversas",
     "EOF": "Tudo em dia por aqui. Voce chegou ao fim desta fila.",
     "LIST": {
-      "404": "Nenhum atendimento encontrado nesta fila no momento."
+      "404": "Nenhum atendimento encontrado nesta fila no momento.",
+      "LOAD_ERROR": "Não foi possível carregar os atendimentos.",
+      "RETRY": "Tentar novamente"
     },
     "FAILED_TO_SEND": "Falha ao enviar",
     "TAB_HEADING": "Conversas",
@@ -26,7 +28,8 @@
     },
     "RESOLVED_VIEW": {
       "OPEN": "Conversas encerradas",
-      "BACK": "Voltar para abertas"
+      "BACK": "Voltar para abertas",
+      "HISTORY_ACTIVE": "Visualizando o histórico finalizado de atendimentos"
     },
     "CHAT_STATUS_FILTER_ITEMS": {
       "open": {

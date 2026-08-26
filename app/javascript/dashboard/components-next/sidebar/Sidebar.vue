@@ -735,17 +735,31 @@ const menuItems = computed(() => {
         <template v-for="item in menuItems" :key="item.name">
           <li
             v-if="!isEffectivelyCollapsed && item.name === 'Inbox'"
-            class="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-n-slate-9 cursor-default"
+            class="gt-sidebar-section px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] cursor-default"
           >
             {{ t('SIDEBAR.OPERATION_SECTION') }}
           </li>
           <li
+            v-if="!isEffectivelyCollapsed && item.name === 'Contacts'"
+            class="gt-sidebar-section px-2 pt-4 pb-1 mt-1 border-t border-n-weak/60 text-[10px] font-semibold uppercase tracking-[0.16em] cursor-default"
+          >
+            {{ t('SIDEBAR.MANAGEMENT_SECTION') }}
+          </li>
+          <li
             v-if="!isEffectivelyCollapsed && item.name === 'Settings'"
-            class="px-2 pt-4 pb-1 mt-1 border-t border-n-weak/60 text-[10px] font-semibold uppercase tracking-[0.16em] text-n-slate-9 cursor-default"
+            class="gt-sidebar-section px-2 pt-4 pb-1 mt-1 border-t border-n-weak/60 text-[10px] font-semibold uppercase tracking-[0.16em] cursor-default"
           >
             {{ t('SIDEBAR.ADMINISTRATION_SECTION') }}
           </li>
-          <SidebarGroup v-bind="item" />
+          <SidebarGroup
+            v-bind="item"
+            :class="{
+              'gt-sidebar-primary': ['Inbox', 'Conversation'].includes(
+                item.name
+              ),
+              'gt-sidebar-incident': item.name === 'Technical Incidents',
+            }"
+          />
         </template>
       </ul>
     </nav>

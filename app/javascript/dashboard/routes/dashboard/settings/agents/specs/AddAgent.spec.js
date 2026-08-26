@@ -35,27 +35,37 @@ describe('AddAgent', () => {
     createAction.mockClear();
   });
 
-  it('accepts one simple password and sends a matching confirmation', async () => {
+  it.each(['12345', 'abcde'])(
+    'accepts the simple administrative password %s and sends a matching confirmation',
+    async password => {
+      const wrapper = mountComponent();
+      const passwordInputs = wrapper.findAll('input[type="password"]');
+
+      expect(passwordInputs).toHaveLength(1);
+
+      await wrapper.find('input[type="text"]').setValue('New Agent');
+      await wrapper.find('input[type="email"]').setValue('agent@example.com');
+      await passwordInputs[0].setValue(password);
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      expect(createAction).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          name: 'New Agent',
+          email: 'agent@example.com',
+          password,
+          password_confirmation: password,
+        })
+      );
+    }
+  );
+
+  it('keeps a single password field in the administrative form', () => {
     const wrapper = mountComponent();
     const passwordInputs = wrapper.findAll('input[type="password"]');
 
     expect(passwordInputs).toHaveLength(1);
-
-    await wrapper.find('input[type="text"]').setValue('New Agent');
-    await wrapper.find('input[type="email"]').setValue('agent@example.com');
-    await passwordInputs[0].setValue('simplepass');
-    await wrapper.find('form').trigger('submit');
-    await flushPromises();
-
-    expect(createAction).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        name: 'New Agent',
-        email: 'agent@example.com',
-        password: 'simplepass',
-        password_confirmation: 'simplepass',
-      })
-    );
   });
 
   it('does not submit a password below the safe minimum', async () => {
@@ -63,7 +73,7 @@ describe('AddAgent', () => {
 
     await wrapper.find('input[type="text"]').setValue('New Agent');
     await wrapper.find('input[type="email"]').setValue('agent@example.com');
-    await wrapper.find('input[type="password"]').setValue('A1!');
+    await wrapper.find('input[type="password"]').setValue('1234');
     await wrapper.find('form').trigger('submit');
     await flushPromises();
 

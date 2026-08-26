@@ -28,7 +28,8 @@
     },
     "RESOLVED_VIEW": {
       "OPEN": "Closed conversations",
-      "BACK": "Back to open"
+      "BACK": "Back to open",
+      "HISTORY_ACTIVE": "Viewing the finalized service history"
     },
     "CHAT_STATUS_FILTER_ITEMS": {
       "open": {

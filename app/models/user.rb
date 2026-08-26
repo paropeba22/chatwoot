@@ -46,6 +46,8 @@
 #
 
 class User < ApplicationRecord
+  ADMIN_CREATION_PASSWORD_LENGTH = 5..128
+
   include AccessTokenable
   include Avatarable
   # Include default devise modules.
@@ -116,6 +118,7 @@ class User < ApplicationRecord
   # rubocop:enable Rails/HasManyOrHasOneDependent
 
   before_validation :set_password_and_uid, on: :create
+  after_validation :apply_admin_creation_password_length_policy
   after_destroy :remove_macros
 
   scope :order_by_full_name, -> { order('lower(name) ASC') }
@@ -188,6 +191,13 @@ class User < ApplicationRecord
     return true if @skip_password_content_validation_for_admin_creation
 
     super
+  end
+
+  def apply_admin_creation_password_length_policy
+    return unless @skip_password_content_validation_for_admin_creation
+    return unless ADMIN_CREATION_PASSWORD_LENGTH.cover?(password.to_s.length)
+
+    errors.delete(:password, :too_short)
   end
 
   # 2FA/MFA Methods

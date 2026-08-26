@@ -1447,15 +1447,21 @@ export default {
 }
 
 .reply-box {
-  @apply relative mb-3 mx-3 border border-n-strong/80 rounded-[14px] bg-n-solid-1 shadow-[0_10px_24px_rgba(2,8,20,0.22)] overflow-hidden;
+  @apply relative mb-3 mx-3 border rounded-[var(--gt-radius-md)] overflow-hidden;
+  border-color: rgb(var(--gt-console-border-strong) / 0.82);
+  background: rgb(var(--gt-console-raised));
+  box-shadow: 0 6px 18px rgba(2, 8, 20, 0.16);
 
   &.is-private {
-    @apply bg-n-solid-amber/90 dark:border-n-amber-7/30 border-n-amber-8/40 shadow-[inset_3px_0_0_rgba(255,197,61,0.7),0_10px_24px_rgba(2,8,20,0.2)];
+    @apply bg-n-solid-amber/90 dark:border-n-amber-7/30 border-n-amber-8/40;
+    box-shadow:
+      inset 3px 0 0 rgb(var(--gt-signal-queue) / 0.72),
+      0 6px 16px rgba(2, 8, 20, 0.15);
   }
 
   &.is-focused {
     box-shadow:
-      0 12px 28px rgba(2, 8, 20, 0.3),
+      0 8px 22px rgba(2, 8, 20, 0.2),
       0 0 0 2px rgba(var(--gt-focus-ring));
   }
 }

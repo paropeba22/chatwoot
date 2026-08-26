@@ -1152,32 +1152,47 @@ watch(conversationFilters, (newVal, oldVal) => {
 
     <div
       class="resolved-view-toggle mx-3 mt-2 mb-1 px-3 py-2 text-xs font-medium flex justify-between items-center rounded-[10px] border border-n-weak/70 cursor-pointer hover:bg-n-alpha-1/70 transition-colors duration-150"
-      :class="isViewingResolved ? 'text-amber-400' : 'text-n-slate-11'"
+      :class="
+        isViewingResolved
+          ? 'gt-history-banner text-n-slate-12'
+          : 'gt-history-link text-n-slate-11'
+      "
+      :aria-pressed="isViewingResolved"
       @click="toggleResolvedView"
     >
-      <span class="flex items-center gap-1.5">
+      <span class="flex items-center gap-2 min-w-0">
         <span
           :class="
             isViewingResolved
               ? 'i-lucide-arrow-left'
               : 'i-lucide-check-circle text-n-teal-10'
           "
-          class="size-3.5"
+          class="size-4 flex-shrink-0"
         />
-        {{
-          isViewingResolved
-            ? $t('CHAT_LIST.RESOLVED_VIEW.BACK')
-            : $t('CHAT_LIST.RESOLVED_VIEW.OPEN')
-        }}
+        <span class="flex flex-col min-w-0 leading-tight">
+          <span class="font-semibold truncate">
+            {{
+              isViewingResolved
+                ? $t('CHAT_LIST.RESOLVED_VIEW.BACK')
+                : $t('CHAT_LIST.RESOLVED_VIEW.OPEN')
+            }}
+          </span>
+          <span v-if="isViewingResolved" class="mt-0.5 text-xxs text-n-slate-9">
+            {{ $t('CHAT_LIST.RESOLVED_VIEW.HISTORY_ACTIVE') }}
+          </span>
+        </span>
       </span>
     </div>
 
-    <p
+    <div
       v-if="!chatListLoading && !conversationList.length"
-      class="flex overflow-auto justify-center items-center p-5 mx-3 my-4 rounded-[14px] border border-dashed border-n-weak/80 bg-n-surface-2/55 text-n-slate-10 text-center text-sm"
+      class="flex flex-col overflow-auto justify-center items-center gap-2 p-6 mx-3 my-4 rounded-[var(--gt-radius-md)] border border-dashed border-n-weak/80 bg-n-surface-2/40 text-n-slate-10 text-center text-sm"
     >
-      {{ $t('CHAT_LIST.LIST.404') }}
-    </p>
+      <span class="grid place-items-center size-9 rounded-lg bg-n-alpha-2">
+        <span class="i-lucide-inbox size-4 text-n-slate-9" />
+      </span>
+      <span>{{ $t('CHAT_LIST.LIST.404') }}</span>
+    </div>
     <ConversationBulkActions
       v-if="selectedConversations.length"
       :conversations="selectedConversations"
@@ -1239,19 +1254,16 @@ watch(conversationFilters, (newVal, oldVal) => {
 
 <style scoped>
 .resolved-view-toggle {
-  background-image: linear-gradient(
-    135deg,
-    rgba(29, 161, 255, 0.07) 0%,
-    transparent 100%
-  );
+  background: rgb(var(--gt-console-subtle) / 0.48);
+}
+
+.gt-history-banner {
+  border-color: rgb(var(--gt-signal-resolved) / 0.42);
+  background: rgb(var(--gt-console-subtle) / 0.9);
+  box-shadow: inset 3px 0 0 rgb(var(--gt-signal-resolved) / 0.78);
 }
 
 .gt-assignee-tabs {
-  background: radial-gradient(
-      ellipse at 50% -40%,
-      rgba(29, 161, 255, 0.14),
-      transparent 72%
-    ),
-    rgba(var(--surface-1), 0.72);
+  background: rgb(var(--gt-console-canvas) / 0.72);
 }
 </style>

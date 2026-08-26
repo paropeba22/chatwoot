@@ -22,7 +22,7 @@ const rules = {
   agentEmail: { required, email },
   agentPassword: {
     required,
-    minLength: minLength(6),
+    minLength: minLength(5),
     maxLength: maxLength(128),
   },
   selectedRoleId: { required },

@@ -12,13 +12,11 @@ import SLACardLabel from 'dashboard/components-next/Conversation/Sla/SLACardLabe
 import CardStatusIcon from './CardStatusIcon.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { useI18n } from 'vue-i18n';
+import OperationalStatus from 'dashboard/components-next/Conversation/OperationalStatus.vue';
 import {
-  getConversationSignal,
   getConversationPresentationSignal,
   visibleConversationLabels,
 } from 'dashboard/helper/conversationSignal';
-import { useOperationsBranding } from 'shared/composables/useOperationsBranding';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -39,37 +37,12 @@ const emit = defineEmits([
   'contextmenu',
 ]);
 
-const { t } = useI18n();
-const operationsBranding = useOperationsBranding();
-
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
-const signalState = computed(() => getConversationSignal(props.chat));
 const presentationSignal = computed(() =>
   getConversationPresentationSignal(props.chat)
 );
-const signalLabel = computed(() =>
-  ({
-    human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
-    bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA', {
-      aiName: operationsBranding.value.aiDisplayName,
-    }),
-    queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
-    neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
-    resolved: t('CONVERSATION.OPERATIONS.SIGNAL.RESOLVED'),
-  })[presentationSignal.value]
-);
 const visibleLabels = computed(() => visibleConversationLabels(props.chat));
 const showLabelsSection = computed(() => visibleLabels.value.length > 0);
-
-const signalPillClass = computed(
-  () =>
-    ({
-      human: 'bg-n-blue-3/70 text-n-blue-11 border-n-blue-8/30',
-      bia: 'bg-n-teal-3/70 text-n-teal-11 border-n-teal-8/30',
-      queue: 'bg-n-amber-3/70 text-n-amber-11 border-n-amber-8/30',
-      neutral: 'bg-n-slate-3/70 text-n-slate-11 border-n-weak',
-    })[signalState.value]
-);
 
 const voiceCallData = computed(() => ({
   status: props.chat.additional_attributes?.call_status,
@@ -98,14 +71,11 @@ const selectedModel = computed({
 
 <template>
   <div
-    class="gt-conversation-card conversation relative cursor-pointer group grid gap-3 items-center px-3 h-14 my-1 mx-2 rounded-[14px] border border-n-weak/75 bg-n-surface-2/70 shadow-[0_2px_8px_rgba(2,8,20,0.18)] hover:border-n-blue-8/40 hover:bg-n-alpha-1/70 transition-[background-color,border-color,box-shadow] duration-150"
-    :data-signal="signalState"
+    class="gt-conversation-card conversation relative cursor-pointer group grid gap-3 items-center px-3 h-14 my-1 mx-2 rounded-[var(--gt-radius-md)] border transition-[background-color,border-color,box-shadow] duration-150"
+    :data-signal="presentationSignal"
     :class="{
-      'active animate-card-select bg-n-surface-active/80 !border-n-blue-8/45 shadow-[0_8px_20px_rgba(2,8,20,0.34)]':
-        isActiveChat,
-      'selected bg-n-slate-2/75 dark:bg-n-slate-3/75 !border-n-blue-8/45':
-        selected,
-      'hover:bg-n-alpha-1/70': !isActiveChat && !selected,
+      'active animate-card-select': isActiveChat,
+      selected,
       'grid-cols-[minmax(0,2fr)_minmax(0,1fr)]': showLabelsSection,
       'grid-cols-[minmax(0,2fr)_max-content]': !showLabelsSection,
     }"
@@ -172,12 +142,11 @@ const selectedModel = computed({
         {{ currentContact.name }}
       </h4>
 
-      <span
-        class="hidden lg:inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-semibold whitespace-nowrap"
-        :class="signalPillClass"
-      >
-        {{ signalLabel }}
-      </span>
+      <OperationalStatus
+        :state="presentationSignal"
+        compact
+        class="hidden lg:inline-flex"
+      />
 
       <CardContent
         :last-message="lastMessageInChat"

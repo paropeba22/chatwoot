@@ -7,6 +7,7 @@ import BackButton from '../BackButton.vue';
 import InboxName from '../InboxName.vue';
 import MoreActions from './MoreActions.vue';
 import Avatar from 'next/avatar/Avatar.vue';
+import OperationalStatus from 'dashboard/components-next/Conversation/OperationalStatus.vue';
 import SLACardLabel from './components/SLACardLabel.vue';
 import wootConstants from 'dashboard/constants/globals';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
@@ -14,11 +15,7 @@ import { buildConversationFilterQuery } from 'dashboard/helper/conversationFilte
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useInbox } from 'dashboard/composables/useInbox';
 import { useI18n } from 'vue-i18n';
-import {
-  getConversationSignal,
-  getConversationPresentationSignal,
-} from 'dashboard/helper/conversationSignal';
-import { useOperationsBranding } from 'shared/composables/useOperationsBranding';
+import { getConversationPresentationSignal } from 'dashboard/helper/conversationSignal';
 
 const props = defineProps({
   chat: {
@@ -32,7 +29,6 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
-const operationsBranding = useOperationsBranding();
 const store = useStore();
 const route = useRoute();
 const conversationHeader = ref(null);
@@ -104,50 +100,18 @@ const hasMultipleInboxes = computed(
   () => store.getters['inboxes/getInboxes'].length > 1
 );
 const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
-const signalState = computed(() => getConversationSignal(props.chat));
 const presentationSignal = computed(() =>
   getConversationPresentationSignal(props.chat)
 );
-const signalLabel = computed(() =>
-  ({
-    human: t('CONVERSATION.OPERATIONS.SIGNAL.HUMAN'),
-    bia: t('CONVERSATION.OPERATIONS.SIGNAL.BIA', {
-      aiName: operationsBranding.value.aiDisplayName,
-    }),
-    queue: t('CONVERSATION.OPERATIONS.SIGNAL.QUEUE'),
-    neutral: t('CONVERSATION.OPERATIONS.SIGNAL.NEUTRAL'),
-    resolved: t('CONVERSATION.OPERATIONS.SIGNAL.RESOLVED'),
-  })[presentationSignal.value]
-);
 const assigneeName = computed(() => props.chat?.meta?.assignee?.name);
 const contactPhone = computed(() => currentContact.value?.phone_number);
-
-const signalPillClass = computed(
-  () =>
-    ({
-      human: 'bg-n-blue-3/70 text-n-blue-11 border-n-blue-8/30',
-      bia: 'bg-n-teal-3/70 text-n-teal-11 border-n-teal-8/30',
-      queue: 'bg-n-amber-3/70 text-n-amber-11 border-n-amber-8/30',
-      neutral: 'bg-n-slate-3/70 text-n-slate-11 border-n-weak',
-    })[signalState.value]
-);
-
-const signalIcon = computed(
-  () =>
-    ({
-      human: 'i-lucide-headset',
-      bia: 'i-lucide-bot',
-      queue: 'i-lucide-clock-3',
-      neutral: 'i-lucide-message-circle',
-    })[signalState.value]
-);
 </script>
 
 <template>
   <div
     ref="conversationHeader"
-    class="gt-conversation-header relative z-30 overflow-visible flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 lg:flex-row px-4 py-3 min-h-[4.5rem] border-b border-n-weak/70 bg-n-surface-2/85"
-    :data-signal="signalState"
+    class="gt-conversation-header relative z-30 overflow-visible flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 lg:flex-row px-4 py-3 min-h-[4.5rem] border-b"
+    :data-signal="presentationSignal"
   >
     <div
       class="flex items-center justify-start w-full lg:w-auto max-w-full min-w-0 lg:flex-1"
@@ -183,12 +147,10 @@ const signalIcon = computed(
           />
         </div>
 
-        <div
-          class="flex items-center gap-2 mt-1 overflow-hidden text-[11px] conversation--header--actions text-ellipsis whitespace-nowrap text-n-slate-10"
-        >
+        <div class="gt-cockpit-context">
           <InboxName v-if="hasMultipleInboxes" :inbox="inbox" class="!mx-0" />
-          <span aria-hidden="true" class="size-0.5 rounded-full bg-n-slate-8" />
-          <span class="truncate">
+          <span class="inline-flex items-center gap-1 truncate">
+            <span class="i-lucide-hash size-3" aria-hidden="true" />
             {{
               $t('CONVERSATION.OPERATIONS.REFERENCE', {
                 id: currentChat.id,
@@ -196,11 +158,10 @@ const signalIcon = computed(
             }}
           </span>
           <template v-if="contactPhone">
-            <span
-              aria-hidden="true"
-              class="hidden sm:inline-block size-0.5 rounded-full bg-n-slate-8"
-            />
-            <span class="hidden sm:inline truncate">{{ contactPhone }}</span>
+            <span class="hidden sm:inline-flex items-center gap-1 truncate">
+              <span class="i-lucide-phone size-3" aria-hidden="true" />
+              {{ contactPhone }}
+            </span>
           </template>
           <span v-if="isSnoozed" class="font-medium text-n-amber-10">
             {{ snoozedDisplayText }}
@@ -212,13 +173,7 @@ const signalIcon = computed(
       class="flex flex-row items-center justify-between lg:justify-end flex-shrink-0 gap-2 w-full lg:w-auto header-actions-wrap [&_button]:rounded-[10px] [&_button]:transition-colors"
     >
       <div class="flex items-center gap-2 min-w-0">
-        <span
-          class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-semibold whitespace-nowrap"
-          :class="signalPillClass"
-        >
-          <span class="size-3.5" :class="signalIcon" />
-          {{ signalLabel }}
-        </span>
+        <OperationalStatus :state="presentationSignal" />
         <span
           v-if="assigneeName"
           class="hidden 2xl:inline text-xs text-n-slate-10 truncate max-w-36"

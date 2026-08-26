@@ -12,13 +12,17 @@ export default {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center h-full px-6">
+  <div
+    class="gt-conversation-empty flex flex-col items-center justify-center h-full px-6"
+  >
     <div
-      class="grid place-items-center size-16 mb-5 rounded-2xl border border-n-blue-8/25 bg-n-blue-9/10 shadow-[0_14px_30px_rgba(2,8,20,0.18)]"
+      class="grid place-items-center size-14 mb-4 rounded-[var(--gt-radius-md)] border border-n-blue-8/25 bg-n-blue-9/10"
     >
-      <span class="i-lucide-headphones size-7 text-n-blue-11" />
+      <span class="i-lucide-radio-tower size-6 text-n-blue-11" />
     </div>
-    <span class="max-w-sm text-sm text-n-slate-11 font-medium text-center">
+    <span
+      class="max-w-sm text-sm text-n-slate-11 font-medium text-center leading-6"
+    >
       {{ message }}
     </span>
     <!-- Cmd bar, keyboard shortcuts placeholder -->

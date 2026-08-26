@@ -144,7 +144,7 @@ export default {
 
 <template>
   <div
-    class="flex justify-between gap-2 h-11 items-center ltr:pl-4 ltr:pr-2 rtl:pr-4 rtl:pl-2 border-b border-n-weak/60 bg-n-alpha-1/35"
+    class="gt-agent-dock-header flex justify-between gap-2 h-11 items-center ltr:pl-4 ltr:pr-2 rtl:pr-4 rtl:pl-2 border-b"
   >
     <EditorModeToggle
       :mode="mode"

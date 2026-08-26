@@ -45,15 +45,20 @@ RSpec.describe AgentBuilder, type: :model do
         expect(user.valid_password?(password)).to be(true)
       end
 
-      it 'accepts a simple password that meets the Devise length policy' do
-        simple_password = 'simplepass'
-        builder = described_class.new(
-          params.merge(password: simple_password, password_confirmation: simple_password)
-        )
+      it 'accepts a simple password that meets the administrative length policy' do
+        %w[12345 abcde].each do |simple_password|
+          builder = described_class.new(
+            params.merge(
+              email: "#{simple_password}@example.com",
+              password: simple_password,
+              password_confirmation: simple_password
+            )
+          )
 
-        user = builder.perform
+          user = builder.perform
 
-        expect(user.valid_password?(simple_password)).to be(true)
+          expect(user.valid_password?(simple_password)).to be(true)
+        end
       end
 
       it 'builds the internal confirmation when the administrative form sends one password' do
@@ -62,8 +67,8 @@ RSpec.describe AgentBuilder, type: :model do
         expect(builder.perform.valid_password?(password)).to be(true)
       end
 
-      it 'rejects a password below the configured security requirements' do
-        builder = described_class.new(params.merge(password: 'T1!', password_confirmation: 'T1!'))
+      it 'rejects an administrative password below five characters' do
+        builder = described_class.new(params.merge(password: '1234', password_confirmation: '1234'))
         expect { builder.perform }.to raise_error(ActiveRecord::RecordInvalid)
       end
 
