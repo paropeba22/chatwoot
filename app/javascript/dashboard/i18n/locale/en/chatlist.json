@@ -19,7 +19,8 @@
     "FILTER_ALL": "All",
     "ASSIGNEE_TYPE_TABS": {
       "me": "Mine",
-      "unassigned": "Unassigned",
+      "unassigned": "Queue",
+      "bot": "AI",
       "all": "All"
     },
     "FOCUS_MODE": {

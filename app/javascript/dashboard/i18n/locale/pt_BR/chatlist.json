@@ -18,9 +18,10 @@
     },
     "FILTER_ALL": "Todos",
     "ASSIGNEE_TYPE_TABS": {
-      "me": "Meus atendimentos",
+      "me": "Meus",
       "unassigned": "Em fila",
-      "all": "Com IA"
+      "bot": "Com IA",
+      "all": "Todos"
     },
     "FOCUS_MODE": {
       "ENABLE": "Atendimento focado",

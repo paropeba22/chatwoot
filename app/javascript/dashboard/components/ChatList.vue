@@ -228,8 +228,13 @@ const assigneeTabItems = computed(() => [
   },
   {
     key: 'bot',
-    name: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.all'),
+    name: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.bot'),
     count: botChatsCount.value,
+  },
+  {
+    key: 'all',
+    name: t('CHAT_LIST.ASSIGNEE_TYPE_TABS.all'),
+    count: conversationStats.value.allCount || 0,
   },
 ]);
 
